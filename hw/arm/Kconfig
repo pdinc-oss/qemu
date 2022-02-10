@@ -551,6 +551,7 @@ config NPCM7XX
     select UNIMP
     select PCA954X
     select USB_OHCI_SYSBUS
+    select MAX20730
 
 config FSL_IMX25
     bool
