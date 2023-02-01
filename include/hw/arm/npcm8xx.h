@@ -42,6 +42,7 @@
 #include "hw/timer/npcm7xx_timer.h"
 #include "hw/ssi/npcm7xx_fiu.h"
 #include "hw/ssi/npcm_espi.h"
+#include "hw/ssi/npcm_pspi.h"
 #include "hw/usb/hcd-ehci.h"
 #include "hw/usb/hcd-ohci.h"
 #include "hw/usb/npcm8xx-udc.h"
@@ -122,6 +123,7 @@ typedef struct NPCM8xxState {
     SVCI3C              i3c[6];
     NPCM8xxGDMA         gdma[3];
     NPCMESPIState       espi;
+    NPCMPSPIState       pspi;
 } NPCM8xxState;
 
 typedef struct NPCM8xxClass {
