@@ -151,3 +151,6 @@ config USB_DWC3
 config XLNX_USB_SUBSYS
     bool
     select USB_DWC3
+
+config USB_NPCM8XX
+    bool
