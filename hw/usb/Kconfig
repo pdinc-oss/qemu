@@ -154,3 +154,7 @@ config XLNX_USB_SUBSYS
 
 config USB_NPCM8XX
     bool
+    select USB_REDIRECT_HOST
+
+config USB_REDIRECT_HOST
+    bool
