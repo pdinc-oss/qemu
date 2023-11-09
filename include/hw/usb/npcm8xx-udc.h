@@ -11,6 +11,7 @@
 #define NPCM8XX_UDC_H
 
 #include "hw/sysbus.h"
+#include "qemu/typedefs.h"
 #include "qom/object.h"
 
 #define TYPE_NPCM8XX_UDC "npcm8xx-udc"
@@ -33,8 +34,10 @@ typedef struct NPCM8xxUDCRegisters {
 typedef struct NPCM8xxUDC {
     SysBusDevice parent;
     MemoryRegion mr;
+    qemu_irq irq;
 
     uint32_t registers[NPCM8XX_UDC_NUM_REGS];
+    bool running;
 } NPCM8xxUDC;
 
 #endif /* NPCM8XX_UDC_H */
