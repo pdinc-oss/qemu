@@ -45,6 +45,12 @@ typedef struct NPCM8xxUDC {
 
     const USBRedirectHostOps *usbredir_ops;
 
+    /*
+     * Registers are stored as array instead of NPCM8xxUDCRegisters because
+     * I want to store registers value into the VM state description without
+     * manually declaring and storing VM state description fields for each
+     * register.
+     */
     uint32_t registers[NPCM8XX_UDC_NUM_REGS];
     bool running;
     bool attached;
