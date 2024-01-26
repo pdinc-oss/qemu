@@ -14,6 +14,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
+#include <stddef.h>
 
 #include "qemu/osdep.h"
 #include "net/checksum.h"
@@ -59,50 +60,58 @@ uint16_t net_checksum_tcpudp(uint16_t length, uint16_t proto,
     return net_checksum_finish(sum);
 }
 
-static void net_checksum_ipv4(struct ip_header *ip, int csum_flag)
+/* Takes the base address to avoid unaligned address accessing */
+static bool is_ipv4_fragment_by_base_address(uint8_t *base) {
+    return (be16_to_cpu((ldub_p(base + offsetof(struct ip_header, ip_off))) & \
+            (IP_OFFMASK | IP_MF)) != 0);
+}
+
+static void net_checksum_ipv4(uint8_t *ip, int csum_flag)
 {
     uint16_t csum;
 
     /* Calculate IP checksum */
     if (csum_flag & CSUM_IP) {
-        stw_he_p(&ip->ip_sum, 0);
+        stw_he_p(ip + offsetof(struct ip_header, ip_sum), 0);
         csum = net_raw_checksum((uint8_t *)ip, IP_HDR_GET_LEN(ip));
-        stw_be_p(&ip->ip_sum, csum);
+        stw_he_p(ip + offsetof(struct ip_header, ip_sum), csum);
     }
 
-    if (IP4_IS_FRAGMENT(ip)) {
+    if (is_ipv4_fragment_by_base_address(ip)) {
         qemu_log_mask(LOG_GUEST_ERROR,
             "%s: fragmented IP packet!", __func__);
     }
 }
 
 /* returns payload length. */
-static uint16_t net_payload_length_ipv4(struct ip_header *ip)
+static uint16_t net_payload_length_ipv4(uint8_t *ip)
 {
-    return lduw_be_p(&ip->ip_len) - sizeof(struct ip_header);
+    return lduw_be_p(ip + offsetof(struct ip_header, ip_len)) - \
+                     sizeof(struct ip_header);
 }
 
 /* returns payload length. */
-static uint16_t net_payload_length_ipv6(struct ip6_header *ip)
+static uint16_t net_payload_length_ipv6(uint8_t *ip)
 {
-    return lduw_be_p(&ip->ip6_plen);
+    return lduw_be_p(ip + offsetof(struct ip6_header, ip6_plen));
 }
 
 void net_checksum_calculate(uint8_t *data, int length, int csum_flag)
 {
     int mac_hdr_len, ip_version;
-    struct ip_header *ip;
-    struct ip6_header *ip6;
     uint16_t ip_len;
     uint16_t csum;
     uint8_t ip_p, addr_len;
     uint8_t *ip_src;
     uint8_t *ip_nxt;
+    uint8_t *ip_base_addr;
 
     /*
      * Note: We cannot assume "data" is aligned, so the all code uses
      * some macros that take care of possible unaligned access for
      * struct members (just in case).
+     * We can't access the member directly neither. Thus the access wll be
+     * in the format of base_address + offsetof(struct, member).
      */
 
     /* Ensure we have at least an Eth header */
@@ -137,24 +146,24 @@ void net_checksum_calculate(uint8_t *data, int length, int csum_flag)
         return;
     }
 
-    ip = (struct ip_header *)(data + mac_hdr_len);
-    ip_version = IP_HEADER_VERSION(ip);
+    ip_base_addr = data + mac_hdr_len;
+    ip_version = (ldub_p(ip_base_addr + offsetof(struct ip_header, ip_ver_len)) \
+                 >> 4) & 0xf;
 
     switch (ip_version) {
     case IP_HEADER_VERSION_4:
-        net_checksum_ipv4(ip, csum_flag);
-        ip_len = net_payload_length_ipv4(ip);
-        ip_p = ip->ip_p;
-        ip_src = (uint8_t *)&ip->ip_src;
-        ip_nxt = (uint8_t *)(ip + 1);
+        net_checksum_ipv4(ip_base_addr, csum_flag);
+        ip_len = net_payload_length_ipv4(ip_base_addr);
+        ip_p = ldub_p(ip_base_addr + offsetof(struct ip_header, ip_p));
+        ip_src = ip_base_addr + offsetof(struct ip_header, ip_src);
+        ip_nxt = ip_base_addr + sizeof(struct ip_header);
         addr_len = 4;
         break;
     case IP_HEADER_VERSION_6:
-        ip6 = (struct ip6_header *)ip;
-        ip_len = net_payload_length_ipv6(ip6);
-        ip_p = ip6->ip6_nxt;
-        ip_src = (uint8_t *)&ip6->ip6_src;
-        ip_nxt = (uint8_t *)(ip6 + 1);
+        ip_len = net_payload_length_ipv6(ip_base_addr);
+        ip_p = ldub_p(ip_base_addr + offsetof(struct ip6_header, ip6_nxt));
+        ip_src = ip_base_addr + offsetof(struct ip6_header, ip6_src);
+        ip_nxt = ip_base_addr + sizeof(struct ip6_header);
         addr_len = 16;
         break;
     default:
@@ -170,20 +179,21 @@ void net_checksum_calculate(uint8_t *data, int length, int csum_flag)
             return;
         }
 
-        tcp_header *tcp = (tcp_header *)(ip_nxt);
+        /* ip_nxt is basically the offset of tcp_header */
+        uint8_t *tcp_base_addr = ip_nxt;
 
         if (ip_len < sizeof(tcp_header)) {
             return;
         }
 
         /* Set csum to 0 */
-        stw_he_p(&tcp->th_sum, 0);
+        stw_he_p(tcp_base_addr + offsetof(tcp_header, th_sum), 0);
 
         csum = net_checksum_tcpudp(ip_len, ip_p, ip_src,
-                                   (uint8_t *)tcp, addr_len);
+                                   tcp_base_addr, addr_len);
 
         /* Store computed csum */
-        stw_be_p(&tcp->th_sum, csum);
+        stw_be_p(tcp_base_addr + offsetof(tcp_header, th_sum), csum);
 
         break;
     }
@@ -193,20 +203,21 @@ void net_checksum_calculate(uint8_t *data, int length, int csum_flag)
             return;
         }
 
-        udp_header *udp = (udp_header *)(ip_nxt);
+        /* ip_nxt is the offset of udp_header */
+        uint8_t *udp_base_addr = ip_nxt;
 
         if (ip_len < sizeof(udp_header)) {
             return;
         }
 
         /* Set csum to 0 */
-        stw_he_p(&udp->uh_sum, 0);
+        stw_he_p(udp_base_addr + offsetof(udp_header, uh_sum), 0);
 
         csum = net_checksum_tcpudp(ip_len, ip_p, ip_src,
-                                   (uint8_t *)udp, addr_len);
+                                   udp_base_addr, addr_len);
 
         /* Store computed csum */
-        stw_be_p(&udp->uh_sum, csum);
+        stw_be_p(udp_base_addr + offsetof(udp_header, uh_sum), csum);
 
         break;
     }
