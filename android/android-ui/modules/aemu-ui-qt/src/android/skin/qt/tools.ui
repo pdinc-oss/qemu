@@ -978,6 +978,206 @@ color: #f0f0f0</string>
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="xr_input_mode_button">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>34</width>
+         <height>34</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>Change XR Input Mode</string>
+       </property>
+       <property name="text">
+        <string notr="true"/>
+       </property>
+       <property name="icon">
+        <iconset resource="resources.qrc">
+         <normaloff>:/light/xr_input_mouse_keyboard_mode</normaloff>:/light/xr_input_mouse_keyboard_mode</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+       <property name="report_metrics" stdset="0">
+        <bool>false</bool>
+       </property>
+       <property name="themeIconName" stdset="0">
+        <string notr="true">xr_input_mouse_keyboard_mode</string>
+       </property>
+       <property name="uiCommand" stdset="0">
+        <string>CHANGE_XR_INPUT_MODE</string>
+       </property>
+       <property name="ToolWindowButton" stdset="0">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="xr_environment_mode_button">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>34</width>
+         <height>34</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>Change XR Environment Mode</string>
+       </property>
+       <property name="text">
+        <string notr="true"/>
+       </property>
+       <property name="icon">
+        <iconset resource="resources.qrc">
+         <normaloff>:/light/xr_environment</normaloff>:/light/xr_environment</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+       <property name="report_metrics" stdset="0">
+        <bool>false</bool>
+       </property>
+       <property name="themeIconName" stdset="0">
+        <string notr="true">xr_environment</string>
+       </property>
+       <property name="uiCommand" stdset="0">
+        <string>CHANGE_XR_ENVIRONMENT_MODE</string>
+       </property>
+       <property name="ToolWindowButton" stdset="0">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="xr_screen_recenter_button">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>34</width>
+         <height>34</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>XR Screen Recenter</string>
+       </property>
+       <property name="text">
+        <string notr="true"/>
+       </property>
+       <property name="icon">
+        <iconset resource="resources.qrc">
+         <normaloff>:/light/xr_screen_recenter</normaloff>:/light/xr_screen_recenter</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+       <property name="report_metrics" stdset="0">
+        <bool>false</bool>
+       </property>
+       <property name="themeIconName" stdset="0">
+        <string notr="true">xr_screen_recenter</string>
+       </property>
+       <property name="uiCommand" stdset="0">
+        <string>XR_SCREEN_RECENTER</string>
+       </property>
+       <property name="ToolWindowButton" stdset="0">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="xr_viewport_control_mode_button">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>34</width>
+         <height>34</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>Change XR Viewport Control Mode</string>
+       </property>
+       <property name="text">
+        <string notr="true"/>
+       </property>
+       <property name="icon">
+        <iconset resource="resources.qrc">
+         <normaloff>:/light/xr_viewport_pan</normaloff>:/light/xr_viewport_pan</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+       <property name="report_metrics" stdset="0">
+        <bool>false</bool>
+       </property>
+       <property name="themeIconName" stdset="0">
+        <string notr="true">xr_viewport_pan</string>
+       </property>
+       <property name="uiCommand" stdset="0">
+        <string>CHANGE_XR_VIEWPORT_CONTROL_MODE</string>
+       </property>
+       <property name="ToolWindowButton" stdset="0">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="more_button">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">

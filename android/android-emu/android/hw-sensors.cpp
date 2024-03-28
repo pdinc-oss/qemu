@@ -1419,7 +1419,7 @@ bool android_foldable_hinge_enabled() {
              getResizableActiveConfigId() == PRESET_SIZE_UNFOLDED));
 }
 
-bool android_xr_buttons_enabled() {
+bool android_is_xr_mode() {
     // TODO(b/331268748): Add a check if the guest platform is AndroidXR
     return false;
 }

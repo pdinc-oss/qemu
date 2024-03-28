@@ -45,6 +45,9 @@
 #include "host-common/qt_ui_defs.h"
 
 class PostureSelectionDialog;
+class XrEnvironmentModeDialog;
+class XrInputModeDialog;
+class XrViewportControlDialog;
 
 namespace Ui {
 class ToolControls;
@@ -111,6 +114,7 @@ public:
     void closeExtendedWindow();
     void enableCloseButton();
     void updateFoldableButtonVisibility();
+    void updateXrButtonsVisibility();
 
     // Observed only on Windows:
     // Whenever we set the window flags for the EmulatorContainer,
@@ -202,6 +206,9 @@ private:
     bool mClipboardSupported = false;
 
     int mLastRequestedFoldablePosture = -1;
+    int mLastEnvironmentModeRequested = 0;
+    int mLastInputModeRequested = 0;
+    int mLastViewportModeRequested = 0;
 
     static const UiEmuAgent* sUiEmuAgent;
 
@@ -226,6 +233,9 @@ private:
     bool mFoldableSyncToAndroidSuccess;
     bool mFoldableSyncToAndroidTimeout;
     ResizableDialog* mResizableDialog;
+    XrEnvironmentModeDialog* mXrEnvironmentModeDialog;
+    XrInputModeDialog* mXrInputModeDialog;
+    XrViewportControlDialog* mXrViewportControlDialog;
 
     bool mCloseClicked = false;
 
@@ -283,6 +293,16 @@ private slots:
     void on_resizable_button_clicked();
     void onGuestClipboardChanged(QString text);
     void onHostClipboardChanged();
+    void on_xr_environment_mode_button_clicked();
+    void on_xr_environment_mode_changed(int mode);
+    void on_dismiss_xr_environment_mode_dialog();
+    void on_xr_input_mode_button_clicked();
+    void on_xr_input_mode_changed(int mode);
+    void on_dismiss_xr_input_mode_dialog();
+    void on_xr_screen_recenter_button_clicked();
+    void on_xr_viewport_control_mode_button_clicked();
+    void on_xr_viewport_control_mode_changed(int mode);
+    void on_dismiss_xr_viewport_control_dialog();
 
     void on_sleep_timer_done();
     void on_unfold_timer_done();

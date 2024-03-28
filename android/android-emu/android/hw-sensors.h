@@ -402,7 +402,7 @@ bool android_foldable_posture_name(int posture, char* name);
 bool android_is_automotive();
 void* android_get_posture_listener();
 
-bool android_xr_buttons_enabled();
+bool android_is_xr_mode();
 
 enum XrInputMode {
     XR_INPUT_MODE_UNKNOWN = 0,
