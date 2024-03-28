@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>XrViewportControlDialog</class>
+ <widget class="QDialog" name="XrViewportControlDialog">
+  <property name="geometry">
+   <rect>
+    <x>100</x>
+    <y>0</y>
+    <width>52</width>
+    <height>172</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QPushButton" name="btn_xr_viewport_pan">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="autoDefault">
+      <bool>false</bool>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>34</width>
+       <height>34</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>34</width>
+       <height>34</height>
+      </size>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset resource="resources.qrc">
+       <normaloff>:/light/xr_viewport_pan</normaloff>:/light/xr_viewport_pan</iconset>
+     </property>
+     <property name="themeIconName" stdset="0">
+      <string notr="true">xr_viewport_pan</string>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>24</width>
+       <height>24</height>
+      </size>
+     </property>
+     <property name="toolTip">
+      <string>Pan</string>
+     </property>
+     <property name="flat">
+      <bool>true</bool>
+     </property>
+     <property name="ToolWindowButton" stdset="0">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="btn_xr_viewport_zoom">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="autoDefault">
+      <bool>false</bool>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>34</width>
+       <height>34</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>34</width>
+       <height>34</height>
+      </size>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset resource="resources.qrc">
+       <normaloff>:/light/xr_viewport_zoom</normaloff>:/light/xr_viewport_zoom</iconset>
+     </property>
+     <property name="themeIconName" stdset="0">
+      <string notr="true">xr_viewport_zoom</string>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>24</width>
+       <height>24</height>
+      </size>
+     </property>
+     <property name="toolTip">
+      <string>Rotate</string>
+     </property>
+     <property name="flat">
+      <bool>true</bool>
+     </property>
+     <property name="ToolWindowButton" stdset="0">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="btn_xr_viewport_rotate">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="autoDefault">
+      <bool>false</bool>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>34</width>
+       <height>34</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>34</width>
+       <height>34</height>
+      </size>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset resource="resources.qrc">
+       <normaloff>:/light/xr_viewport_rotate</normaloff>:/light/xr_viewport_rotate</iconset>
+     </property>
+     <property name="themeIconName" stdset="0">
+      <string notr="true">xr_viewport_rotate</string>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>24</width>
+       <height>24</height>
+      </size>
+     </property>
+     <property name="toolTip">
+      <string>Rotate</string>
+     </property>
+     <property name="flat">
+      <bool>true</bool>
+     </property>
+     <property name="ToolWindowButton" stdset="0">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
+ <connections/>
+</ui>
