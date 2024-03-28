@@ -21,11 +21,12 @@
 #include <glm/vec3.hpp>
 #include <mutex>
 
-#include "android/automation/AutomationController.h"
-#include "android/automation/AutomationEventSink.h"
 #include "aemu/base/async/ThreadLooper.h"
 #include "aemu/base/files/PathUtils.h"
 #include "aemu/base/files/StdioStream.h"
+#include "aemu/base/utils/stream.h"
+#include "android/automation/AutomationController.h"
+#include "android/automation/AutomationEventSink.h"
 #include "android/base/system/System.h"
 #include "android/emulation/control/sensors_agent.h"
 #include "android/hw-sensors.h"
@@ -34,9 +35,9 @@
 #include "android/physics/FoldableModel.h"
 #include "android/physics/GlmHelpers.h"
 #include "android/physics/InertialModel.h"
+#include "android/physics/XrDeviceModel.h"
 #include "android/utils/debug.h"
 #include "android/utils/file_io.h"
-#include "aemu/base/utils/stream.h"
 
 #define D(...) VERBOSE_PRINT(sensors, __VA_ARGS__)
 #define W(...) dwarning(__VA_ARGS__)
@@ -304,6 +305,7 @@ private:
     AmbientEnvironment mAmbientEnvironment;
     FoldableModel mFoldableModel;
     BodyModel mBodyModel;
+    XrDeviceModel mXrDeviceModel;
 
     AutomationController* mAutomationController = nullptr;
     const QAndroidPhysicalStateAgent* mAgent = nullptr;
@@ -788,6 +790,50 @@ void PhysicalModelImpl::setTargetInternalAccelerometerUncalibrated(vec3, Physica
     targetStateChanged();
 }
 
+void PhysicalModelImpl::setTargetInternalXrInputMode(
+        float value,
+        PhysicalInterpolation mode) {
+    physicalStateChanging();
+    {
+        std::lock_guard<std::recursive_mutex> lock(mMutex);
+        mXrDeviceModel.setXrInputMode(value, mode);
+    }
+    targetStateChanged();
+}
+
+void PhysicalModelImpl::setTargetInternalXrEnvironmentMode(
+        float value,
+        PhysicalInterpolation mode) {
+    physicalStateChanging();
+    {
+        std::lock_guard<std::recursive_mutex> lock(mMutex);
+        mXrDeviceModel.setXrEnvironmentMode(value, mode);
+    }
+    targetStateChanged();
+}
+
+void PhysicalModelImpl::setTargetInternalXrViewportControlMode(
+        float value,
+        PhysicalInterpolation mode) {
+    physicalStateChanging();
+    {
+        std::lock_guard<std::recursive_mutex> lock(mMutex);
+        mXrDeviceModel.setXrViewportControlMode(value, mode);
+    }
+    targetStateChanged();
+}
+
+void PhysicalModelImpl::setTargetInternalXrScreenRecenter(
+        float value,
+        PhysicalInterpolation mode) {
+    physicalStateChanging();
+    {
+        std::lock_guard<std::recursive_mutex> lock(mMutex);
+        mXrDeviceModel.setXrScreenRecenter(value, mode);
+    }
+    targetStateChanged();
+}
+
 vec3 PhysicalModelImpl::getParameterAccelerometerUncalibrated(ParameterValueType) const {
     return fromGlm(mInertialModel.getAcceleration());
 }
@@ -912,6 +958,30 @@ float PhysicalModelImpl::getParameterWristTilt(
         ParameterValueType parameterValueType) const {
     std::lock_guard<std::recursive_mutex> lock(mMutex);
     return mInertialModel.getWristTilt(parameterValueType);
+}
+
+float PhysicalModelImpl::getParameterXrInputMode(
+        ParameterValueType parameterValueType) const {
+    std::lock_guard<std::recursive_mutex> lock(mMutex);
+    return mXrDeviceModel.getXrInputMode(parameterValueType);
+}
+
+float PhysicalModelImpl::getParameterXrEnvironmentMode(
+        ParameterValueType parameterValueType) const {
+    std::lock_guard<std::recursive_mutex> lock(mMutex);
+    return mXrDeviceModel.getXrEnvironmentMode(parameterValueType);
+}
+
+float PhysicalModelImpl::getParameterXrScreenRecenter(
+        ParameterValueType parameterValueType) const {
+    std::lock_guard<std::recursive_mutex> lock(mMutex);
+    return mXrDeviceModel.getXrScreenRecenter(parameterValueType);
+}
+
+float PhysicalModelImpl::getParameterXrViewportControlMode(
+        ParameterValueType parameterValueType) const {
+    std::lock_guard<std::recursive_mutex> lock(mMutex);
+    return mXrDeviceModel.getXrViewportControlMode(parameterValueType);
 }
 
 #define GET_FUNCTION_NAME(x) get##x

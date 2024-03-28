@@ -102,7 +102,7 @@ static SkinRotation getRotation() {
 }
 
 static const QAndroidEmulatorWindowAgent sQAndroidEmulatorWindowAgent = {
-        .initUI = [](){ MicrophonePage::loadSettings(); },
+        .initUI = []() { MicrophonePage::loadSettings(); },
         .getEmulatorWindow = emulator_window_get,
         .rotate90Clockwise =
                 [] {
@@ -391,7 +391,18 @@ static const QAndroidEmulatorWindowAgent sQAndroidEmulatorWindowAgent = {
                 []() { return gUserSettingIsDontSaveSnapshot; },
         .setUserSettingIsDontSaveSnapshot =
                 [](bool val) { gUserSettingIsDontSaveSnapshot = val; },
-};
+        .setXrInputMode = [](int mode) -> bool {
+            return android_xr_set_input_mode(mode);
+        },
+        .setXrEnvironmentMode = [](int mode) -> bool {
+            return android_xr_set_environment_mode(mode);
+        },
+        .setXrScreenRecenter = []() -> bool {
+            return android_xr_set_screen_recenter();
+        },
+        .setXrViewportControlMode = [](int mode) -> bool {
+            return android_xr_set_viewport_control_mode(mode);
+        }};
 
 const QAndroidEmulatorWindowAgent* const gQAndroidEmulatorWindowAgent =
         &sQAndroidEmulatorWindowAgent;
