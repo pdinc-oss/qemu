@@ -1,0 +1,67 @@
+/*
+ * Copyright (C) 2024 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto2";
+option optimize_for = LITE_RUNTIME;
+
+package xr_emulator_proto;
+
+enum MsgType {
+    MSG_TYPE_UNKNOWN = 0;
+    MSG_TYPE_SET_ENVIRONMENT_MODE = 1;
+    MSG_TYPE_SET_INPUT_MODE = 2;
+    MSG_TYPE_RECENTER_SCREEN = 3;
+    MSG_TYPE_SET_VIEWPORT_CONTROL = 4;
+}
+enum Status {
+    RESULT_UNKNOWN = 0;
+    RESULT_OK = 1;
+    ERROR_UNIMPLEMENTED_CMD = 2;
+    ERROR_INVALID_PROPERTY = 3;
+}
+
+enum EnvironmentMode {
+    ENVIRONMENT_MODE_UNKNOWN = 0;
+    ENVIRONMENT_MODE_PASSTHROUGH_ON = 1;
+    ENVIRONMENT_MODE_PASSTHROUGH_OFF = 2;
+    ENVIRONMENT_MODE_LIVING_ROOM_DAY = 3;
+    ENVIRONMENT_MODE_LIVING_ROOM_NIGHT = 4;
+}
+
+enum InputMode {
+    INPUT_MODE_MOUSE_UNKNOWN = 0;
+    INPUT_MODE_MOUSE_KEYBOARD = 1;
+    INPUT_MODE_HAND_RAYCAST = 2;
+    INPUT_MODE_EYE_TRACKING = 3;
+}
+
+enum ViewportControlMode {
+    VIEWPORT_CONTROL_MODE_UNKNOWN = 0;
+    VIEWPORT_CONTROL_MODE_PAN = 1;
+    VIEWPORT_CONTROL_MODE_ZOOM = 2;
+    VIEWPORT_CONTROL_MODE_ROTATE = 3;
+}
+
+message EmulatorRequest {
+    optional MsgType msg_type = 1;
+    optional EnvironmentMode environment_mode = 2;
+    optional InputMode input_mode = 3;
+    optional ViewportControlMode viewport_control_mode = 4;
+}
+
+message EmulatorResponse {
+    optional Status status = 1;
+}

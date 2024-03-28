@@ -20,14 +20,18 @@
 #include <vector>
 
 #include "aemu/base/EventNotificationSupport.h"  // for EventNotifi...
+#include "android/emulation/android_qemud.h"
 #include "android/hw-sensors.h"
 #include "android/physics/Physics.h"
+#include "xr_emulator_conn.pb.h"
 
 namespace android {
 namespace physics {
 
 class XrDeviceModel {
 public:
+    XrDeviceModel();
+
     // called by physical model to send a XR Input mode to the system.
     void setXrInputMode(float value, PhysicalInterpolation mode);
     // Required to support PhysicalModel.
@@ -45,6 +49,11 @@ public:
     // Required to support PhysicalModel.
     float getXrViewportControlMode(ParameterValueType parameterValueType) const;
 
+    QemudClient* initializeQemudClient(int channel, const char* client_param);
+    void qemudClientRecv(uint8_t* msg, int msglen);
+    void qemudClientClose();
+    void qemudClientSend(const xr_emulator_proto::EmulatorRequest& request);
+
 private:
     XrInputMode mLastInputModeRequested =
             XrInputMode::XR_INPUT_MODE_MOUSE_KEYBOARD;
@@ -57,6 +66,9 @@ private:
     void sendXrEnvironmentMode(enum XrEnvironmentMode mode);
     void sendXrScreenRecenter();
     void sendXrViewportControlMode(enum XrViewportControlMode mode);
+
+    QemudService* qemud_service = nullptr;
+    QemudClient* qemud_client = nullptr;
 };
 
 }  // namespace physics
