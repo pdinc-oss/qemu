@@ -74,6 +74,18 @@
         <file alias="tablet_mode">images/light/tablet_mode.svg</file>
         <file alias="volume_down">images/light/ic_volume_down_678_48px.svg</file>
         <file alias="volume_up">images/light/ic_volume_up_678_48px.svg</file>
+        <file alias="xr_input_eye_tacking">images/light/ic_xr_eye_tacking.svg</file>
+        <file alias="xr_input_hand_raycast">images/light/ic_xr_hand_raycast.svg</file>
+        <file alias="xr_input_mouse_keyboard_mode">images/light/ic_xr_mouse_keyboard_mode.svg</file>
+        <file alias="xr_environment">images/light/ic_xr_environment.svg</file>
+        <file alias="xr_environment_living_room_day">images/light/ic_xr_environment_day.svg</file>
+        <file alias="xr_environment_living_room_night">images/light/ic_xr_environment_night.svg</file>
+        <file alias="xr_environment_passthrough_off">images/light/ic_xr_passthrough_off.svg</file>
+        <file alias="xr_environment_passthrough_on">images/light/ic_xr_passthrough_on.svg</file>
+        <file alias="xr_screen_recenter">images/light/ic_xr_screen_recenter.svg</file>
+        <file alias="xr_viewport_pan">images/light/ic_xr_viewport_pan.svg</file>
+        <file alias="xr_viewport_rotate">images/light/ic_xr_viewport_rotate.svg</file>
+        <file alias="xr_viewport_zoom">images/light/ic_xr_viewport_zoom.svg</file>
         <file alias="zoom">images/light/ic_zoom_in_678_48dp.svg</file>
 
         <!-- Used in the "extended" window -->
