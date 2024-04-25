@@ -1419,6 +1419,11 @@ bool android_foldable_hinge_enabled() {
              getResizableActiveConfigId() == PRESET_SIZE_UNFOLDED));
 }
 
+bool android_xr_buttons_enabled() {
+    // TODO(b/331268748): Add a check if the guest platform is AndroidXR
+    return false;
+}
+
 bool android_foldable_any_folded_area_configured() {
     for (int i = 0; i < ANDROID_FOLDABLE_MAX_DISPLAY_REGIONS; i++) {
         if (android_foldable_folded_area_configured(i)) {
@@ -1624,4 +1629,36 @@ void android_hw_sensors_unregister_callback(void* opaque) {
     auto oldSize = gSensorListeners.size();
     gSensorListeners.erase(opaque);
     assert(oldSize == gSensorListeners.size() + 1);
+}
+
+bool android_xr_set_input_mode(int mode) {
+    auto f_mode = static_cast<float>(mode);
+    return static_cast<bool>(android_physical_model_set(
+                                     PHYSICAL_PARAMETER_XR_INPUT_MODE, &f_mode,
+                                     1, PHYSICAL_INTERPOLATION_SMOOTH) >= 0);
+}
+
+bool android_xr_set_environment_mode(int mode) {
+    auto f_mode = static_cast<float>(mode);
+    return static_cast<bool>(
+            android_physical_model_set(PHYSICAL_PARAMETER_XR_ENVIRONMENT_MODE,
+                                       &f_mode, 1,
+                                       PHYSICAL_INTERPOLATION_SMOOTH) >= 0);
+}
+
+bool android_xr_set_screen_recenter() {
+    // TODO: Change the recenter flag to boolean.
+    float value = 1.0f;
+    return static_cast<bool>(
+            android_physical_model_set(PHYSICAL_PARAMETER_XR_SCREEN_RECENTER,
+                                       &value, 1,
+                                       PHYSICAL_INTERPOLATION_SMOOTH) >= 0);
+}
+
+bool android_xr_set_viewport_control_mode(int mode) {
+    auto f_mode = static_cast<float>(mode);
+    return static_cast<bool>(
+            android_physical_model_set(
+                    PHYSICAL_PARAMETER_XR_VIEWPORT_CONTROL_MODE, &f_mode, 1,
+                    PHYSICAL_INTERPOLATION_SMOOTH) >= 0);
 }

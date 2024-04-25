@@ -182,7 +182,19 @@ static const QAndroidEmulatorWindowAgent sQAndroidEmulatorWindowAgent = {
         .userSettingIsDontSaveSnapshot =
                 []() { return gUserSettingIsDontSaveSnapshot; },
         .setUserSettingIsDontSaveSnapshot =
-                [](bool val) { gUserSettingIsDontSaveSnapshot = val; }};
+                [](bool val) { gUserSettingIsDontSaveSnapshot = val; },
+        .setXrInputMode = [](int mode) -> bool {
+            return android_xr_set_input_mode(mode);
+        },
+        .setXrEnvironmentMode = [](int mode) -> bool {
+            return android_xr_set_environment_mode(mode);
+        },
+        .setXrScreenRecenter = []() -> bool {
+            return android_xr_set_screen_recenter();
+        },
+        .setXrViewportControlMode = [](int mode) -> bool {
+            return android_xr_set_viewport_control_mode(mode);
+        }};
 
 extern "C" const QAndroidEmulatorWindowAgent* const
         gQAndroidEmulatorWindowAgent = &sQAndroidEmulatorWindowAgent;
