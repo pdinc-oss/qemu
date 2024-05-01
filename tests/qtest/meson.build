@@ -205,7 +205,7 @@ qtests_npcm7xx = \
    (slirp.found() ? ['npcm7xx_emc-test'] : [])
 qtests_npcm8xx = \
   ['npcm_gmac-test'] + \
-  (usbredir.found() ? ['npcm8xx_udc-test'] : [])
+  (libusb.found() and usbredir.found() ? ['npcm8xx_udc-test'] : [])
 qtests_aspeed = \
   ['aspeed_hace-test',
    'aspeed_smc-test',
@@ -366,7 +366,7 @@ qtests = {
   'netdev-socket': files('netdev-socket.c', '../unit/socket-helpers.c'),
 }
 
-if usbredir.found()
+if libusb.found() and usbredir.found()
   qtests += {'npcm8xx_udc-test': [usbredir, files('fake-usbredir-guest.c')]}
 endif
 
