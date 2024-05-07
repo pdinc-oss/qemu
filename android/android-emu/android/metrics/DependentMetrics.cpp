@@ -210,6 +210,8 @@ toClearcutLogAvdProperty(AvdFlavor flavor) {
             return android_studio::EmulatorAvdInfo::WEAR_AVD;
         case AVD_ANDROID_AUTO:
             return android_studio::EmulatorAvdInfo::ANDROIDAUTO_AVD;
+        case AVD_DEV_2024:
+            return android_studio::EmulatorAvdInfo::DEV_2024_AVD;
         case AVD_OTHER:
             return android_studio::EmulatorAvdInfo::UNKNOWN_EMULATOR_AVD_FLAG;
     }
@@ -409,7 +411,6 @@ static void fillAvdMetrics(android_studio::AndroidStudioEvent* event) {
             getConsoleAgents()->settings->hw()->disk_ramdisk_path,
             getConsoleAgents()->settings->android_cmdLineOptions()->ramdisk !=
                     nullptr);
-
     eventAvdInfo->add_properties(toClearcutLogAvdProperty(
             avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo())));
 }

@@ -1386,7 +1386,8 @@ message EmulatorAvdInfo {
         LAPTOP_AVD = 8;
         DESKTOP_AVD = 9;
         CHROMEOS = 10;
-        // Next tag: 11
+        DEV_2024_AVD = 11;
+        // Next tag: 12
     }
     enum EmulatorDeviceName {
         UNKNOWN_EMULATOR_DEVICE_NAME = 0;
