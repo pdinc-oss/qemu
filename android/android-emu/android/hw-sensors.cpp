@@ -1420,8 +1420,7 @@ bool android_foldable_hinge_enabled() {
 }
 
 bool android_is_xr_mode() {
-    // TODO(b/331268748): Add a check if the guest platform is AndroidXR
-    return false;
+    return fc::isEnabled(fc::XrModeUI);
 }
 
 bool android_foldable_any_folded_area_configured() {
