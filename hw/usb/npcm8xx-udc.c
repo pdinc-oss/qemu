@@ -301,7 +301,7 @@ static inline void npcm8xx_udc_send_data(NPCM8xxUDC *udc,
                                   sizeof(uint32_t));
     } else {
         error_report("%s: unable to send data via usbredir host.",
-                     object_get_canonical_path(OBJECT(udc)));
+                     DEVICE(udc)->canonical_path);
     }
 }
 
@@ -316,7 +316,7 @@ static inline void npcm8xx_udc_write_endptprime(NPCM8xxUDC *udc, uint32_t value)
         qemu_log_mask(
             LOG_GUEST_ERROR,
             "%s[%u]: Attempted to send data when device is not running\n",
-            object_get_canonical_path(OBJECT(udc)), udc->device_index);
+            DEVICE(udc)->canonical_path, udc->device_index);
         return;
     }
 
@@ -324,7 +324,7 @@ static inline void npcm8xx_udc_write_endptprime(NPCM8xxUDC *udc, uint32_t value)
         qemu_log_mask(
             LOG_GUEST_ERROR,
             "%s[%u]: Attempted to send data when device is not attached\n",
-            object_get_canonical_path(OBJECT(udc)), udc->device_index);
+            DEVICE(udc)->canonical_path, udc->device_index);
         return;
     }
 
@@ -437,7 +437,7 @@ static uint64_t npcm8xx_udc_read(void *opaque, hwaddr offset, unsigned size)
         qemu_log_mask(
             LOG_GUEST_ERROR,
             "%s: Attempted to read from unsupported register 0x%lx\n",
-            object_get_canonical_path(OBJECT(opaque)), offset);
+            DEVICE(opaque)->canonical_path, offset);
     }
 
     trace_npcm8xx_udc_read(udc->device_index, offset, value);
@@ -455,7 +455,7 @@ static void npcm8xx_udc_write(void *opaque, hwaddr offset, uint64_t value,
         /* Read-only register */
         qemu_log_mask(LOG_GUEST_ERROR,
                         "%s: Attempted to write to read-only register 0x%x\n",
-                        object_get_canonical_path(OBJECT(opaque)),
+                        DEVICE(opaque)->canonical_path,
                         A_DCCPARAMS);
         break;
     case A_USBCMD:
@@ -491,7 +491,7 @@ static void npcm8xx_udc_write(void *opaque, hwaddr offset, uint64_t value,
         /* Read-only register */
         qemu_log_mask(LOG_GUEST_ERROR,
                         "%s: Attempted to write to read-only register 0x%x\n",
-                        object_get_canonical_path(OBJECT(opaque)),
+                        DEVICE(opaque)->canonical_path,
                         A_ENDPTSTAT);
         break;
     case A_ENDPTCOMPLETE:
@@ -510,7 +510,7 @@ static void npcm8xx_udc_write(void *opaque, hwaddr offset, uint64_t value,
         qemu_log_mask(
             LOG_GUEST_ERROR,
             "%s: Attempted to write to unsupported register 0x%lx\n",
-            object_get_canonical_path(OBJECT(opaque)), offset);
+            DEVICE(opaque)->canonical_path, offset);
     }
 
     trace_npcm8xx_udc_write(udc->device_index, offset, value);
@@ -566,7 +566,7 @@ static void npcm8xx_udc_usbredir_reset(void *opaque)
         qemu_log_mask(
             LOG_GUEST_ERROR,
             "%s: usbredir reset request failed to reset the device.",
-            object_get_canonical_path(OBJECT(opaque)));
+            DEVICE(opaque)->canonical_path);
         return;
     }
 
