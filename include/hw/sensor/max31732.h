@@ -9,6 +9,9 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#ifndef MAX31732_H
+#define MAX31732_H
+
 #include "qemu/osdep.h"
 #include "hw/i2c/smbus_slave.h"
 #include "hw/registerfields.h"
@@ -134,3 +137,4 @@ int32_t max31732_get_temperature(uint8_t *temp_reg);
  * @temp_reg.
  */
 void max31732_set_temperature(uint8_t *temp_reg, int32_t value);
+#endif
