@@ -664,6 +664,8 @@ toClearcutFeatureFlag(android::featurecontrol::Feature feature) {
             return android_studio::EmulatorFeatureFlagState::UWB;
         case android::featurecontrol::XrModeUI:
             return android_studio::EmulatorFeatureFlagState::UX_TEST_2024;
+        case android::featurecontrol::VirtioDualModeMouse:
+            return android_studio::EmulatorFeatureFlagState::VIRTIO_DUAL_MODE_MOUSE;
     }
     return android_studio::EmulatorFeatureFlagState::
             EMULATOR_FEATURE_FLAG_UNSPECIFIED;
