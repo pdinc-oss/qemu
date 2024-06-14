@@ -201,9 +201,9 @@ static uint32_t nuvoton_pci_ipmi_cfg_read(PCIDevice *dev, uint32_t addr,
     bool hidecfg = FIELD_EX32(s->pci_mbx.hmbxctl, NUVOTON_HMBXCTL, HIDECFG);
 
     if (hidecfg) {
+        g_autofree char *path = object_get_canonical_path(OBJECT(s));
         qemu_log_mask(LOG_GUEST_ERROR, "%s: Attempted to read from PCI cfg "
-                      "regs when configuration space is hidden\n",
-                      object_get_canonical_path(OBJECT(s)));
+                      "regs when configuration space is hidden\n", path);
         return 0;
     }
 
@@ -219,17 +219,17 @@ static void nuvoton_pci_ipmi_cfg_write(PCIDevice *dev, uint32_t addr,
     bool hidecfg = FIELD_EX32(s->pci_mbx.hmbxctl, NUVOTON_HMBXCTL, HIDECFG);
 
     if (hidecfg) {
+        g_autofree char *path = object_get_canonical_path(OBJECT(s));
         qemu_log_mask(LOG_GUEST_ERROR, "%s: Attempted to write to PCI cfg regs "
-                      "when configuration space is hidden\n",
-                      object_get_canonical_path(OBJECT(s)));
+                      "when configuration space is hidden\n", path);
         return;
     }
 
     if (cfglck && (addr >= A_NUVOTON_BPCI_VID_DID_WRITE &&
                    addr <= A_NUVOTON_BPCI_SUBSYSTEM_ID_WRITE)) {
+        g_autofree char *path = object_get_canonical_path(OBJECT(s));
         qemu_log_mask(LOG_GUEST_ERROR, "%s: Attempted to write to PCI cfg regs "
-                      "when configuration is locked\n",
-                      object_get_canonical_path(OBJECT(s)));
+                      "when configuration is locked\n", path);
         return;
     }
 
@@ -314,6 +314,7 @@ static uint64_t nuvoton_pci_ipmi_mbx_ram_read(NuvotonPCIIPMIState *s,
 static uint64_t nuvoton_pci_ipmi_mbx_reg_read(NuvotonPCIIPMIState *s,
                                               hwaddr addr)
 {
+
     switch (addr) {
     case A_NUVOTON_HMBXSTAT:
         return s->pci_mbx.hmbxstat;
@@ -323,9 +324,12 @@ static uint64_t nuvoton_pci_ipmi_mbx_reg_read(NuvotonPCIIPMIState *s,
         return s->pci_mbx.hmbxcmd;
     /* Anything else in the MMIO region is RES1 */
     default:
-        qemu_log_mask(LOG_GUEST_ERROR, "%s: Access to unknown register at "
-                      "0x%lx\n", object_get_canonical_path(OBJECT(s)), addr);
-        return 0xffffffff;
+        {
+            g_autofree char *path = object_get_canonical_path(OBJECT(s));
+            qemu_log_mask(LOG_GUEST_ERROR, "%s: Access to unknown register at "
+                          "0x%lx\n", path, addr);
+            return 0xffffffff;
+        }
     }
 }
 
@@ -459,6 +463,7 @@ static void nuvoton_pci_ipmi_mbx_write_and_tx(NuvotonPCIIPMIState *s,
 static void nuvoton_pci_ipmi_mbx_reg_write(NuvotonPCIIPMIState *s, hwaddr addr,
                                            uint64_t val64)
 {
+
     switch (addr) {
     case A_NUVOTON_HMBXSTAT:
         nuvoton_pci_ipmi_hmbxstat_w(s, val64);
@@ -470,10 +475,13 @@ static void nuvoton_pci_ipmi_mbx_reg_write(NuvotonPCIIPMIState *s, hwaddr addr,
         nuvoton_pci_ipmi_hmbxcmd_w(s, val64);
         break;
     default:
-        /* Anything else is RES1, ignore writes to it */
-        qemu_log_mask(LOG_GUEST_ERROR, "%s: Access to unknown register at "
-                      "0x%lx\n", object_get_canonical_path(OBJECT(s)), addr);
-        break;
+        {
+            g_autofree char *path = object_get_canonical_path(OBJECT(s));
+            /* Anything else is RES1, ignore writes to it */
+            qemu_log_mask(LOG_GUEST_ERROR, "%s: Access to unknown register at "
+                          "0x%lx\n", path, addr);
+            break;
+        }
     }
 }
 
@@ -705,8 +713,9 @@ static void nuvoton_pci_ipmi_realize(PCIDevice *pd, Error **errp)
     NuvotonPCIIPMIState *s = NUVOTON_PCI_IPMI(pd);
 
     if (!s->ipmi_kcs_state) {
+        g_autofree char *path = object_get_canonical_path(OBJECT(s));
         error_setg(errp, "%s: IPMI KCS portion of device is not connected\n",
-                   object_get_canonical_path(OBJECT(pd)));
+                   path);
     }
 
     pci_config_set_prog_interface(pd->config, 0x01);
@@ -729,8 +738,9 @@ static void nuvoton_ipmi_kcs_realize(DeviceState *dev, Error **errp)
     IPMICore *ic;
 
     if (!s->kcs.bmc) {
+        g_autofree char *path = object_get_canonical_path(OBJECT(dev));
         error_setg(errp, "%s: IPMI device requires a bmc attribute to be set",
-                   object_get_canonical_path(OBJECT(dev)));
+                   path);
         return;
     }
 
