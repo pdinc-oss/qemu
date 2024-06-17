@@ -901,6 +901,19 @@ EmulatorQtWindow::EmulatorQtWindow(QWidget* parent)
 
     // Enable the close button on the tool window as the last step.
     mToolWindow->enableCloseButton();
+
+    if (android::featurecontrol::isEnabled(
+                android::featurecontrol::VirtioDualModeMouse)) {
+        D("Dual-mode mouse: Setting abolute coordinates to true");
+        // Enable absolute coordiantes mode as default for dual mode mouse.
+        mRelativeMouseCoordMode = false;
+        // Do not show the mouse restore prompt in dual-mode mouse driver since
+        // the pointer will be grabbed and release seamlessly in relative
+        // coordiantes mode without any other user actions.
+        mPromptMouseRestoreMessageBox = false;
+        // Enable mouse tracking from the initialization.
+        queueSkinEvent(createMouseTrackingSkinEvent(kEventMouseStartTracking));
+    }
 }
 
 EmulatorQtWindow::Ptr EmulatorQtWindow::getInstancePtr() {
@@ -1262,6 +1275,11 @@ void EmulatorQtWindow::keyReleaseEvent(QKeyEvent* event) {
         setMouseTracking(trackballActive);
     }
 }
+void EmulatorQtWindow::setRelativeMouseCoordMode(bool state) {
+    D("Dual-mode Mouse: Setting mouse coordinates to %d", state);
+    mRelativeMouseCoordMode = state;
+}
+
 void EmulatorQtWindow::mouseMoveEvent(QMouseEvent* event) {
     // The motion event will interfere with the swipe gesture being synthesized.
     if (mWheelScrollTimer.isActive())
@@ -1319,19 +1337,37 @@ void EmulatorQtWindow::mouseMoveEvent(QMouseEvent* event) {
     }
 }
 
+void EmulatorQtWindow::enterEvent(QEnterEvent* event) {
+    if (android::featurecontrol::isEnabled(
+                android::featurecontrol::VirtioDualModeMouse)) {
+        // If dual-mode driver is enabled, let the Guest OS take control of
+        // displaying the cursor.
+        mContainer.setCursor(Qt::BlankCursor);
+    }
+}
+
 void EmulatorQtWindow::leaveEvent(QEvent* event) {
     // On Mac, the cursor retains its shape even after it
     // leaves, if it is over our transparent region. Make
     // sure we're not showing the resize cursor. We can't
     // resize because we don't get events after the cursor
     // has left.
+    // In case of VirtioDualModeMouse, restores the cursor
+    // to host cursor .
     mContainer.setCursor(Qt::ArrowCursor);
 }
 
 void EmulatorQtWindow::mousePressEvent(QMouseEvent* event) {
+    // Enable the mouse grab for VirtioMouse. If VirtioDualModeMouse is
+    // enabled, mouse grab is enabled only in the relative coordinates mode.
+    bool enableMouseGrab = android::featurecontrol::isEnabled(
+                    android::featurecontrol::VirtioMouse);
     if (android::featurecontrol::isEnabled(
-                android::featurecontrol::VirtioMouse) &&
-        !mMouseGrabbed) {
+                android::featurecontrol::VirtioDualModeMouse) &&
+        !mRelativeMouseCoordMode) {
+        enableMouseGrab = false;
+    }
+    if (enableMouseGrab && !mMouseGrabbed) {
         if (mPromptMouseRestoreMessageBox) {
             QMessageBox msgBox;
             QString text =
@@ -1370,16 +1406,19 @@ void EmulatorQtWindow::mousePressEvent(QMouseEvent* event) {
         queueSkinEvent(createMouseTrackingSkinEvent(kEventMouseStartTracking));
 
         mMouseGrabbed = true;
-
-        // Don't send this mouse event to the guest. Either the user likely
-        // clicked on the dialog that popped up (rendering the press/release
-        // state incorrect), or they just clicked in the window to activate
-        // mouse input and should retain control over the guest OS behavior.
-        //
-        // NOTE: This will potentially cause a spurrious mouse release event
-        // to be sent when the user releases the button, but this is considered
-        // unlikely to affect things, and not worth the risk of tracking it.
-        return;
+        if (!android::featurecontrol::isEnabled(
+                    android::featurecontrol::VirtioDualModeMouse)) {
+            // Don't send this mouse event to the guest. Either the user likely
+            // clicked on the dialog that popped up (rendering the press/release
+            // state incorrect), or they just clicked in the window to activate
+            // mouse input and should retain control over the guest OS behavior.
+            //
+            // NOTE: This will potentially cause a spurrious mouse release event
+            // to be sent when the user releases the button, but this is
+            // considered unlikely to affect things, and not worth the risk of
+            // tracking it.
+            return;
+        }
     }
 
     // Pen long press generates synthesized mouse events,
@@ -1395,6 +1434,13 @@ void EmulatorQtWindow::mousePressEvent(QMouseEvent* event) {
 void EmulatorQtWindow::mouseReleaseEvent(QMouseEvent* event) {
     // Pen long press generates synthesized mouse events,
     // which need to be filtered out
+    if (android::featurecontrol::isEnabled(
+                android::featurecontrol::VirtioDualModeMouse) &&
+        mRelativeMouseCoordMode && mMouseGrabbed) {
+        D("Mouse Released");
+        releaseMouse();
+        mMouseGrabbed = false;
+    }
     if (event->source() == Qt::MouseEventNotSynthesized) {
         SkinEventType eventType = translateMouseEventType(
                 kEventMouseButtonUp, event->button(), event->buttons());
@@ -2200,7 +2246,14 @@ void EmulatorQtWindow::slot_setWindowCursorResize(int whichCorner,
 
 void EmulatorQtWindow::slot_setWindowCursorNormal(QSemaphore* semaphore) {
     QSemaphoreReleaser semReleaser(semaphore);
-    mContainer.setCursor(Qt::ArrowCursor);
+    if (android::featurecontrol::isEnabled(
+                android::featurecontrol::VirtioDualModeMouse)) {
+        // If dual-mode driver is enabled, let the Guest OS take control of
+        // displaying the cursor.
+        mContainer.setCursor(Qt::BlankCursor);
+    } else {
+        mContainer.setCursor(Qt::ArrowCursor);
+    }
 }
 
 void EmulatorQtWindow::slot_setWindowIcon(const unsigned char* data,
@@ -2831,14 +2884,18 @@ void EmulatorQtWindow::forwardKeyEventToEmulator(SkinEventType type,
 void EmulatorQtWindow::handleKeyEvent(SkinEventType type, const QKeyEvent& event) {
     // TODO(liyl): Make this shortcut configurable instead of hard-coding it
     // inside the code.
-    if (event.key() == Qt::Key_R &&
-        event.modifiers() == Qt::ControlModifier && type == kEventKeyDown) {
-        D("%s: mouse released\n", __func__);
-        releaseMouse();
+    if (!android::featurecontrol::isEnabled(
+                android::featurecontrol::VirtioDualModeMouse)) {
+        if (event.key() == Qt::Key_R &&
+            event.modifiers() == Qt::ControlModifier && type == kEventKeyDown) {
+            D("%s: mouse released\n", __func__);
+            releaseMouse();
 
-        queueSkinEvent(createMouseTrackingSkinEvent(kEventMouseStopTracking));
+            queueSkinEvent(
+                    createMouseTrackingSkinEvent(kEventMouseStopTracking));
 
-        mMouseGrabbed = false;
+            mMouseGrabbed = false;
+        }
     }
 
     if (!mForwardShortcutsToDevice && mInZoomMode) {
