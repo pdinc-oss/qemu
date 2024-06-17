@@ -1145,11 +1145,30 @@ static void skin_window_map_to_scale(SkinWindow* window, int* x, int* y) {
     getConsoleAgents()->surface->skin_surface_reverse_map(window->surface, x, y);
 }
 
-static void add_mouse_event(SkinWindow* window, const SkinEventMouseData* mouse, int button_pressed) {
+static void add_mouse_event_absolute(SkinWindow* window,
+                                     const SkinEventMouseData* mouse,
+                                     int button_pressed) {
     if (!window->mouse.tracking) {
         return;
     }
     int32_t x, y;
+    // Populates the absolute window coordinates.
+    x = mouse->x;
+    y = mouse->y;
+    window->mouse.button_pressed = button_pressed;
+    skin_window_map_to_scale(window, &x, &y);
+
+    const uint32_t id = 0;
+    window->win_funcs->mouse_event(x, y, window->mouse.button_pressed, id,
+                                   /* absoluteCoordinates */ true);
+}
+
+static void add_mouse_event_relative(SkinWindow* window, const SkinEventMouseData* mouse, int button_pressed) {
+    if (!window->mouse.tracking) {
+        return;
+    }
+    int32_t x, y;
+    // Populates the relative coordinates of the mouse.
     x = mouse->xrel;
     y = mouse->yrel;
     window->mouse.button_pressed = button_pressed;
@@ -1157,7 +1176,8 @@ static void add_mouse_event(SkinWindow* window, const SkinEventMouseData* mouse,
 
     const uint32_t id = 0;
     // TODO(liyl): handle multi-display and display rotation.
-    window->win_funcs->mouse_event(x, y, window->mouse.button_pressed, id);
+    window->win_funcs->mouse_event(x, y, window->mouse.button_pressed, id,
+                                   /* absoluteCoordinates */ false);
 }
 
 static void add_mouse_wheel_event(SkinWindow* window,
@@ -1253,7 +1273,7 @@ static void add_finger_event(SkinWindow* window,
             }
         }
     }
-    window->win_funcs->mouse_event(posX, posY, state, displayId);
+    window->win_funcs->mouse_event(posX, posY, state, displayId, /* absoluteCoordinates */ true);
 }
 
 static void add_pen_event(SkinWindow* window,
@@ -2526,7 +2546,7 @@ void skin_window_process_event(SkinWindow* window, SkinEvent* ev) {
                window->finger.pos.y, window->finger.inside);
 #endif
             if (feature_is_enabled(kFeature_VirtioMouse)) {
-                add_mouse_event(window, &ev->u.mouse, mouse->button_pressed | 1 << (ev->u.mouse.button));
+                add_mouse_event_relative(window, &ev->u.mouse, mouse->button_pressed | 1 << (ev->u.mouse.button));
             } else if (finger->inside) {
                 // The click is inside the touch screen
                 finger->tracking = 1;
@@ -2645,7 +2665,7 @@ void skin_window_process_event(SkinWindow* window, SkinEvent* ev) {
                 skin_window_move_mouse(window, finger, mx, my);
             } else if (feature_is_enabled(kFeature_VirtioMouse)) {
                 skin_window_move_mouse(window, finger, mx, my);
-                add_mouse_event(window, &ev->u.mouse, mouse->button_pressed & ~(1 << ev->u.mouse.button));
+                add_mouse_event_relative(window, &ev->u.mouse, mouse->button_pressed & ~(1 << ev->u.mouse.button));
             } else if (finger->tracking) {
                 skin_window_move_mouse(window, finger, mx, my);
                 finger->tracking = 0;
@@ -2694,8 +2714,16 @@ void skin_window_process_event(SkinWindow* window, SkinEvent* ev) {
             skin_window_map_to_scale(window, &mx, &my);
             if (!window->button.pressed) {
                 skin_window_move_mouse(window, finger, mx, my);
-                if (feature_is_enabled(kFeature_VirtioMouse)) {
-                    add_mouse_event(window, &ev->u.mouse, mouse->button_pressed);
+                if (feature_is_enabled(kFeature_VirtioDualModeMouse)) {
+                    if (ev->u.mouse.send_relative_coordinates) {
+                        add_mouse_event_relative(window, &ev->u.mouse,
+                                        mouse->button_pressed);
+                    } else {
+                        add_mouse_event_absolute(window, &ev->u.mouse,
+                                                 mouse->button_pressed);
+                    }
+                } else if (feature_is_enabled(kFeature_VirtioMouse)) {
+                    add_mouse_event_relative(window, &ev->u.mouse, mouse->button_pressed);
                 } else if (feature_is_enabled(kFeature_VirtioTablet)) {
                     add_finger_event(window, finger, finger->pos.x,
                                      finger->pos.y, window->tablet.button_pressed, displayId);

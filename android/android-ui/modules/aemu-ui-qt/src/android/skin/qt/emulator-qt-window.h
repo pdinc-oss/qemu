@@ -250,7 +250,8 @@ public:
                           SkinMouseButtonType button,
                           const QPointF& pos,
                           const QPointF& gPos,
-                          bool skipSync = false);
+                          bool skipSync = false,
+                          bool sendRelativeMouseCoordinates = true);
     void handlePenEvent(SkinEventType type,
                         const QTabletEvent* event,
                         bool skipSync = false);
@@ -591,6 +592,7 @@ private:
     unsigned int mHardRefreshCountDown = 0;
     SkinRotation mOrientation;  // Rotation of the main window
     bool mWindowIsMinimized = false;
+    bool mRelativeMouseCoordMode = true;
 
     QScreen* mCurrentScreen = nullptr;
     SkinEvent createSkinEventScreenChanged();
