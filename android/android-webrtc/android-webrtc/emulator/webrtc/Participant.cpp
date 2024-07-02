@@ -213,7 +213,8 @@ void EventForwarder::OnMessage(const ::webrtc::DataBuffer& buffer) {
             android::base::ThreadLooper::runOnMainLooper([agent, mouseEvent]() {
                 agent->sendMouseEvent(mouseEvent.x(), mouseEvent.y(), 0,
                                       mouseEvent.buttons(),
-                                      mouseEvent.display());
+                                      mouseEvent.display(),
+                                      MOUSE_EVENT_MODE_DEFAULT);
             });
             break;
         }

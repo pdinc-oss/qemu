@@ -74,8 +74,9 @@ void EventDispatcher::dispatchEvent(const json msg) {
     } else if (label == "mouse" &&
                mouseEvent.ParseFromArray(decoded.data(), decoded_size)) {
         android::base::ThreadLooper::runOnMainLooper([=]() {
-            mAgents->user_event->sendMouseEvent(mouseEvent.x(), mouseEvent.y(),
-                                                0, mouseEvent.buttons(), 0);
+            mAgents->user_event->sendMouseEvent(
+                mouseEvent.x(), mouseEvent.y(), 0, mouseEvent.buttons(), 0,
+                MOUSE_EVENT_MODE_DEFAULT);
         });
     } else if (label == "touch" &&
                touchEvent.ParseFromArray(decoded.data(), decoded_size)) {
