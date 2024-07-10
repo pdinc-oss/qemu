@@ -20,9 +20,10 @@
 // BUG: 136093985 Use name "qwerty2" so that Android system is able
 // to associate the keyboard device with the "qwerty2.Therefore the device will
 // be recognized as the built-in keyboard.
-#define VIRTIO_ID_NAME_KEYBOARD "qwerty2"
-#define VIRTIO_ID_NAME_MOUSE    "QEMU Virtio Mouse"
-#define VIRTIO_ID_NAME_TABLET   "QEMU Virtio Tablet"
+#define VIRTIO_ID_NAME_KEYBOARD         "qwerty2"
+#define VIRTIO_ID_NAME_MOUSE            "QEMU Virtio Mouse"
+#define VIRTIO_ID_NAME_DUAL_MODE_MOUSE  "QEMU Virtio Dual Mode Mouse"
+#define VIRTIO_ID_NAME_TABLET           "QEMU Virtio Tablet"
 
 #define DEBUG 0
 
@@ -385,8 +386,64 @@ static struct virtio_input_config virtio_mouse_config_v2[] = {
     { /* end of list */ },
 };
 
+static QemuInputHandler virtio_dual_mode_mouse_handler = {
+    .name  = VIRTIO_ID_NAME_DUAL_MODE_MOUSE,
+    .mask  = INPUT_EVENT_MASK_BTN | INPUT_EVENT_MASK_ABS |
+             INPUT_EVENT_MASK_REL,
+    .event = virtio_input_handle_event,
+    .sync  = virtio_input_handle_sync,
+};
+
+
+static struct virtio_input_config virtio_dual_mode_mouse_config[] = {
+    {
+        .select    = VIRTIO_INPUT_CFG_ID_NAME,
+        .size      = sizeof(VIRTIO_ID_NAME_DUAL_MODE_MOUSE),
+        .u.string  = VIRTIO_ID_NAME_DUAL_MODE_MOUSE,
+    },{
+        .select    = VIRTIO_INPUT_CFG_ID_DEVIDS,
+        .size      = sizeof(struct virtio_input_devids),
+        .u.ids     = {
+            .bustype = const_le16(BUS_VIRTUAL),
+            .vendor  = const_le16(0x0627), /* same we use for usb hid devices */
+            .product = const_le16(0x0004), /* a new product number for dual-mode mouse driver */
+            .version = const_le16(0x0001),
+        },
+    },{
+        .select    = VIRTIO_INPUT_CFG_EV_BITS,
+        .subsel    = EV_ABS,
+        .size      = 2,
+        .u.bitmap  = {
+            (1 << ABS_X) | (1 << ABS_Y),
+            (1 << (REL_WHEEL - 8))
+        },
+    },{
+        .select    = VIRTIO_INPUT_CFG_EV_BITS,
+        .subsel    = EV_REL,
+        .size      = 2,
+        .u.bitmap  = {
+            (1 << REL_X) | (1 << REL_Y),
+            (1 << (REL_WHEEL - 8))
+        },
+    },{
+        .select    = VIRTIO_INPUT_CFG_ABS_INFO,
+        .subsel    = ABS_X,
+        .size      = sizeof(virtio_input_absinfo),
+        .u.abs.min = const_le32(INPUT_EVENT_ABS_MIN),
+        .u.abs.max = const_le32(INPUT_EVENT_ABS_MAX),
+    },{
+        .select    = VIRTIO_INPUT_CFG_ABS_INFO,
+        .subsel    = ABS_Y,
+        .size      = sizeof(virtio_input_absinfo),
+        .u.abs.min = const_le32(INPUT_EVENT_ABS_MIN),
+        .u.abs.max = const_le32(INPUT_EVENT_ABS_MAX),
+    },
+    { /* end of list */ },
+};
+
 static Property virtio_mouse_properties[] = {
     DEFINE_PROP_BOOL("wheel-axis", VirtIOInputHID, wheel_axis, true),
+    DEFINE_PROP_BOOL("dual-mode", VirtIOInputHID, dual_mode, false),
     DEFINE_PROP_END_OF_LIST(),
 };
 
@@ -402,10 +459,11 @@ static void virtio_mouse_init(Object *obj)
     VirtIOInputHID *vhid = VIRTIO_INPUT_HID(obj);
     VirtIOInput *vinput = VIRTIO_INPUT(obj);
 
-    vhid->handler = &virtio_mouse_handler;
-    virtio_input_init_config(vinput, vhid->wheel_axis
-                             ? virtio_mouse_config_v2
-                             : virtio_mouse_config_v1);
+    vhid->handler = vhid->dual_mode ? &virtio_dual_mode_mouse_handler : &virtio_mouse_handler;
+    virtio_input_init_config(
+        vinput, vhid->dual_mode ? virtio_dual_mode_mouse_config
+                                : (vhid->wheel_axis ? virtio_mouse_config_v2
+                                                    : virtio_mouse_config_v1));
     virtio_input_key_config(vinput, keymap_button,
                             ARRAY_SIZE(keymap_button));
 }
