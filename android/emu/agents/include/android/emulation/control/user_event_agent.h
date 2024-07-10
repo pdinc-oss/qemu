@@ -20,6 +20,27 @@
 ANDROID_BEGIN_HEADER
 typedef struct SkinEvent SkinEvent;
 typedef struct SkinGenericEventCode SkinGenericEventCode;
+
+// Mouse events can be based on relative and absolute coordinates. The device
+// driver can be configured to use either the relative or absolute coordinates, 
+// such as the trackball driver is configured to send relative coordinates, and
+// and touchpad driver is configured to send absolute coordinates. On the other
+// hand, the dual mode mouse driver is configured for both absolute and
+// relative coordinates and the coordinates type is decided during the runtime.
+enum MouseEventMode {
+    // The event coordinates will be absolute or relative based on the device
+    // driver configuration.
+    MOUSE_EVENT_MODE_DEFAULT = 0,
+    // If the device is configured with both absolute and relative coordinates,
+    // the event will be sent with relative coordinates, else the behavior will
+    // be same as MOUSE_EVENT_MODE_DEFAULT.
+    MOUSE_EVENT_MODE_REL = 1,
+    // If the device is configured with both absolute and relative coordinates,
+    // the event will be sent with absolute coordinates, else the behavior will
+    // be same as MOUSE_EVENT_MODE_DEFAULT.
+    MOUSE_EVENT_MODE_ABS = 2,
+};
+
 // C interface to expose Qemu implementation of user event piping to the VM.
 typedef struct QAndroidUserEventAgent {
     // Send various input user events to the VM.
@@ -36,7 +57,8 @@ typedef struct QAndroidUserEventAgent {
                            int dy,
                            int dz,
                            int buttonsState,
-                           int displayId);
+                           int displayId,
+                           enum MouseEventMode event_mode);
     // Pen event.
     void (*sendPenEvent)(int dx,
                          int dy,

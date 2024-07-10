@@ -508,6 +508,17 @@ bool qemu_input_is_absolute(void)
     return (s != NULL) && (s->handler->mask & INPUT_EVENT_MASK_ABS);
 }
 
+bool qemu_input_is_dual_mode_coordinates(void)
+{
+    QemuInputHandlerState *s;
+
+    s = qemu_input_find_handler(INPUT_EVENT_MASK_REL | INPUT_EVENT_MASK_ABS,
+                                NULL);
+    return (s != NULL) &&
+           (s->handler->mask & INPUT_EVENT_MASK_ABS) && 
+           (s->handler->mask & INPUT_EVENT_MASK_REL);
+}
+
 int qemu_input_scale_axis(int value,
                           int min_in, int max_in,
                           int min_out, int max_out)
