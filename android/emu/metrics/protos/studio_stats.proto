@@ -1573,9 +1573,10 @@ message EmulatorFeatureFlagState {
         VULKAN_ALLOCATE_HOST_MEMORY = 107;
         DEVICE_KEYBOARD_QT_RAW_INPUT = 108;
         UWB = 109;
-        UX_TEST_2024 = 110;
-        VIRTIO_DUAL_MODE_MOUSE = 111;
-        // Next tag: 112
+        GUEST_ANGLE = 110;
+        UX_TEST_2024 = 111;
+        VIRTIO_DUAL_MODE_MOUSE = 112;
+        // Next tag: 113
     }
     // Which features were enabled by default or through the server-side config.
     repeated EmulatorFeatureFlag attempted_enabled_feature_flags = 1;
