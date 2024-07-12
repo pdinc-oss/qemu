@@ -1003,6 +1003,13 @@ void ToolWindow::handleUICommand(QtUICommand cmd,
                             PHYSICAL_PARAMETER_XR_INPUT_MODE, &mode, 1,
                             PHYSICAL_INTERPOLATION_SMOOTH);
                 }
+                const auto emulatorWindow = EmulatorQtWindow::getInstance();
+                if (emulatorWindow) {
+                    emulatorWindow->setRelativeMouseCoordMode(false);
+                } else {
+                    LOG(WARNING)
+                            << "No window found to set mouse coordinates mode";
+                }
             }
             break;
         case QtUICommand::CHANGE_XR_ENVIRONMENT_MODE:
@@ -1035,6 +1042,13 @@ void ToolWindow::handleUICommand(QtUICommand cmd,
                     sUiEmuAgent->sensors->setPhysicalParameterTarget(
                             PHYSICAL_PARAMETER_XR_VIEWPORT_CONTROL_MODE, &control,
                             1, PHYSICAL_INTERPOLATION_SMOOTH);
+                }
+                const auto emulatorWindow = EmulatorQtWindow::getInstance();
+                if (emulatorWindow) {
+                    emulatorWindow->setRelativeMouseCoordMode(true);
+                } else {
+                    LOG(WARNING)
+                            << "No window found to set mouse coordinates mode";
                 }
             }
             break;

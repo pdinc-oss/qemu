@@ -133,6 +133,7 @@ public:
     void dropEvent(QDropEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
     void keyReleaseEvent(QKeyEvent* event) override;
+    void enterEvent(QEnterEvent* event) override;
     void leaveEvent(QEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
@@ -326,6 +327,7 @@ public:
                             bool ignoreOrientation = false);
     bool addMultiDisplayWindow(uint32_t id, bool add, uint32_t w, uint32_t h);
     bool paintMultiDisplayWindow(uint32_t id, uint32_t texture);
+    void setRelativeMouseCoordMode(bool state);
 
     static bool sClosed;
 
