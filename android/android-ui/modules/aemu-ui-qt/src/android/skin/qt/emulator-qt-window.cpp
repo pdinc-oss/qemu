@@ -1281,7 +1281,8 @@ void EmulatorQtWindow::mouseMoveEvent(QMouseEvent* event) {
             SkinEventType eventType = translateMouseEventType(
                     kEventMouseMotion, event->button(), event->buttons());
             handleMouseEvent(eventType, getSkinMouseButton(event), event->pos(),
-                             event->globalPos());
+                             event->globalPos(), /*skipSync*/ false,
+                             mRelativeMouseCoordMode);
         }
 
         if (mMouseGrabbed) {
@@ -2732,7 +2733,8 @@ void EmulatorQtWindow::handleMouseEvent(SkinEventType type,
                                         SkinMouseButtonType button,
                                         const QPointF& posF,
                                         const QPointF& gPosF,
-                                        bool skipSync) {
+                                        bool skipSync,
+                                        bool sendRelativeMouseCoordinates) {
     QPoint pos((int)posF.x(), (int)posF.y());
     QPoint gPos((int)gPosF.x(), (int)gPosF.y());
     if (type == kEventMouseButtonDown) {
@@ -2742,6 +2744,8 @@ void EmulatorQtWindow::handleMouseEvent(SkinEventType type,
     SkinEvent skin_event = createSkinEvent(type);
     skin_event.u.mouse.button = button;
     skin_event.u.mouse.skip_sync = skipSync;
+    skin_event.u.mouse.send_relative_coordinates =
+            sendRelativeMouseCoordinates;
     skin_event.u.mouse.x = pos.x();
     skin_event.u.mouse.y = pos.y();
     skin_event.u.mouse.x_global = gPos.x();
