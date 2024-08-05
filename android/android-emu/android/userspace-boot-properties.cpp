@@ -179,6 +179,7 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
     const char* emulatorCircularProp;
     const char* autoRotateProp;
     const char* qemuExternalDisplays;
+    const char* qemuDualModeMouseDriverProp;
 
     namespace fc = android::featurecontrol;
     if (fc::isEnabled(fc::AndroidbootProps) ||
@@ -218,6 +219,7 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
         emulatorCircularProp = "androidboot.emulator.circular";
         autoRotateProp = "androidboot.qemu.autorotate";
         qemuExternalDisplays = "androidboot.qemu.external.displays";
+        qemuDualModeMouseDriverProp = "androidboot.qemu.dual_mode_mouse_driver";
     } else {
         androidbootVerityMode = nullptr;
         checkjniProp = "android.checkjni";
@@ -252,6 +254,7 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
         emulatorCircularProp = "ro.emulator.circular";
         autoRotateProp = "qemu.autorotate";
         qemuExternalDisplays = "qemu.external.displays";
+        qemuDualModeMouseDriverProp = "qemu.dual_mode_mouse_driver";
     }
 
     std::vector<std::pair<std::string, std::string>> params;
@@ -595,6 +598,10 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
 
     if (hw->hw_lcd_circular) {
       params.push_back({emulatorCircularProp, "1"});
+    }
+
+    if (fc::isEnabled(fc::VirtioDualModeMouse)) {
+        params.push_back({qemuDualModeMouseDriverProp, "1"});
     }
 
     return params;
