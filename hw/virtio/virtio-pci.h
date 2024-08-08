@@ -367,10 +367,11 @@ struct VirtIOInputPCI {
     VirtIOInput vdev;
 };
 
-#define TYPE_VIRTIO_INPUT_HID_PCI "virtio-input-hid-pci"
-#define TYPE_VIRTIO_KEYBOARD_PCI  "virtio-keyboard-pci"
-#define TYPE_VIRTIO_MOUSE_PCI     "virtio-mouse-pci"
-#define TYPE_VIRTIO_TABLET_PCI    "virtio-tablet-pci"
+#define TYPE_VIRTIO_INPUT_HID_PCI           "virtio-input-hid-pci"
+#define TYPE_VIRTIO_KEYBOARD_PCI            "virtio-keyboard-pci"
+#define TYPE_VIRTIO_MOUSE_PCI               "virtio-mouse-pci"
+#define TYPE_VIRTIO_TABLET_PCI              "virtio-tablet-pci"
+#define TYPE_VIRTIO_DUAL_MODE_MOUSE_PCI     "virtio-dual-mode-mouse-pci"
 #define VIRTIO_INPUT_HID_PCI(obj) \
         OBJECT_CHECK(VirtIOInputHIDPCI, (obj), TYPE_VIRTIO_INPUT_HID_PCI)
 
