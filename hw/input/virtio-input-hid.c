@@ -412,10 +412,9 @@ static struct virtio_input_config virtio_dual_mode_mouse_config[] = {
     },{
         .select    = VIRTIO_INPUT_CFG_EV_BITS,
         .subsel    = EV_ABS,
-        .size      = 2,
+        .size      = 1,
         .u.bitmap  = {
             (1 << ABS_X) | (1 << ABS_Y),
-            (1 << (REL_WHEEL - 8))
         },
     },{
         .select    = VIRTIO_INPUT_CFG_EV_BITS,
