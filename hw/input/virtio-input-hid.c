@@ -442,6 +442,9 @@ static struct virtio_input_config virtio_dual_mode_mouse_config[] = {
 
 static Property virtio_mouse_properties[] = {
     DEFINE_PROP_BOOL("wheel-axis", VirtIOInputHID, wheel_axis, true),
+    // TODO(b/358235530): Remove the dual-mode flag from VirtIOInputHID since
+    // it initializes from parameters after driver initialization and is
+    // therefore retains the default value during driver initialization.
     DEFINE_PROP_BOOL("dual-mode", VirtIOInputHID, dual_mode, false),
     DEFINE_PROP_END_OF_LIST(),
 };
@@ -472,6 +475,25 @@ static const TypeInfo virtio_mouse_info = {
     .parent        = TYPE_VIRTIO_INPUT_HID,
     .instance_size = sizeof(VirtIOInputHID),
     .instance_init = virtio_mouse_init,
+    .class_init    = virtio_mouse_class_init,
+};
+
+static void virtio_dual_mode_mouse_init(Object *obj)
+{
+    VirtIOInputHID *vhid = VIRTIO_INPUT_HID(obj);
+    VirtIOInput *vinput = VIRTIO_INPUT(obj);
+
+    vhid->handler = &virtio_dual_mode_mouse_handler;
+    virtio_input_init_config(vinput, virtio_dual_mode_mouse_config);
+    virtio_input_key_config(vinput, keymap_button,
+                            ARRAY_SIZE(keymap_button));
+}
+
+static const TypeInfo virtio_dual_mode_mouse_info = {
+    .name          = TYPE_VIRTIO_DUAL_MODE_MOUSE,
+    .parent        = TYPE_VIRTIO_INPUT_HID,
+    .instance_size = sizeof(VirtIOInputHID),
+    .instance_init = virtio_dual_mode_mouse_init,
     .class_init    = virtio_mouse_class_init,
 };
 
@@ -621,6 +643,7 @@ static void virtio_register_types(void)
     type_register_static(&virtio_keyboard_info);
     type_register_static(&virtio_mouse_info);
     type_register_static(&virtio_tablet_info);
+    type_register_static(&virtio_dual_mode_mouse_info);
 }
 
 type_init(virtio_register_types)

@@ -2615,6 +2615,14 @@ static void virtio_tablet_initfn(Object *obj)
                                 TYPE_VIRTIO_TABLET);
 }
 
+static void virtio_dual_mode_mouse_initfn(Object *obj)
+{
+    VirtIOInputHIDPCI *dev = VIRTIO_INPUT_HID_PCI(obj);
+
+    virtio_instance_init_common(obj, &dev->vdev, sizeof(dev->vdev),
+                                TYPE_VIRTIO_DUAL_MODE_MOUSE);
+}
+
 static const TypeInfo virtio_input_pci_info = {
     .name          = TYPE_VIRTIO_INPUT_PCI,
     .parent        = TYPE_VIRTIO_PCI,
@@ -2651,6 +2659,13 @@ static const TypeInfo virtio_tablet_pci_info = {
     .parent        = TYPE_VIRTIO_INPUT_HID_PCI,
     .instance_size = sizeof(VirtIOInputHIDPCI),
     .instance_init = virtio_tablet_initfn,
+};
+
+static const TypeInfo virtio_dual_mode_mouse_pci_info = {
+    .name          = TYPE_VIRTIO_DUAL_MODE_MOUSE_PCI,
+    .parent        = TYPE_VIRTIO_INPUT_HID_PCI,
+    .instance_size = sizeof(VirtIOInputHIDPCI),
+    .instance_init = virtio_dual_mode_mouse_initfn,
 };
 
 /* virtio-wifi-pci */
@@ -2818,6 +2833,7 @@ static void virtio_pci_register_types(void)
     type_register_static(&virtio_keyboard_pci_info);
     type_register_static(&virtio_mouse_pci_info);
     type_register_static(&virtio_tablet_pci_info);
+    type_register_static(&virtio_dual_mode_mouse_pci_info);
 #ifdef CONFIG_LINUX
     type_register_static(&virtio_host_pci_info);
 #endif
