@@ -1573,9 +1573,11 @@ message EmulatorFeatureFlagState {
         VULKAN_ALLOCATE_HOST_MEMORY = 107;
         DEVICE_KEYBOARD_QT_RAW_INPUT = 108;
         UWB = 109;
-        GUEST_ANGLE = 110;
-        UX_TEST_2024 = 111;
-        VIRTIO_DUAL_MODE_MOUSE = 112;
+        UX_TEST_2024 = 110;
+        GUEST_ANGLE = 111;
+        ANDROID_VIRTUALIZATION_FRAMEWORK = 112;
+        // Intentional gap to avoid merge conflicts.
+        VIRTIO_DUAL_MODE_MOUSE = 131;
         // Next tag: 113
     }
     // Which features were enabled by default or through the server-side config.
