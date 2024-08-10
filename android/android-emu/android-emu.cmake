@@ -363,8 +363,7 @@ android_target_compile_options(
           -Wno-pessimizing-move -Wno-unused-lambda-capture)
 
 android_target_compile_definitions(
-  android-emu darwin PRIVATE "-D_DARWIN_C_SOURCE=1" "-Dftello64=ftell"
-                             "-Dfseeko64=fseek")
+  android-emu darwin PRIVATE "-D_DARWIN_C_SOURCE=1")
 
 target_compile_definitions(android-emu PRIVATE "-D_LIBCPP_VERSION=__GLIBCPP__")
 
@@ -553,10 +552,10 @@ target_compile_definitions(android-emu-shared PUBLIC ${CURL_DEFINITIONS}
                                                      ${LIBXML2_DEFINITIONS})
 android_target_compile_definitions(
   android-emu-shared darwin-x86_64
-  PRIVATE "-D_DARWIN_C_SOURCE=1" "-Dftello64=ftell" "-Dfseeko64=fseek")
+  PRIVATE "-D_DARWIN_C_SOURCE=1")
 android_target_compile_definitions(
   android-emu-shared darwin-aarch64
-  PRIVATE "-D_DARWIN_C_SOURCE=1" "-Dftello64=ftell" "-Dfseeko64=fseek")
+  PRIVATE "-D_DARWIN_C_SOURCE=1")
 target_compile_definitions(
   android-emu-shared
   PRIVATE "-DCRASHUPLOAD=${OPTION_CRASHUPLOAD}"
@@ -670,8 +669,8 @@ if(NOT LINUX_AARCH64)
 
   # Settings needed for darwin
   android_target_compile_definitions(
-    android-emu_unittests darwin PRIVATE "-D_DARWIN_C_SOURCE=1"
-                                         "-Dftello64=ftell" "-Dfseeko64=fseek")
+    android-emu_unittests darwin PRIVATE "-D_DARWIN_C_SOURCE=1")
+
   android_target_compile_options(android-emu_unittests darwin
                                  PRIVATE "-Wno-deprecated-declarations")
   # Dependecies are exported from android-emu.
