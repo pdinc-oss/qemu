@@ -159,6 +159,7 @@ private:
     static void forwardGenericEventToEmulator(int type, int code, int value);
     void handleUICommand(QtUICommand cmd, bool down, std::string extra = "");
     void ensureExtendedWindowExists();
+    bool needExtendedWindow(QtUICommand cmd) const;
 
     void stopExtendedWindowCreation();
 
