@@ -442,10 +442,6 @@ static struct virtio_input_config virtio_dual_mode_mouse_config[] = {
 
 static Property virtio_mouse_properties[] = {
     DEFINE_PROP_BOOL("wheel-axis", VirtIOInputHID, wheel_axis, true),
-    // TODO(b/358235530): Remove the dual-mode flag from VirtIOInputHID since
-    // it initializes from parameters after driver initialization and is
-    // therefore retains the default value during driver initialization.
-    DEFINE_PROP_BOOL("dual-mode", VirtIOInputHID, dual_mode, false),
     DEFINE_PROP_END_OF_LIST(),
 };
 
@@ -461,11 +457,10 @@ static void virtio_mouse_init(Object *obj)
     VirtIOInputHID *vhid = VIRTIO_INPUT_HID(obj);
     VirtIOInput *vinput = VIRTIO_INPUT(obj);
 
-    vhid->handler = vhid->dual_mode ? &virtio_dual_mode_mouse_handler : &virtio_mouse_handler;
-    virtio_input_init_config(
-        vinput, vhid->dual_mode ? virtio_dual_mode_mouse_config
-                                : (vhid->wheel_axis ? virtio_mouse_config_v2
-                                                    : virtio_mouse_config_v1));
+    vhid->handler = &virtio_mouse_handler;
+    virtio_input_init_config(vinput, vhid->wheel_axis
+                            ? virtio_mouse_config_v2
+                            : virtio_mouse_config_v1);
     virtio_input_key_config(vinput, keymap_button,
                             ARRAY_SIZE(keymap_button));
 }
