@@ -410,6 +410,12 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
         mToolsUi->overview_button->setHidden(true);
     }
 
+    if (avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) ==
+        AVD_DEV_2024) {
+        mToolsUi->prev_layout_button->setHidden(true);
+        mToolsUi->next_layout_button->setHidden(true);
+    }
+
 #ifndef Q_OS_MAC
     // Swap minimize and close buttons on non-apple OSes
     auto closeBtn = mToolsUi->winButtonsLayout->takeAt(0);
