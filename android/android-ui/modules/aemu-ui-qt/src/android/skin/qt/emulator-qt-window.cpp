@@ -3440,7 +3440,9 @@ void EmulatorQtWindow::wheelEvent(QWheelEvent* event) {
             android::featurecontrol::isEnabled(
                     android::featurecontrol::VirtioMouse) ||
             android::featurecontrol::isEnabled(
-                    android::featurecontrol::VirtioTablet);
+                    android::featurecontrol::VirtioTablet) ||
+            android::featurecontrol::isEnabled(
+                    android::featurecontrol::VirtioDualModeMouse);
 
     const QAndroidGlobalVarsAgent* settings = getConsoleAgents()->settings;
     const bool inputDeviceHasRotary =
@@ -3451,13 +3453,16 @@ void EmulatorQtWindow::wheelEvent(QWheelEvent* event) {
               avdInfo_getAvdFlavor(settings->avdInfo()) == AVD_WEAR));
 
     if (inputDeviceHasWheel) {
-        // Mouse is active only when it's grabbed. Tablet is always active.
+        // Mouse is active only when it's grabbed. Tablet and dual-mode mouse
+        // are always active.
         const bool inputDeviceActive =
                 (android::featurecontrol::isEnabled(
                          android::featurecontrol::VirtioMouse) &&
                  mMouseGrabbed) ||
                 android::featurecontrol::isEnabled(
-                        android::featurecontrol::VirtioTablet);
+                        android::featurecontrol::VirtioTablet) ||
+                android::featurecontrol::isEnabled(
+                        android::featurecontrol::VirtioDualModeMouse);
         if (!inputDeviceActive) {
             return;
         }
