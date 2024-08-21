@@ -1484,7 +1484,7 @@ message Notification {
         DisplayConfigurationsChangedNotification
                 displayConfigurationsChangedNotification = 3;
         Posture posture = 4;
-        BootCompletedNotication booted = 5;
+        BootCompletedNotification booted = 5;
         BrightnessValue brightness = 6;
 
         // This notification is sent when a TextView receives or loses focus.
@@ -1494,7 +1494,7 @@ message Notification {
     }
 }
 
-message BootCompletedNotication {
+message BootCompletedNotification {
     // The time in milliseconds it took for the boot to complete.
     // Note that this value can be 0 when you are loading from a snapshot.
     int32 time = 1;
