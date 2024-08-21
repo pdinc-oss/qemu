@@ -1903,6 +1903,7 @@ void ToolWindow::on_xr_environment_mode_changed(int mode) {
         return;
     }
 
+    mEmulatorWindow->activateWindow();
     mLastEnvironmentModeRequested = mode;
     handleUICommand(QtUICommand::CHANGE_XR_ENVIRONMENT_MODE, true);
 }
@@ -1913,6 +1914,7 @@ void ToolWindow::on_xr_input_mode_changed(int mode) {
         return;
     }
 
+    mEmulatorWindow->activateWindow();
     mLastInputModeRequested = mode;
     handleUICommand(QtUICommand::CHANGE_XR_INPUT_MODE, true);
     switch (mLastInputModeRequested) {
@@ -1939,6 +1941,7 @@ void ToolWindow::on_xr_viewport_control_mode_changed(int mode) {
         LOG(WARNING) << "Unknown XR Viewport mode requested: " << mode;
         return;
     }
+    mEmulatorWindow->activateWindow();
     mLastViewportModeRequested = mode;
     handleUICommand(QtUICommand::CHANGE_XR_VIEWPORT_CONTROL_MODE, true);
 
