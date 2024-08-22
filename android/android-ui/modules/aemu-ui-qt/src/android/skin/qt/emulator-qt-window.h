@@ -469,6 +469,7 @@ private:
 
     void runAdbShellPowerDownAndQuit();
     void setVisibleExtent(QBitmap bitMap);
+    Qt::CursorShape getCursorShape(bool mouseGrabbed);
 
     android::base::Looper* mLooper;
     QTimer mStartupTimer;
@@ -498,6 +499,20 @@ private:
     bool mMouseRepositionFinished = false;
     bool mPromptMouseRestoreMessageBox = true;
 
+    // Display blank cursor when mouse is grabbed.
+    static constexpr Qt::CursorShape DEFAULT_MOUSE_GRABBED_MODE_CURSOR =
+            Qt::BlankCursor;
+    // Display default arrow cursor when mouse is not grabbed.
+    static constexpr Qt::CursorShape DEFAULT_MOUSE_NORMAL_MODE_CURSOR =
+            Qt::ArrowCursor;
+    // If dual-mode driver is enabled in default mode, display the guest
+    // cursor.
+    static constexpr Qt::CursorShape DUAL_MODE_MOUSE_DEFAULT_CURSOR =
+            Qt::BlankCursor;
+    // If dual-mode driver is enabled in relative coordinates mode, display the
+    // alternate cursor which shows head movement.
+    static constexpr Qt::CursorShape DUAL_MODE_MOUSE_RELATIVE_MODE_CURSOR =
+            Qt::CrossCursor;
     // Window flags to use for frameless and framed appearance
 
     static constexpr Qt::WindowFlags FRAMELESS_WINDOW_FLAGS =
