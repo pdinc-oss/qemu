@@ -141,6 +141,7 @@ public:
     void tabletEvent(QTabletEvent* event) override;
     void paintEvent(QPaintEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
+    void focusInEvent(QFocusEvent *event) override;
     void startThread(StartFunction f, int argc, char** argv);
     void stopThread();
 

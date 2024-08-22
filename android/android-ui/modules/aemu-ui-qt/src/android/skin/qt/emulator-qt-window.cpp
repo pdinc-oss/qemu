@@ -771,6 +771,8 @@ EmulatorQtWindow::EmulatorQtWindow(QWidget* parent)
     setAttribute(Qt::WA_OpaquePaintEvent);
     setAttribute(Qt::WA_NoSystemBackground);
     setAttribute(Qt::WA_AcceptTouchEvents);
+    // Set the focus policy to receive FocusInEvent.
+    setFocusPolicy(Qt::StrongFocus);
 
     bool shortcutBool =
             settings.value(Ui::Settings::FORWARD_SHORTCUTS_TO_DEVICE, false)
@@ -1471,6 +1473,13 @@ void EmulatorQtWindow::mouseReleaseEvent(QMouseEvent* event) {
                 kEventMouseButtonUp, event->button(), event->buttons());
         handleMouseEvent(eventType, getSkinMouseButton(event), event->pos(),
                          event->globalPos());
+    }
+}
+
+void EmulatorQtWindow::focusInEvent(QFocusEvent *event) {
+    if (android::featurecontrol::isEnabled(
+                android::featurecontrol::VirtioDualModeMouse)) {
+        mContainer.setCursor(getCursorShape(/*mouseGrabbed*/ false));
     }
 }
 
