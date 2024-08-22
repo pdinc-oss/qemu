@@ -771,6 +771,8 @@ EmulatorQtWindow::EmulatorQtWindow(QWidget* parent)
     setAttribute(Qt::WA_OpaquePaintEvent);
     setAttribute(Qt::WA_NoSystemBackground);
     setAttribute(Qt::WA_AcceptTouchEvents);
+    // Set the focus policy to receive FocusInEvent.
+    setFocusPolicy(Qt::StrongFocus);
 
     bool shortcutBool =
             settings.value(Ui::Settings::FORWARD_SHORTCUTS_TO_DEVICE, false)
@@ -1344,12 +1346,29 @@ void EmulatorQtWindow::mouseMoveEvent(QMouseEvent* event) {
     }
 }
 
+Qt::CursorShape EmulatorQtWindow::getCursorShape(bool mouseGrabbed) {
+    if (android::featurecontrol::isEnabled(
+                android::featurecontrol::VirtioDualModeMouse)) {
+        if (mRelativeMouseCoordMode) {
+            return DUAL_MODE_MOUSE_RELATIVE_MODE_CURSOR;
+        } else {
+            return DUAL_MODE_MOUSE_DEFAULT_CURSOR;
+        }
+    } else {
+        if (mouseGrabbed) {
+            return DEFAULT_MOUSE_GRABBED_MODE_CURSOR;
+        } else {
+            return DEFAULT_MOUSE_NORMAL_MODE_CURSOR;
+        }
+    }
+}
+
 void EmulatorQtWindow::enterEvent(QEnterEvent* event) {
     if (android::featurecontrol::isEnabled(
                 android::featurecontrol::VirtioDualModeMouse)) {
-        // If dual-mode driver is enabled, let the Guest OS take control of
-        // displaying the cursor.
-        mContainer.setCursor(Qt::BlankCursor);
+        // If dual-mode driver is enabled, change the mouse cursor shape when
+        // cursor enters the window area.
+        mContainer.setCursor(getCursorShape(/*mouseGrabbed*/ false));
     }
 }
 
@@ -1360,7 +1379,7 @@ void EmulatorQtWindow::leaveEvent(QEvent* event) {
     // resize because we don't get events after the cursor
     // has left.
     // In case of VirtioDualModeMouse, restores the cursor
-    // to host cursor .
+    // to host cursor.
     mContainer.setCursor(Qt::ArrowCursor);
 }
 
@@ -1408,7 +1427,7 @@ void EmulatorQtWindow::mousePressEvent(QMouseEvent* event) {
         }
 
         D("%s: mouse grabbed\n", __func__);
-        grabMouse(QCursor(Qt::CursorShape::BlankCursor));
+        grabMouse(QCursor(getCursorShape(/*mouseGrabbed*/ true)));
 
         queueSkinEvent(createMouseTrackingSkinEvent(kEventMouseStartTracking));
 
@@ -1447,12 +1466,20 @@ void EmulatorQtWindow::mouseReleaseEvent(QMouseEvent* event) {
         D("Mouse Released");
         releaseMouse();
         mMouseGrabbed = false;
+        mContainer.setCursor(getCursorShape(/*mouseGrabbed*/ false));
     }
     if (event->source() == Qt::MouseEventNotSynthesized) {
         SkinEventType eventType = translateMouseEventType(
                 kEventMouseButtonUp, event->button(), event->buttons());
         handleMouseEvent(eventType, getSkinMouseButton(event), event->pos(),
                          event->globalPos());
+    }
+}
+
+void EmulatorQtWindow::focusInEvent(QFocusEvent *event) {
+    if (android::featurecontrol::isEnabled(
+                android::featurecontrol::VirtioDualModeMouse)) {
+        mContainer.setCursor(getCursorShape(/*mouseGrabbed*/ false));
     }
 }
 
@@ -2253,14 +2280,7 @@ void EmulatorQtWindow::slot_setWindowCursorResize(int whichCorner,
 
 void EmulatorQtWindow::slot_setWindowCursorNormal(QSemaphore* semaphore) {
     QSemaphoreReleaser semReleaser(semaphore);
-    if (android::featurecontrol::isEnabled(
-                android::featurecontrol::VirtioDualModeMouse)) {
-        // If dual-mode driver is enabled, let the Guest OS take control of
-        // displaying the cursor.
-        mContainer.setCursor(Qt::BlankCursor);
-    } else {
-        mContainer.setCursor(Qt::ArrowCursor);
-    }
+    mContainer.setCursor(getCursorShape(/*mouseGrabbed*/ false));
 }
 
 void EmulatorQtWindow::slot_setWindowIcon(const unsigned char* data,
