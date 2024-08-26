@@ -82,7 +82,6 @@
 #include "android/skin/qt/virtualscene-control-window.h"
 #include "android/skin/qt/xr-environment-mode-dialog.h"
 #include "android/skin/qt/xr-input-mode-dialog.h"
-#include "android/skin/qt/xr-viewport-control-dialog.h"
 #include "android/ui-emu-agent.h"
 #include "android/utils/debug.h"
 #include "android/utils/system.h"
@@ -164,7 +163,6 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
       mResizableDialog(new ResizableDialog(this)),
       mXrEnvironmentModeDialog(new XrEnvironmentModeDialog(this)),
       mXrInputModeDialog(new XrInputModeDialog(this)),
-      mXrViewportControlDialog(new XrViewportControlDialog(this)),
       mFoldableSyncToAndroidSuccess(false),
       mFoldableSyncToAndroidTimeout(false),
       mFoldableSyncToAndroid([this](FoldableSyncToAndroidItem&& item) {
@@ -467,10 +465,6 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
                 SLOT(on_xr_input_mode_changed(int)));
         connect(mXrInputModeDialog, SIGNAL(finished(int)), this,
                 SLOT(on_dismiss_xr_input_mode_dialog()));
-        connect(mXrViewportControlDialog, SIGNAL(onXrViewportControlRequested(int)),
-                this, SLOT(on_xr_viewport_control_mode_changed(int)));
-        connect(mXrViewportControlDialog, SIGNAL(finished(int)),
-                this, SLOT(on_dismiss_xr_viewport_control_dialog()));
     }
 
     if (!resizableEnabled()) {
@@ -1078,24 +1072,6 @@ void ToolWindow::handleUICommand(QtUICommand cmd,
                 }
             }
             break;
-        case QtUICommand::CHANGE_XR_VIEWPORT_CONTROL_MODE:
-            if (android_is_xr_mode()) {
-                if (down) {
-                    float control = static_cast<float>(mLastViewportModeRequested);
-                    LOG(DEBUG) << "Sending XR Viewport Mode: " << control;
-                    sUiEmuAgent->sensors->setPhysicalParameterTarget(
-                            PHYSICAL_PARAMETER_XR_VIEWPORT_CONTROL_MODE, &control,
-                            1, PHYSICAL_INTERPOLATION_SMOOTH);
-                }
-                const auto emulatorWindow = EmulatorQtWindow::getInstance();
-                if (emulatorWindow) {
-                    emulatorWindow->setRelativeMouseCoordMode(true);
-                } else {
-                    LOG(WARNING)
-                            << "No window found to set mouse coordinates mode";
-                }
-            }
-            break;
         case QtUICommand::SHOW_MULTITOUCH:
         // Multitouch is handled in EmulatorQtWindow, and doesn't
         // really need an element in the QtUICommand enum. This
@@ -1648,27 +1624,12 @@ void ToolWindow::on_xr_screen_recenter_button_clicked() {
     handleUICommand(QtUICommand::XR_SCREEN_RECENTER, true);
 }
 
-void ToolWindow::on_xr_viewport_control_mode_button_clicked() {
-    mXrViewportControlDialog->show();
-    // Align pop-up posture selction dialog to the right of posture button
-    QRect geoTool = this->geometry();
-    mXrViewportControlDialog->move(
-            geoTool.right(),
-            geoTool.top() +
-                    mToolsUi->xr_viewport_control_mode_button->geometry()
-                            .top());
-}
-
 void ToolWindow::on_dismiss_xr_environment_mode_dialog() {
     mToolsUi->xr_environment_mode_button->setChecked(false);
 }
 
 void ToolWindow::on_dismiss_xr_input_mode_dialog() {
     mToolsUi->xr_input_mode_button->setChecked(false);
-}
-
-void ToolWindow::on_dismiss_xr_viewport_control_dialog() {
-    mToolsUi->xr_viewport_control_mode_button->setChecked(false);
 }
 
 void ToolWindow::on_resizable_button_clicked() {
@@ -1950,33 +1911,6 @@ void ToolWindow::on_xr_input_mode_changed(int mode) {
         case /*XR_INPUT_MODE_EYE_TRACKING*/ 3:
             ChangeIcon(mToolsUi->xr_input_mode_button, "xr_input_eye_tacking",
                        "Input: Eye Tracking + Selection");
-            break;
-        default:
-            break;
-    }
-}
-
-void ToolWindow::on_xr_viewport_control_mode_changed(int mode) {
-    if (mode == /*VIEWPORT_CONTROL_MODE_UNKNOWN*/ 0) {
-        LOG(WARNING) << "Unknown XR Viewport mode requested: " << mode;
-        return;
-    }
-    mEmulatorWindow->activateWindow();
-    mLastViewportModeRequested = mode;
-    handleUICommand(QtUICommand::CHANGE_XR_VIEWPORT_CONTROL_MODE, true);
-
-    switch (mLastViewportModeRequested) {
-        case /*VIEWPORT_CONTROL_MODE_PAN*/ 1:
-            ChangeIcon(mToolsUi->xr_viewport_control_mode_button,
-                       "xr_viewport_pan", "Viewport Control: Pan");
-            break;
-        case /*VIEWPORT_CONTROL_MODE_ZOOM*/ 2:
-            ChangeIcon(mToolsUi->xr_viewport_control_mode_button,
-                       "xr_viewport_zoom", "Viewport Control: Zoom");
-            break;
-        case /*VIEWPORT_CONTROL_MODE_ROTATE*/ 3:
-            ChangeIcon(mToolsUi->xr_viewport_control_mode_button,
-                       "xr_viewport_rotate", "Viewport Control: Rotate");
             break;
         default:
             break;

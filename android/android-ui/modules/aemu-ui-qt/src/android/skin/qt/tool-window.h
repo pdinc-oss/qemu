@@ -47,7 +47,6 @@
 class PostureSelectionDialog;
 class XrEnvironmentModeDialog;
 class XrInputModeDialog;
-class XrViewportControlDialog;
 
 namespace Ui {
 class ToolControls;
@@ -209,7 +208,6 @@ private:
     int mLastRequestedFoldablePosture = -1;
     int mLastEnvironmentModeRequested = 0;
     int mLastInputModeRequested = 0;
-    int mLastViewportModeRequested = 0;
 
     static const UiEmuAgent* sUiEmuAgent;
 
@@ -236,7 +234,6 @@ private:
     ResizableDialog* mResizableDialog;
     XrEnvironmentModeDialog* mXrEnvironmentModeDialog;
     XrInputModeDialog* mXrInputModeDialog;
-    XrViewportControlDialog* mXrViewportControlDialog;
     // A map of all XR specific pushbuttons in the main panel, which is used
     // to identify XR specific buttons and also group them together based on
     // specific type.
@@ -307,9 +304,6 @@ private slots:
     void on_xr_input_mode_changed(int mode);
     void on_dismiss_xr_input_mode_dialog();
     void on_xr_screen_recenter_button_clicked();
-    void on_xr_viewport_control_mode_button_clicked();
-    void on_xr_viewport_control_mode_changed(int mode);
-    void on_dismiss_xr_viewport_control_dialog();
 
     void on_sleep_timer_done();
     void on_unfold_timer_done();

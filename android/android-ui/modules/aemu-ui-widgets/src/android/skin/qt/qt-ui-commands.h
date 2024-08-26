@@ -74,7 +74,6 @@ enum class QtUICommand {
     CHANGE_XR_INPUT_MODE,
     CHANGE_XR_ENVIRONMENT_MODE,
     XR_SCREEN_RECENTER,
-    CHANGE_XR_VIEWPORT_CONTROL_MODE,
 };
 
 enum class QtKeyEventSource {
