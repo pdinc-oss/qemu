@@ -378,6 +378,7 @@ Feature: 'GuestAngle' (102), value: 0, default: 0, is overridden: 0
 Feature: 'AndroidVirtualizationFramework' (103), value: 0, default: 0, is overridden: 0
 Feature: 'XrModeUI' (104), value: 0, default: 0, is overridden: 0
 Feature: 'VirtioDualModeMouse' (105), value: 0, default: 0, is overridden: 0
+Feature: 'DualModeMouseDisplayHostCursor' (106), value: 0, default: 0, is overridden: 0
 )#";
     EXPECT_EQ(feature_list, ss.str());
 }
