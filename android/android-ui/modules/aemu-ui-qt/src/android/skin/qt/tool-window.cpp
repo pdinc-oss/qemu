@@ -114,7 +114,7 @@ using android::emulation::OptionalAdbCommandResult;
 using android::metrics::MetricsReporter;
 using Ui::Settings::SaveSnapshotOnExit;
 
-namespace pb = android_studio;
+namespace proto = android_studio;
 namespace fc = android::featurecontrol;
 using fc::Feature;
 
@@ -1472,7 +1472,7 @@ bool ToolWindow::askWhetherToSaveSnapshot() {
     int64_t endTime = get_uptime_ms();
     uint64_t dialogTime = endTime - startTime;
 
-    MetricsReporter::get().report([dialogTime](pb::AndroidStudioEvent* event) {
+    MetricsReporter::get().report([dialogTime](proto::AndroidStudioEvent* event) {
         auto counts =
                 event->mutable_emulator_details()->mutable_snapshot_ui_counts();
         counts->set_quickboot_ask_total_time_ms(
@@ -1480,7 +1480,7 @@ bool ToolWindow::askWhetherToSaveSnapshot() {
     });
 
     if (selection == QMessageBox::Cancel) {
-        MetricsReporter::get().report([](pb::AndroidStudioEvent* event) {
+        MetricsReporter::get().report([](proto::AndroidStudioEvent* event) {
             auto counts = event->mutable_emulator_details()
                                   ->mutable_snapshot_ui_counts();
             counts->set_quickboot_ask_canceled(
@@ -1491,7 +1491,7 @@ bool ToolWindow::askWhetherToSaveSnapshot() {
     }
 
     if (selection == QMessageBox::Yes) {
-        MetricsReporter::get().report([](pb::AndroidStudioEvent* event) {
+        MetricsReporter::get().report([](proto::AndroidStudioEvent* event) {
             auto counts = event->mutable_emulator_details()
                                   ->mutable_snapshot_ui_counts();
             counts->set_quickboot_ask_yes(1 + counts->quickboot_ask_yes());
@@ -1499,7 +1499,7 @@ bool ToolWindow::askWhetherToSaveSnapshot() {
         getConsoleAgents()->settings->avdParams()->flags &=
                 !AVDINFO_NO_SNAPSHOT_SAVE_ON_EXIT;
     } else {
-        MetricsReporter::get().report([](pb::AndroidStudioEvent* event) {
+        MetricsReporter::get().report([](proto::AndroidStudioEvent* event) {
             auto counts = event->mutable_emulator_details()
                                   ->mutable_snapshot_ui_counts();
             counts->set_quickboot_ask_no(1 + counts->quickboot_ask_no());
