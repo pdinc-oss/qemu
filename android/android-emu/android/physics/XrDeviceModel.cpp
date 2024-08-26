@@ -220,7 +220,7 @@ void XrDeviceModel::qemudClientRecv(uint8_t* msg, int msglen) {
     } else {
         printMsg = "Received raw string: " + std::string(msg, msg + msglen);
     }
-    W("%s.\n", static_cast<std::string>(printMsg));
+    D("%s.\n", static_cast<std::string>(printMsg));
 }
 
 void XrDeviceModel::qemudClientClose() {
