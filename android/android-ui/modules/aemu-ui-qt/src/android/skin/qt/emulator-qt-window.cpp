@@ -1352,7 +1352,12 @@ Qt::CursorShape EmulatorQtWindow::getCursorShape(bool mouseGrabbed) {
         if (mRelativeMouseCoordMode) {
             return DUAL_MODE_MOUSE_RELATIVE_MODE_CURSOR;
         } else {
-            return DUAL_MODE_MOUSE_DEFAULT_CURSOR;
+            if (android::featurecontrol::isEnabled(
+                    android::featurecontrol::DualModeMouseDisplayHostCursor)) {
+                return DUAL_MODE_MOUSE_DEFAULT_CURSOR_DISPLAY_HOST_MODE;
+            } else {
+                return DUAL_MODE_MOUSE_DEFAULT_CURSOR_DISPLAY_GUEST_MODE;
+            }
         }
     } else {
         if (mouseGrabbed) {
