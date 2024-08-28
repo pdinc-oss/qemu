@@ -1019,6 +1019,9 @@ color: #f0f0f0</string>
        <property name="themeIconName" stdset="0">
         <string notr="true">xr_input_mouse_keyboard_mode</string>
        </property>
+       <property name="xrButtonType" stdset="0">
+        <string>input_control</string>
+       </property>
        <property name="uiCommand" stdset="0">
         <string>CHANGE_XR_INPUT_MODE</string>
        </property>
@@ -1072,6 +1075,9 @@ color: #f0f0f0</string>
        <property name="uiCommand" stdset="0">
         <string>CHANGE_XR_ENVIRONMENT_MODE</string>
        </property>
+       <property name="xrButtonType" stdset="0">
+        <string>environment_control</string>
+       </property>
        <property name="ToolWindowButton" stdset="0">
         <bool>true</bool>
        </property>
@@ -1118,6 +1124,9 @@ color: #f0f0f0</string>
        </property>
        <property name="uiCommand" stdset="0">
         <string>XR_SCREEN_RECENTER</string>
+       </property>
+       <property name="xrButtonType" stdset="0">
+        <string>viewport_control</string>
        </property>
        <property name="ToolWindowButton" stdset="0">
         <bool>true</bool>
@@ -1168,6 +1177,9 @@ color: #f0f0f0</string>
        </property>
        <property name="uiCommand" stdset="0">
         <string>CHANGE_XR_VIEWPORT_CONTROL_MODE</string>
+       </property>
+       <property name="xrButtonType" stdset="0">
+        <string>viewport_control</string>
        </property>
        <property name="ToolWindowButton" stdset="0">
         <bool>true</bool>

@@ -237,6 +237,12 @@ private:
     XrEnvironmentModeDialog* mXrEnvironmentModeDialog;
     XrInputModeDialog* mXrInputModeDialog;
     XrViewportControlDialog* mXrViewportControlDialog;
+    // A map of all XR specific pushbuttons in the main panel, which is used
+    // to identify XR specific buttons and also group them together based on
+    // specific type.
+    std::unordered_map<std::string,
+                       std::vector<std::reference_wrapper<QPushButton>>>
+            mXrButtonTypeToPushButtonsMap;
 
     bool mCloseClicked = false;
 
