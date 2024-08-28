@@ -92,6 +92,9 @@ constexpr CommandInfo kCommands[] = {
         INIT_COMMAND(WEAR_2, "Wear OS Button 2"),
         INIT_COMMAND(PALM, "Palm gesture"),
         INIT_COMMAND(TILT, "Tilt gesture"),
+        INIT_COMMAND(CHANGE_XR_INPUT_MODE, "Input selector"),
+        INIT_COMMAND(CHANGE_XR_ENVIRONMENT_MODE, "Environment selector"),
+        INIT_COMMAND(XR_SCREEN_RECENTER, "Reset Position"),
 };
 
 bool parseQtUICommand(const QString& string, QtUICommand* command) {
