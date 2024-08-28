@@ -506,10 +506,14 @@ private:
     // Display default arrow cursor when mouse is not grabbed.
     static constexpr Qt::CursorShape DEFAULT_MOUSE_NORMAL_MODE_CURSOR =
             Qt::ArrowCursor;
-    // If dual-mode driver is enabled in default mode, display the guest
-    // cursor.
-    static constexpr Qt::CursorShape DUAL_MODE_MOUSE_DEFAULT_CURSOR =
+    // If dual-mode driver is enabled in default mode, display the guest cursor
+    // by default.
+    static constexpr Qt::CursorShape DUAL_MODE_MOUSE_DEFAULT_CURSOR_DISPLAY_GUEST_MODE =
             Qt::BlankCursor;
+    // If dual-mode driver is enabled in default mode, display the host cursor
+    // if DualModeMouseDisplayHostCursor feature is enabled.
+    static constexpr Qt::CursorShape DUAL_MODE_MOUSE_DEFAULT_CURSOR_DISPLAY_HOST_MODE =
+            Qt::ArrowCursor;
     // If dual-mode driver is enabled in relative coordinates mode, display the
     // alternate cursor which shows head movement.
     static constexpr Qt::CursorShape DUAL_MODE_MOUSE_RELATIVE_MODE_CURSOR =
