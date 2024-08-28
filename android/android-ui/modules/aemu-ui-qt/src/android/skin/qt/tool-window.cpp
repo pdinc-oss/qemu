@@ -334,6 +334,20 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
             // Unfortunately, we have no way of enforcing it at compile time.
             assert(0);
         }
+
+        // All XR buttons are expected to define the `xrButtonType` property.
+        QVariant xrButtonTypeVariant = button->property("xrButtonType");
+        if (xrButtonTypeVariant.isValid()) {
+            std::string xrButtonType = xrButtonTypeVariant.toString().toStdString();
+            if (mXrButtonTypeToPushButtonsMap.find(xrButtonType) ==
+                        mXrButtonTypeToPushButtonsMap.end()) {
+                mXrButtonTypeToPushButtonsMap[xrButtonType] =
+                        {std::ref(*button)};
+            } else {
+                mXrButtonTypeToPushButtonsMap[xrButtonType].push_back(
+                        std::ref(*button));
+            }
+        }
     }
 
     if (getConsoleAgents()->settings->hw()->hw_arc) {
@@ -525,10 +539,16 @@ void ToolWindow::updateFoldableButtonVisibility() {
 
 void ToolWindow::updateXrButtonsVisibility() {
     auto is_xr_mode = android_is_xr_mode();
-    mToolsUi->xr_input_mode_button->setVisible(is_xr_mode);
-    mToolsUi->xr_environment_mode_button->setVisible(is_xr_mode);
-    mToolsUi->xr_screen_recenter_button->setVisible(is_xr_mode);
-    mToolsUi->xr_viewport_control_mode_button->setVisible(is_xr_mode);
+    for (const auto &[xrButtonType, xrButtonList] :
+            mXrButtonTypeToPushButtonsMap) {
+        for (const auto& xrButtonRef : xrButtonList) {
+            QPushButton& xrButton = xrButtonRef.get();
+            if (!is_xr_mode) {
+                xrButton.setHidden(true);
+            }
+            xrButton.setEnabled(is_xr_mode);
+        }
+    }
 }
 
 void ToolWindow::updateButtonUiCommand(QPushButton* button,
