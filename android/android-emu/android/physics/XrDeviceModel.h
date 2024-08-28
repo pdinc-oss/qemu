@@ -60,7 +60,7 @@ private:
     XrEnvironmentMode mLastEnvironmentModeRequested =
             XrEnvironmentMode::XR_ENVIRONMENT_MODE_PASSTHROUGH_OFF;
     XrViewportControlMode mLastViewportControlModeRequested =
-            XrViewportControlMode::VIEWPORT_CONTROL_MODE_PAN;
+            XrViewportControlMode::VIEWPORT_CONTROL_MODE_UNKNOWN;
 
     void sendXrInputMode(enum XrInputMode mode);
     void sendXrEnvironmentMode(enum XrEnvironmentMode mode);

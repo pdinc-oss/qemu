@@ -543,6 +543,7 @@ void ToolWindow::updateXrButtonsVisibility() {
             xrButton.setEnabled(is_xr_mode);
         }
     }
+    updateXrNavigationButtonsChecked(mXrLastMouseKeyboardModeCommand);
 }
 
 void ToolWindow::updateButtonUiCommand(QPushButton* button,
@@ -1040,6 +1041,7 @@ void ToolWindow::handleUICommand(QtUICommand cmd,
                     sUiEmuAgent->sensors->setPhysicalParameterTarget(
                             PHYSICAL_PARAMETER_XR_INPUT_MODE, &mode, 1,
                             PHYSICAL_INTERPOLATION_SMOOTH);
+                    updateXrNavigationButtonsChecked(cmd);
                 }
                 const auto emulatorWindow = EmulatorQtWindow::getInstance();
                 if (emulatorWindow) {
@@ -1069,6 +1071,63 @@ void ToolWindow::handleUICommand(QtUICommand cmd,
                     sUiEmuAgent->sensors->setPhysicalParameterTarget(
                             PHYSICAL_PARAMETER_XR_SCREEN_RECENTER, &mode, 1,
                             PHYSICAL_INTERPOLATION_SMOOTH);
+                }
+            }
+            break;
+        case QtUICommand::XR_VIEWPORT_CONTROL_MODE_PAN:
+            if (android_is_xr_mode()) {
+                if (down) {
+                    float control = VIEWPORT_CONTROL_MODE_PAN;
+                    LOG(DEBUG) << "Sending XR Viewport Mode: " << control;
+                    sUiEmuAgent->sensors->setPhysicalParameterTarget(
+                            PHYSICAL_PARAMETER_XR_VIEWPORT_CONTROL_MODE, &control,
+                            1, PHYSICAL_INTERPOLATION_SMOOTH);
+                    updateXrNavigationButtonsChecked(cmd);
+                }
+                const auto emulatorWindow = EmulatorQtWindow::getInstance();
+                if (emulatorWindow) {
+                    emulatorWindow->setRelativeMouseCoordMode(true);
+                } else {
+                    LOG(WARNING)
+                            << "No window found to set mouse coordinates mode";
+                }
+            }
+            break;
+        case QtUICommand::XR_VIEWPORT_CONTROL_MODE_DOLLY:
+            if (android_is_xr_mode()) {
+                if (down) {
+                    float control = VIEWPORT_CONTROL_MODE_ZOOM;
+                    LOG(DEBUG) << "Sending XR Viewport Mode: " << control;
+                    sUiEmuAgent->sensors->setPhysicalParameterTarget(
+                            PHYSICAL_PARAMETER_XR_VIEWPORT_CONTROL_MODE, &control,
+                            1, PHYSICAL_INTERPOLATION_SMOOTH);
+                    updateXrNavigationButtonsChecked(cmd);
+                }
+                const auto emulatorWindow = EmulatorQtWindow::getInstance();
+                if (emulatorWindow) {
+                    emulatorWindow->setRelativeMouseCoordMode(true);
+                } else {
+                    LOG(WARNING)
+                            << "No window found to set mouse coordinates mode";
+                }
+            }
+            break;
+        case QtUICommand::XR_VIEWPORT_CONTROL_MODE_ROTATE:
+            if (android_is_xr_mode()) {
+                if (down) {
+                    float control = VIEWPORT_CONTROL_MODE_ROTATE;
+                    LOG(DEBUG) << "Sending XR Viewport Mode: " << control;
+                    sUiEmuAgent->sensors->setPhysicalParameterTarget(
+                            PHYSICAL_PARAMETER_XR_VIEWPORT_CONTROL_MODE, &control,
+                            1, PHYSICAL_INTERPOLATION_SMOOTH);
+                    updateXrNavigationButtonsChecked(cmd);
+                }
+                const auto emulatorWindow = EmulatorQtWindow::getInstance();
+                if (emulatorWindow) {
+                    emulatorWindow->setRelativeMouseCoordMode(true);
+                } else {
+                    LOG(WARNING)
+                            << "No window found to set mouse coordinates mode";
                 }
             }
             break;
@@ -1629,7 +1688,63 @@ void ToolWindow::on_dismiss_xr_environment_mode_dialog() {
 }
 
 void ToolWindow::on_dismiss_xr_input_mode_dialog() {
-    mToolsUi->xr_input_mode_button->setChecked(false);
+    updateXrNavigationButtonsChecked(mXrLastMouseKeyboardModeCommand);
+}
+
+void ToolWindow::on_xr_viewport_pan_button_clicked() {
+    mEmulatorWindow->activateWindow();
+    handleUICommand(QtUICommand::XR_VIEWPORT_CONTROL_MODE_PAN, true);
+}
+
+void ToolWindow::on_xr_viewport_dolly_button_clicked() {
+    mEmulatorWindow->activateWindow();
+    handleUICommand(QtUICommand::XR_VIEWPORT_CONTROL_MODE_DOLLY, true);
+}
+
+void ToolWindow::on_xr_viewport_rotate_button_clicked() {
+    mEmulatorWindow->activateWindow();
+    handleUICommand(QtUICommand::XR_VIEWPORT_CONTROL_MODE_ROTATE, true);
+}
+
+// Set the current selected input mode button or viewport control mode button
+// checked (activated). The parameter `currentMode` is the current selected
+// command.
+void ToolWindow::updateXrNavigationButtonsChecked(QtUICommand currentMode) {
+    if (!android_is_xr_mode()) {
+        return;
+    }
+    for (const auto &[buttonType, buttonList] : mXrButtonTypeToPushButtonsMap) {
+        // Iterate through all the buttons of type `input_control` or
+        // `viewport_control` and find the button whose uiCommand property
+        // matches with the parameter `currentMode` command string.
+        if (buttonType == "input_control" || buttonType == "viewport_control") {
+            for (const auto& buttonRef : buttonList) {
+                QPushButton& xrButton = buttonRef.get();
+                const QVariant uiCommand = xrButton.property("uiCommand");
+                if (uiCommand.isValid()) {
+                    QtUICommand buttonCommand;
+                    // Parse the `uiCommand` string to retrive the QtUICommand
+                    // object.
+                    if (parseQtUICommand(uiCommand.toString(), &buttonCommand)) {
+                        if (buttonCommand == currentMode) {
+                            mXrLastMouseKeyboardModeCommand = currentMode;
+                            // Check the QPushButton if uiCommand matches with
+                            // currently selection.
+                            xrButton.setChecked(true);
+                            continue;
+                        }
+                    } else {
+                        LOG(WARNING) << "UiCommand for XrButton not found";
+                    }
+                } else {
+                    LOG(WARNING) << "Expected UiCommand for XR buttons";
+                }
+                // For all the buttons which do not find a match with selected
+                // command, uncheck the QPushButton.
+                xrButton.setChecked(false);
+            }
+        }
+    }
 }
 
 void ToolWindow::on_resizable_button_clicked() {

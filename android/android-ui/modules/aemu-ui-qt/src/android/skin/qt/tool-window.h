@@ -173,6 +173,9 @@ private:
 
     void showOrRaiseExtendedWindow(ExtendedWindowPane pane);
     void updateButtonUiCommand(QPushButton* button, const char* uiCommand);
+    // Check the input or viewport control button which matches the
+    // `currentMode` command, otherwise uncheck the button.
+    void updateXrNavigationButtonsChecked(QtUICommand currentMode);
 
     virtual void closeEvent(QCloseEvent* ce) override;
     virtual void mousePressEvent(QMouseEvent* event) override;
@@ -208,6 +211,8 @@ private:
     int mLastRequestedFoldablePosture = -1;
     int mLastEnvironmentModeRequested = 0;
     int mLastInputModeRequested = 0;
+    QtUICommand mXrLastMouseKeyboardModeCommand = QtUICommand::CHANGE_XR_INPUT_MODE;
+    std::vector<std::reference_wrapper<QPushButton>> mXrMouseKeyboardModeButtons;
 
     static const UiEmuAgent* sUiEmuAgent;
 
@@ -304,6 +309,9 @@ private slots:
     void on_xr_input_mode_changed(int mode);
     void on_dismiss_xr_input_mode_dialog();
     void on_xr_screen_recenter_button_clicked();
+    void on_xr_viewport_pan_button_clicked();
+    void on_xr_viewport_dolly_button_clicked();
+    void on_xr_viewport_rotate_button_clicked();
 
     void on_sleep_timer_done();
     void on_unfold_timer_done();
