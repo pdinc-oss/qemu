@@ -54,7 +54,7 @@
       </size>
      </property>
      <property name="toolTip">
-      <string>Pass Through On</string>
+      <string>Passthrough on</string>
      </property>
      <property name="flat">
       <bool>true</bool>
@@ -104,7 +104,7 @@
       </size>
      </property>
      <property name="toolTip">
-      <string>Pass Through Off</string>
+      <string>Passthrough off</string>
      </property>
      <property name="flat">
       <bool>true</bool>

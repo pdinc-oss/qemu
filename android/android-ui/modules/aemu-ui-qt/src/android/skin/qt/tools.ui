@@ -1204,7 +1204,7 @@ color: #f0f0f0</string>
         </size>
        </property>
        <property name="toolTip">
-        <string>XR Screen Recenter</string>
+        <string>Reset position</string>
        </property>
        <property name="text">
         <string notr="true"/>
