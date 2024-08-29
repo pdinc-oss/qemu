@@ -56,8 +56,6 @@ android_qt_lib(
       android/skin/qt/xr-environment-mode-dialog.ui
       android/skin/qt/xr-input-mode-dialog.cpp
       android/skin/qt/xr-input-mode-dialog.ui
-      android/skin/qt/xr-viewport-control-dialog.cpp
-      android/skin/qt/xr-viewport-control-dialog.ui
       android/window-agent-impl.cpp
   DEPS aemu-ui-car-property-utils
        aemu-ui-headless # Yes! The QT ui depends on the headless one..
