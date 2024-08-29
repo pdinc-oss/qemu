@@ -78,8 +78,6 @@
         <file alias="xr_input_hand_raycast">images/light/ic_xr_hand_raycast.svg</file>
         <file alias="xr_input_mouse_keyboard_mode">images/light/ic_xr_mouse_keyboard_mode.svg</file>
         <file alias="xr_environment">images/light/ic_xr_environment.svg</file>
-        <file alias="xr_environment_living_room_day">images/light/ic_xr_environment_day.svg</file>
-        <file alias="xr_environment_living_room_night">images/light/ic_xr_environment_night.svg</file>
         <file alias="xr_environment_passthrough_off">images/light/ic_xr_passthrough_off.svg</file>
         <file alias="xr_environment_passthrough_on">images/light/ic_xr_passthrough_on.svg</file>
         <file alias="xr_screen_recenter">images/light/ic_xr_screen_recenter.svg</file>
@@ -279,8 +277,6 @@
         <file alias="xr_input_hand_raycast">images/dark/ic_xr_hand_raycast.svg</file>
         <file alias="xr_input_mouse_keyboard_mode">images/dark/ic_xr_mouse_keyboard_mode.svg</file>
         <file alias="xr_environment">images/dark/ic_xr_environment.svg</file>
-        <file alias="xr_environment_living_room_day">images/dark/ic_xr_environment_day.svg</file>
-        <file alias="xr_environment_living_room_night">images/dark/ic_xr_environment_night.svg</file>
         <file alias="xr_environment_passthrough_off">images/dark/ic_xr_passthrough_off.svg</file>
         <file alias="xr_environment_passthrough_on">images/dark/ic_xr_passthrough_on.svg</file>
         <file alias="xr_screen_recenter">images/dark/ic_xr_screen_recenter.svg</file>
