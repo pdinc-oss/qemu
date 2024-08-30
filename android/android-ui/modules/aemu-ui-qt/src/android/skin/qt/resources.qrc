@@ -84,6 +84,7 @@
         <file alias="xr_viewport_pan">images/light/ic_xr_viewport_pan.svg</file>
         <file alias="xr_viewport_rotate">images/light/ic_xr_viewport_rotate.svg</file>
         <file alias="xr_viewport_zoom">images/light/ic_xr_viewport_zoom.svg</file>
+        <file alias="xr_show_taskbar">images/light/ic_xr_taskbar.svg</file>
         <file alias="zoom">images/light/ic_zoom_in_678_48dp.svg</file>
 
         <!-- Used in the "extended" window -->
@@ -283,6 +284,7 @@
         <file alias="xr_viewport_pan">images/dark/ic_xr_viewport_pan.svg</file>
         <file alias="xr_viewport_rotate">images/dark/ic_xr_viewport_rotate.svg</file>
         <file alias="xr_viewport_zoom">images/dark/ic_xr_viewport_zoom.svg</file>
+        <file alias="xr_show_taskbar">images/dark/ic_xr_taskbar.svg</file>
         <file alias="zoom">images/dark/ic_zoom_in_white_48dp.svg</file>
 
         <!-- Used in the "extended" window -->

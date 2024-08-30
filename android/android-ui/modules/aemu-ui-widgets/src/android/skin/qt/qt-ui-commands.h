@@ -77,6 +77,7 @@ enum class QtUICommand {
     XR_VIEWPORT_CONTROL_MODE_PAN,
     XR_VIEWPORT_CONTROL_MODE_DOLLY,
     XR_VIEWPORT_CONTROL_MODE_ROTATE,
+    XR_SHOW_TASKBAR,
 };
 
 enum class QtKeyEventSource {
