@@ -723,13 +723,6 @@ bool emuglConfig_init(EmuglConfig* config,
         }
     }
 
-#if defined(__APPLE__) && defined(__arm64__)
-    // Also force MoltenVK with 'auto' modes on XR
-    if (fc::isEnabled(fc::XrModeUI) && !strcmp("host", gpu_mode)) {
-        use_host_vulkan = true;
-    }
-#endif
-
     config->use_host_vulkan = use_host_vulkan;
 
     // b/328275986: Turn off ANGLE because it breaks.
