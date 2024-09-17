@@ -121,7 +121,7 @@ static void user_event_mouse(int dx,
         if (feature_is_enabled(kFeature_VirtioTablet)) {
             kbd_put_tablet_button_state(buttonsState);
         }
-        if (qemu_input_is_dual_mode_coordinates()) {
+        if (feature_is_enabled(kFeature_VirtioDualModeMouse)) {
             if (event_mode == MOUSE_EVENT_MODE_REL) {
                 kbd_mouse_event(dx, dy, dz, buttonsState);
             } else {
