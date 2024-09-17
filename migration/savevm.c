@@ -2985,7 +2985,10 @@ int qemu_loadvm_state(QEMUFile *f)
     trace_qemu_loadvm_state_post_main(ret);
 
     if (mis->have_listen_thread) {
-        /* Listen thread still going, can't clean up yet */
+        /*
+         * Postcopy listen thread still going, don't synchronize the
+         * cpus yet.
+         */
         return ret;
     }
 
@@ -3028,7 +3031,6 @@ int qemu_loadvm_state(QEMUFile *f)
         }
     }
 
-    qemu_loadvm_state_cleanup();
     cpu_synchronize_all_post_init();
 
     return ret;
