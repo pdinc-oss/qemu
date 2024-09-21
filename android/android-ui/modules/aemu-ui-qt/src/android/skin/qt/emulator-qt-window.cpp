@@ -1391,13 +1391,15 @@ void EmulatorQtWindow::leaveEvent(QEvent* event) {
 void EmulatorQtWindow::mousePressEvent(QMouseEvent* event) {
     // Enable the mouse grab for VirtioMouse. If VirtioDualModeMouse is
     // enabled, mouse grab is enabled only in the relative coordinates mode.
+    // TODO(b/368630314): On mac os, the cursor shape does not change on button
+    // press and the bounding rect used to contain the relative cursor causes
+    // visual artifacts. This may require additional debugging and a possible
+    // QT changes. Hence, grabbed mode is disabled on VirtioDualModeMouse for
+    // now.
     bool enableMouseGrab = android::featurecontrol::isEnabled(
-                    android::featurecontrol::VirtioMouse);
-    if (android::featurecontrol::isEnabled(
-                android::featurecontrol::VirtioDualModeMouse) &&
-        !mRelativeMouseCoordMode) {
-        enableMouseGrab = false;
-    }
+                                android::featurecontrol::VirtioMouse) &&
+                           !android::featurecontrol::isEnabled(
+                                android::featurecontrol::VirtioDualModeMouse);
     if (enableMouseGrab && !mMouseGrabbed) {
         if (mPromptMouseRestoreMessageBox) {
             QMessageBox msgBox;
