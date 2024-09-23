@@ -1713,17 +1713,29 @@ void ToolWindow::on_dismiss_xr_input_mode_dialog() {
 
 void ToolWindow::on_xr_viewport_pan_button_clicked() {
     mEmulatorWindow->activateWindow();
-    handleUICommand(QtUICommand::XR_VIEWPORT_CONTROL_MODE_PAN, true);
+    if (mXrLastMouseKeyboardModeCommand == QtUICommand::XR_VIEWPORT_CONTROL_MODE_PAN) {
+        on_xr_input_mode_changed(mLastInputModeRequested);
+    } else {
+        handleUICommand(QtUICommand::XR_VIEWPORT_CONTROL_MODE_PAN, true);
+    }
 }
 
 void ToolWindow::on_xr_viewport_dolly_button_clicked() {
     mEmulatorWindow->activateWindow();
-    handleUICommand(QtUICommand::XR_VIEWPORT_CONTROL_MODE_DOLLY, true);
+    if (mXrLastMouseKeyboardModeCommand == QtUICommand::XR_VIEWPORT_CONTROL_MODE_DOLLY) {
+        on_xr_input_mode_changed(mLastInputModeRequested);
+    } else {
+        handleUICommand(QtUICommand::XR_VIEWPORT_CONTROL_MODE_DOLLY, true);
+    }
 }
 
 void ToolWindow::on_xr_viewport_rotate_button_clicked() {
     mEmulatorWindow->activateWindow();
-    handleUICommand(QtUICommand::XR_VIEWPORT_CONTROL_MODE_ROTATE, true);
+    if (mXrLastMouseKeyboardModeCommand == QtUICommand::XR_VIEWPORT_CONTROL_MODE_ROTATE) {
+        on_xr_input_mode_changed(mLastInputModeRequested);
+    } else {
+        handleUICommand(QtUICommand::XR_VIEWPORT_CONTROL_MODE_ROTATE, true);
+    }
 }
 
 // Set the current selected input mode button or viewport control mode button

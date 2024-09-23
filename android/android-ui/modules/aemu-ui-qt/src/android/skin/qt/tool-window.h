@@ -210,7 +210,7 @@ private:
 
     int mLastRequestedFoldablePosture = -1;
     int mLastEnvironmentModeRequested = 0;
-    int mLastInputModeRequested = 0;
+    int mLastInputModeRequested = /*XR_INPUT_MODE_MOUSE_KEYBOARD*/ 1;
     QtUICommand mXrLastMouseKeyboardModeCommand = QtUICommand::CHANGE_XR_INPUT_MODE;
     std::vector<std::reference_wrapper<QPushButton>> mXrMouseKeyboardModeButtons;
 
