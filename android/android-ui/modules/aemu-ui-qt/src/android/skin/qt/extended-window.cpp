@@ -222,6 +222,8 @@ ExtendedWindow::ExtendedWindow(EmulatorQtWindow* eW, ToolWindow* tW)
                 AVD_TV &&
         avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) !=
                 AVD_WEAR &&
+        avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) !=
+                AVD_DEV_2024 &&
         (avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) !=
                  AVD_ANDROID_AUTO ||
          android::automotive::isMultiDisplaySupported(
@@ -231,10 +233,16 @@ ExtendedWindow::ExtendedWindow(EmulatorQtWindow* eW, ToolWindow* tW)
     } else {
         mExtendedUi->displaysButton->setVisible(false);
     }
-    mSidebarButtons.addButton(mExtendedUi->cellularButton);
+
+    if (avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) !=
+                AVD_DEV_2024) {
+        mSidebarButtons.addButton(mExtendedUi->cellularButton);
+        mSidebarButtons.addButton(mExtendedUi->telephoneButton);
+        mSidebarButtons.addButton(mExtendedUi->dpadButton);
+        mSidebarButtons.addButton(mExtendedUi->fingerButton);
+    }
+
     mSidebarButtons.addButton(mExtendedUi->batteryButton);
-    mSidebarButtons.addButton(mExtendedUi->telephoneButton);
-    mSidebarButtons.addButton(mExtendedUi->dpadButton);
     if (getConsoleAgents()->settings->hw()->hw_rotaryInput ||
         avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) ==
                 AVD_WEAR) {
@@ -243,24 +251,28 @@ ExtendedWindow::ExtendedWindow(EmulatorQtWindow* eW, ToolWindow* tW)
         mExtendedUi->rotaryInputButton->hide();
     }
     mSidebarButtons.addButton(mExtendedUi->microphoneButton);
-    mSidebarButtons.addButton(mExtendedUi->fingerButton);
 
     // Currently, the camera page only contains options for the virtual scene
     // camera.  Hide the button if the virtual scene camera is not enabled, or
-    // if we are using an Android Auto image because that does not have camera
-    // support at the moment.
+    // if we are using an Android Auto or XR image because that does not have
+    // camera support at the moment.
     if (androidHwConfig_hasVirtualSceneCamera(
                 getConsoleAgents()->settings->hw()) &&
         (!getConsoleAgents()->settings->avdInfo() ||
          (avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) !=
-          AVD_ANDROID_AUTO))) {
+                AVD_ANDROID_AUTO &&
+          avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) !=
+                AVD_DEV_2024))) {
         mSidebarButtons.addButton(mExtendedUi->cameraButton);
         mExtendedUi->cameraButton->setVisible(true);
     } else {
         mExtendedUi->cameraButton->setVisible(false);
     }
 
-    mSidebarButtons.addButton(mExtendedUi->virtSensorsButton);
+    if (avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) !=
+                AVD_DEV_2024) {
+        mSidebarButtons.addButton(mExtendedUi->virtSensorsButton);
+    }
 
     if (android::featurecontrol::isEnabled(
                 android::featurecontrol::GenericSnapshotsUI) &&
@@ -339,6 +351,16 @@ ExtendedWindow::ExtendedWindow(EmulatorQtWindow* eW, ToolWindow* tW)
         } else {
             mExtendedUi->carRotaryButton->setVisible(false);
         }
+    }
+
+    if (avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) ==
+                AVD_DEV_2024) {
+        mExtendedUi->locationButton->setVisible(false);
+        mExtendedUi->cellularButton->setVisible(false);
+        mExtendedUi->dpadButton->setVisible(false);
+        mExtendedUi->fingerButton->setVisible(false);
+        mExtendedUi->telephoneButton->setVisible(false);
+        mExtendedUi->virtSensorsButton->setVisible(false);
     }
 
 #ifdef __APPLE__
