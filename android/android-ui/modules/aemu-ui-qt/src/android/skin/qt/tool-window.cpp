@@ -192,9 +192,10 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
     SettingsTheme theme = getSelectedTheme();
     adjustAllButtonsForTheme(theme);
     updateTheme(Ui::stylesheetForTheme(theme));
+    const AvdInfo* avdInfo = getConsoleAgents()->settings->avdInfo();
+    const AvdFlavor avdFlavor = avdInfo ? avdInfo_getAvdFlavor(avdInfo) : AVD_OTHER;
 
     QString default_shortcuts =
-            "Ctrl+Shift+A SHOW_PANE_CAMERA\n"
             "Ctrl+Shift+U SHOW_PANE_BUGREPORT\n"
             "Ctrl+Shift+M SHOW_PANE_MICROPHONE\n"
             "Ctrl+Shift+N SHOW_PANE_SNAPSHOT\n"
@@ -205,13 +206,7 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
             "F1         SHOW_PANE_HELP\n"
 #endif
             "Ctrl+S     TAKE_SCREENSHOT\n"
-            "Ctrl+Shift+Up    PAN_UP\n"
-            "Ctrl+Shift+Down  PAN_DOWN\n"
-            "Ctrl+Shift+Left  PAN_LEFT\n"
-            "Ctrl+Shift+Right PAN_RIGHT\n"
             "Ctrl+P     POWER\n"
-            "Ctrl+M     MENU\n"
-            "Ctrl+T     TOGGLE_TRACKBALL\n"
 #ifndef __APPLE__
             "Ctrl+H     HOME\n"
 #else
@@ -220,13 +215,24 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
             "Ctrl+O     OVERVIEW\n"
             "Ctrl+Backspace BACK\n";
 
-    if (!getConsoleAgents()->settings->avdInfo() ||
-        avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) !=
-                AVD_WEAR) {
+    if (avdFlavor != AVD_DEV_2024) {
+        default_shortcuts +=
+            "Ctrl+Shift+A       SHOW_PANE_CAMERA\n"
+            "Ctrl+M             MENU\n"
+            "Ctrl+Shift+Up      PAN_UP\n"
+            "Ctrl+Shift+Down    PAN_DOWN\n"
+            "Ctrl+Shift+Left    PAN_LEFT\n"
+            "Ctrl+Shift+Right   PAN_RIGHT\n"
+            "Ctrl+T             TOGGLE_TRACKBALL\n";
+    }
+
+    if (avdFlavor != AVD_WEAR) {
         default_shortcuts += "Ctrl+=     VOLUME_UP\n";
         default_shortcuts += "Ctrl+-     VOLUME_DOWN\n";
-        default_shortcuts += "Ctrl+Left ROTATE_LEFT\n";
-        default_shortcuts += "Ctrl+Right ROTATE_RIGHT\n";
+        if (avdFlavor != AVD_DEV_2024) {
+            default_shortcuts += "Ctrl+Left  ROTATE_LEFT\n";
+            default_shortcuts += "Ctrl+Right ROTATE_RIGHT\n";
+        }
     }
 
     if (!android_foldable_any_folded_area_configured() &&
@@ -245,25 +251,24 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
         default_shortcuts += "Ctrl+Shift+R SHOW_PANE_RECORD\n";
     }
 
-    if (getConsoleAgents()->settings->avdInfo()) {
-        if (avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) ==
-            AVD_WEAR) {
-            if (avdInfo_getApiLevel(getConsoleAgents()->settings->avdInfo()) >=
-                28) {
+    if (avdInfo) {
+        if (avdFlavor == AVD_WEAR) {
+            if (avdInfo_getApiLevel(avdInfo) >= 28) {
                 default_shortcuts += "Ctrl+Shift+O WEAR_1\n";
                 default_shortcuts += "Ctrl+Shift+T TILT\n";
                 default_shortcuts += "Ctrl+Shift+E PALM\n";
             }
-            if (avdInfo_getApiLevel(getConsoleAgents()->settings->avdInfo()) >
-                28) {
+            if (avdInfo_getApiLevel(avdInfo) > 28) {
                 default_shortcuts += "Ctrl+Shift+I WEAR_2\n";
             }
-        } else if (avdInfo_getAvdFlavor(
-                           getConsoleAgents()->settings->avdInfo()) ==
-                   AVD_ANDROID_AUTO) {
+        } else if (avdFlavor == AVD_ANDROID_AUTO) {
             default_shortcuts += "Ctrl+Shift+T SHOW_PANE_CAR\n";
             default_shortcuts += "Ctrl+Shift+O SHOW_PANE_CAR_ROTARY\n";
             default_shortcuts += "Ctrl+Shift+I SHOW_PANE_SENSOR_REPLAY\n";
+        } else if (avdFlavor == AVD_DEV_2024) {
+            default_shortcuts +=
+                "Ctrl+Shift+/   XR_SCREEN_RECENTER\n"
+                "Ctrl+Shift+T   XR_SHOW_TASKBAR\n";
         } else if (android::featurecontrol::isEnabled(
                            android::featurecontrol::MultiDisplay) &&
                    !android_foldable_any_folded_area_configured() &&
@@ -277,35 +282,39 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
         }
     }
 
-    if (fc::isEnabled(fc::TvRemote) &&
-        getConsoleAgents()->settings->avdInfo() &&
-        avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) ==
-                AVD_TV) {
+    if (fc::isEnabled(fc::TvRemote) && avdFlavor == AVD_TV) {
         default_shortcuts += "Ctrl+Shift+D SHOW_PANE_TV_REMOTE\n";
-    } else {
+    } else if (avdFlavor != AVD_DEV_2024) {
         default_shortcuts += "Ctrl+Shift+D SHOW_PANE_DPAD\n";
     }
 
-    if (!getConsoleAgents()->settings->avdInfo() ||
-        avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) !=
-                AVD_TV) {
+    if (avdFlavor != AVD_TV) {
+        if (avdFlavor != AVD_DEV_2024) {
+            default_shortcuts +=
+                    "Ctrl+Shift+L SHOW_PANE_LOCATION\n"
+                    "Ctrl+Shift+C SHOW_PANE_CELLULAR\n"
+                    "Ctrl+Shift+P SHOW_PANE_PHONE\n"
+                    "Ctrl+Shift+V SHOW_PANE_VIRTSENSORS\n"
+                    "Ctrl+Shift+F SHOW_PANE_FINGER\n";
+        }
         default_shortcuts +=
-                "Ctrl+Shift+L SHOW_PANE_LOCATION\n"
-                "Ctrl+Shift+C SHOW_PANE_CELLULAR\n"
-                "Ctrl+Shift+B SHOW_PANE_BATTERY\n"
-                "Ctrl+Shift+P SHOW_PANE_PHONE\n"
-                "Ctrl+Shift+V SHOW_PANE_VIRTSENSORS\n"
-                "Ctrl+Shift+F SHOW_PANE_FINGER\n";
+            "Ctrl+Shift+B   SHOW_PANE_BATTERY\n";
     }
 
     QTextStream stream(&default_shortcuts);
     mShortcutKeyStore.populateFromTextStream(stream, parseQtUICommand);
-    // Need to add this one separately because QKeySequence cannot parse
-    // the string "Ctrl".
-    mShortcutKeyStore.add(QKeySequence(Qt::Key_Control | Qt::ControlModifier),
+
+    if (avdFlavor != AVD_DEV_2024) {
+        // Multitouch is disabled on XR images.
+        // Need to add this one separately because QKeySequence cannot parse
+        // the string "Ctrl".
+        mShortcutKeyStore.add(QKeySequence(Qt::Key_Control | Qt::ControlModifier),
                           QtUICommand::SHOW_MULTITOUCH);
 
-    VirtualSceneControlWindow::addShortcutKeysToKeyStore(mShortcutKeyStore);
+        // Virtual Scene control shortcuts are disabled on XR images since they
+        // conflict with the navigation shortcuts.
+        VirtualSceneControlWindow::addShortcutKeysToKeyStore(mShortcutKeyStore);
+    }
 
     // Update tool tips on all push buttons.
     const QList<QPushButton*> childButtons =
@@ -357,8 +366,7 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
         mToolsUi->tablet_mode_button->setHidden(true);
     }
 
-    if (avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) ==
-        AVD_TV) {
+    if (avdFlavor == AVD_TV) {
         // Android TV should not rotate
         // TODO: emulate VESA mounts for use with
         // vertically scrolling arcade games
@@ -366,8 +374,7 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
         mToolsUi->next_layout_button->setHidden(true);
     }
 
-    if (avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) ==
-        AVD_WEAR) {
+    if (avdFlavor == AVD_WEAR) {
         // Wear OS shouldn't get rotate nor volume up/down buttons.
         mToolsUi->prev_layout_button->setHidden(true);
         mToolsUi->next_layout_button->setHidden(true);
@@ -375,9 +382,7 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
         mToolsUi->volume_down_button->setHidden(true);
     }
 
-    if (avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) ==
-                AVD_WEAR &&
-        avdInfo_getApiLevel(getConsoleAgents()->settings->avdInfo()) >= 28) {
+    if (avdFlavor == AVD_WEAR && avdInfo_getApiLevel(avdInfo) >= 28) {
         // Use new button layout for >= API 28 wear emulators
         mToolsUi->overview_button->setHidden(true);
         mToolsUi->power_button->setHidden(true);
@@ -386,8 +391,7 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
         mToolsUi->controlsLayout->removeWidget(mToolsUi->back_button);
         mToolsUi->controlsLayout->insertWidget(0, mToolsUi->back_button);
 
-        if (avdInfo_getApiLevel(getConsoleAgents()->settings->avdInfo()) ==
-            28) {
+        if (avdInfo_getApiLevel(avdInfo) == 28) {
             mToolsUi->wear_button_2->setHidden(true);
         }
     } else {
@@ -397,8 +401,7 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
         mToolsUi->tilt_button->setHidden(true);
     }
 
-    if (avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) ==
-        AVD_ANDROID_AUTO) {
+    if (avdFlavor == AVD_ANDROID_AUTO) {
         // Android Auto doesn't support rotate, home, back, recent
         mToolsUi->prev_layout_button->setHidden(true);
         mToolsUi->next_layout_button->setHidden(true);
@@ -406,8 +409,7 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
         mToolsUi->overview_button->setHidden(true);
     }
 
-    if (avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) ==
-        AVD_DESKTOP) {
+    if (avdFlavor == AVD_DESKTOP) {
         // Desktop device does not rotate
         mToolsUi->prev_layout_button->setHidden(true);
         mToolsUi->next_layout_button->setHidden(true);
@@ -422,8 +424,7 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
         mToolsUi->overview_button->setHidden(true);
     }
 
-    if (avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) ==
-        AVD_DEV_2024) {
+    if (avdFlavor == AVD_DEV_2024) {
         mToolsUi->prev_layout_button->setHidden(true);
         mToolsUi->next_layout_button->setHidden(true);
     }
