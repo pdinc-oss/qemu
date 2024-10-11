@@ -709,6 +709,8 @@ toClearcutFeatureFlag(android::featurecontrol::Feature feature) {
             return android_studio::EmulatorFeatureFlagState::ANDROID_VIRTUALIZATION_FRAMEWORK;
         case android::featurecontrol::DualModeMouseDisplayHostCursor:
             return android_studio::EmulatorFeatureFlagState::DUAL_MODE_MOUSE_DISPLAY_HOST_CURSOR;
+        case android::featurecontrol::BypassVulkanDeviceFeatureOverrides:
+            return android_studio::EmulatorFeatureFlagState::BYPASS_VULKAN_DEVICE_FEATURE_OVERRIDES;
     }
     return android_studio::EmulatorFeatureFlagState::
             EMULATOR_FEATURE_FLAG_UNSPECIFIED;
