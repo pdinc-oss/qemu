@@ -774,8 +774,6 @@ EmulatorQtWindow::EmulatorQtWindow(QWidget* parent)
     setAttribute(Qt::WA_OpaquePaintEvent);
     setAttribute(Qt::WA_NoSystemBackground);
     setAttribute(Qt::WA_AcceptTouchEvents);
-    // Set the focus policy to receive FocusInEvent.
-    setFocusPolicy(Qt::StrongFocus);
 
     bool shortcutBool =
             settings.value(Ui::Settings::FORWARD_SHORTCUTS_TO_DEVICE, false)
@@ -1487,6 +1485,11 @@ void EmulatorQtWindow::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void EmulatorQtWindow::focusInEvent(QFocusEvent *event) {
+    // FocusIn event may not be received unless setFocusPolicy(Qt::StrongFocus)
+    // is called on the widget. However, this breaks the zoom behavior because
+    // of EmulatorOverlay::focusOutEvent() hides the overlay itself right after
+    // the zoom button is clicked since it takes the focus out of the emulator
+    // window.
     if (android::featurecontrol::isEnabled(
                 android::featurecontrol::VirtioDualModeMouse)) {
         mContainer.setCursor(getCursorShape(/*mouseGrabbed*/ false));
