@@ -529,9 +529,11 @@ static void usbredir_host_parser_control_transfer(
 
     if (USBREDIR_HEADER_CACHE_SIZE <
         sizeof(struct usb_redir_control_packet_header)) {
+        g_autofree char *path = object_get_canonical_path(
+            OBJECT(usbredir_host));
         error_report(
             "%s: usb_redir_control_packet_header overflowed request cache.",
-            object_get_canonical_path(OBJECT(usbredir_host)));
+            path);
         return;
     }
 
@@ -556,9 +558,11 @@ static void usbredir_host_parser_set_config(
 
     if (USBREDIR_HEADER_CACHE_SIZE <
         sizeof(struct usb_redir_set_configuration_header)) {
+        g_autofree char *path = object_get_canonical_path(
+            OBJECT(usbredir_host));
         error_report(
             "%s: usb_redir_set_configuration_header overflowed request cache.",
-            object_get_canonical_path(OBJECT(usbredir_host)));
+            path);
         return;
     }
 
@@ -582,9 +586,11 @@ static void usbredir_host_parser_set_alt(
 
     if (USBREDIR_HEADER_CACHE_SIZE <
         sizeof(struct usb_redir_set_alt_setting_header)) {
+        g_autofree char *path = object_get_canonical_path(
+            OBJECT(usbredir_host));
         error_report(
             "%s: usb_redir_set_alt_setting_header overflowed request cache.",
-            object_get_canonical_path(OBJECT(usbredir_host)));
+            path);
         return;
     }
 
@@ -714,8 +720,9 @@ static void usbredir_host_create_parser(USBRedirectHost *usbredir_host)
     usbredir_host->parser = usbredirparser_create();
 
     if (!usbredir_host->parser) {
-        error_report("%s: usbredirparser_create() failed",
-                     object_get_canonical_path(OBJECT(usbredir_host)));
+        g_autofree char *path = object_get_canonical_path(
+            OBJECT(usbredir_host));
+        error_report("%s: usbredirparser_create() failed", path);
         exit(1);
     }
 
@@ -806,8 +813,9 @@ static void usbredir_host_realize(DeviceState *dev, Error **errp)
         QTAILQ_INIT(&usbredir_host->bulk_in_data_cache);
         QTAILQ_INIT(&usbredir_host->bulk_out_packet_cache);
     } else {
-        qemu_log_mask(LOG_TRACE, "%s: continuing without chardev",
-                      object_get_canonical_path(OBJECT(dev)));
+        g_autofree char *path = object_get_canonical_path(
+            OBJECT(dev));
+        qemu_log_mask(LOG_TRACE, "%s: continuing without chardev", path);
     }
 }
 
