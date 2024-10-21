@@ -625,9 +625,6 @@ private:
                 android::featurecontrol::GuestUsesAngle, false);
         android::featurecontrol::setEnabledOverride(
                 android::featurecontrol::VulkanQueueSubmitWithCommands, true);
-        android::featurecontrol::setEnabledOverride(
-                android::featurecontrol::VulkanBatchedDescriptorSetUpdate,
-                true);
 
         getConsoleAgents()->settings->hw()->hw_gltransport_asg_writeBufferSize =
                 262144;
