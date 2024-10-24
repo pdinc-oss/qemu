@@ -742,7 +742,7 @@ static void designware_i2c_enter_reset(Object *obj, ResetType type)
     s->status = DW_I2C_STATUS_IDLE;
 }
 
-static void designware_i2c_hold_reset(Object *obj)
+static void designware_i2c_hold_reset(Object *obj, ResetType type)
 {
     DesignWareI2CState *s = DESIGNWARE_I2C(obj);
 
