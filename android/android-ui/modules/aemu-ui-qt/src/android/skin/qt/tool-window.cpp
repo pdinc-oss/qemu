@@ -180,11 +180,15 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
     setWindowFlags(flag | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint);
     mToolsUi->setupUi(this);
 
+    const AvdInfo* avdInfo = getConsoleAgents()->settings->avdInfo();
+    const AvdFlavor avdFlavor = avdInfo ? avdInfo_getAvdFlavor(avdInfo) : AVD_OTHER;
+
     mToolsUi->mainLayout->setAlignment(Qt::AlignCenter);
     mToolsUi->winButtonsLayout->setAlignment(Qt::AlignCenter);
     mToolsUi->controlsLayout->setAlignment(Qt::AlignCenter);
     if (android_foldable_any_folded_area_configured() ||
-        android_foldable_hinge_configured() || resizableEnabled()) {
+        android_foldable_hinge_configured() || resizableEnabled() ||
+        avdFlavor == AVD_DEV_2024) {
         mToolsUi->zoom_button->hide();
         mToolsUi->zoom_button->setEnabled(false);
     }
@@ -192,8 +196,6 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
     SettingsTheme theme = getSelectedTheme();
     adjustAllButtonsForTheme(theme);
     updateTheme(Ui::stylesheetForTheme(theme));
-    const AvdInfo* avdInfo = getConsoleAgents()->settings->avdInfo();
-    const AvdFlavor avdFlavor = avdInfo ? avdInfo_getAvdFlavor(avdInfo) : AVD_OTHER;
 
     QString default_shortcuts =
             "Ctrl+Shift+U SHOW_PANE_BUGREPORT\n"
@@ -237,7 +239,8 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
 
     if (!android_foldable_any_folded_area_configured() &&
         !android_foldable_hinge_configured() &&
-        !android_foldable_rollable_configured() && !resizableEnabled()) {
+        !android_foldable_rollable_configured() && !resizableEnabled() &&
+        avdFlavor != AVD_DEV_2024) {
         // Zoom is not available for foldable and resizable AVDs
         default_shortcuts += "Ctrl+Z    ENTER_ZOOM\n";
         default_shortcuts += "Ctrl+Up   ZOOM_IN\n";
