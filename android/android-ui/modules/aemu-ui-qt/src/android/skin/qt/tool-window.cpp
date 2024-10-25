@@ -1663,7 +1663,7 @@ void ToolWindow::on_tablet_mode_button_clicked() {
 
 void ToolWindow::on_change_posture_button_clicked() {
     mPostureSelectionDialog->show();
-    // Align pop-up posture selction dialog to the right of posture button
+    // Align pop-up posture selection dialog to the right of posture button.
     QRect geoTool = this->geometry();
     mPostureSelectionDialog->move(
             geoTool.right(),
@@ -1689,12 +1689,20 @@ void ToolWindow::on_xr_environment_mode_button_clicked() {
 }
 
 void ToolWindow::on_xr_input_mode_button_clicked() {
-    mXrInputModeDialog->show();
-    // Align pop-up posture selction dialog to the right of posture button
-    QRect geoTool = this->geometry();
-    mXrInputModeDialog->move(
-            geoTool.right(),
-            geoTool.top() + mToolsUi->xr_input_mode_button->geometry().top());
+    if (getConsoleAgents()
+                ->settings->android_cmdLineOptions()
+                ->support_multiple_input_modalites) {
+        mXrInputModeDialog->show();
+        // Align pop-up input selection dialog to the right of input button.
+        QRect geoTool = this->geometry();
+        mXrInputModeDialog->move(
+                geoTool.right(),
+                geoTool.top() + mToolsUi->xr_input_mode_button->geometry().top());
+    } else {
+        mEmulatorWindow->activateWindow();
+        mLastInputModeRequested = XR_INPUT_MODE_MOUSE_KEYBOARD;
+        handleUICommand(QtUICommand::CHANGE_XR_INPUT_MODE, true);
+    }
 }
 
 void ToolWindow::on_xr_screen_recenter_button_clicked() {
