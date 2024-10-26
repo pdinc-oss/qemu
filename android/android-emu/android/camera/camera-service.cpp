@@ -299,29 +299,27 @@ _camera_info_get_by_device_name(const char* device_name, CameraInfo* arr, int nu
 
 static int _camera_client_get_max_resolution(const CameraInfo* info,
                                              int* width, int* height) {
-    CameraFrameDim *dim, *chosen;
-    int maxArea = 0, area;
-
     if (!info || !width || !height) {
         return -1;
     }
-    dim = info->frame_sizes;
-    if (!dim) {
+
+    CameraFrameDim *maxDim = info->frame_sizes;
+    if (!maxDim) {
         return -1;
     }
-    for (int i = 0; i < info->frame_sizes_num; i++) {
-        if (dim->width > 1280 || dim->height > 1280) {
-            continue;
-        }
-        area = dim->width * dim->height;
+    int maxArea = maxDim->width * maxDim->height;
+
+    CameraFrameDim *dim = maxDim + 1;
+    for (int i = info->frame_sizes_num - 1; i > 0 ; --i, ++dim) {
+        const int area = dim->width * dim->height;
         if (area > maxArea) {
             maxArea = area;
-            chosen = dim;
+            maxDim = dim;
         }
-        dim++;
     }
-    *width = chosen->width;
-    *height = chosen->height;
+
+    *width = maxDim->width;
+    *height = maxDim->height;
     return 0;
 }
 
