@@ -18,6 +18,8 @@
  * Contains emulated camera service implementation.
  */
 
+#include <algorithm>
+
 #include "android/camera/camera-service.h"
 
 #include "android/boot-properties.h"
@@ -303,7 +305,7 @@ static int _camera_client_get_max_resolution(const CameraInfo* info,
         return -1;
     }
 
-    CameraFrameDim *maxDim = info->frame_sizes;
+    const CameraFrameDim *maxDim = info->frame_sizes;
     if (!maxDim) {
         return -1;
     }
@@ -312,15 +314,14 @@ static int _camera_client_get_max_resolution(const CameraInfo* info,
         return -1;
     }
 
-    int maxArea = maxDim->width * maxDim->height;
-    CameraFrameDim *dim = maxDim + 1;
-    for (int i = frameSizesNum - 1; i > 0 ; --i, ++dim) {
-        const int area = dim->width * dim->height;
-        if (area > maxArea) {
-            maxArea = area;
-            maxDim = dim;
-        }
-    }
+    using MaxSoFar = std::pair<const CameraFrameDim *, int>;
+
+    maxDim = std::accumulate(maxDim + 1, maxDim + frameSizesNum,
+        std::make_pair(maxDim, maxDim->width * maxDim->height),
+        [](const MaxSoFar maxSoFar, const CameraFrameDim &dim) -> MaxSoFar {
+            const int area = dim.width * dim.height;
+            return (area > maxSoFar.second) ? std::make_pair(&dim, area) : maxSoFar;
+        }).first;
 
     *width = maxDim->width;
     *height = maxDim->height;
