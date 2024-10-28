@@ -307,10 +307,14 @@ static int _camera_client_get_max_resolution(const CameraInfo* info,
     if (!maxDim) {
         return -1;
     }
-    int maxArea = maxDim->width * maxDim->height;
+    const int frameSizesNum = info->frame_sizes_num;
+    if (frameSizesNum <= 0) {
+        return -1;
+    }
 
+    int maxArea = maxDim->width * maxDim->height;
     CameraFrameDim *dim = maxDim + 1;
-    for (int i = info->frame_sizes_num - 1; i > 0 ; --i, ++dim) {
+    for (int i = frameSizesNum - 1; i > 0 ; --i, ++dim) {
         const int area = dim->width * dim->height;
         if (area > maxArea) {
             maxArea = area;
