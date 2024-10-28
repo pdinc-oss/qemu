@@ -1730,7 +1730,13 @@ SkinWindow* skin_window_create(SkinLayout* slayout,
     }
 
     if (window->monitor.size.w == 0 || window->monitor.size.h == 0) {
-        skin_winsys_get_monitor_rect(&monitor);
+        // On MacOS with retina display, the device pixel ratio is 2.0 and
+        // logical width and height are half of the physical width and height.
+        // The device pixel ratio above is not yet initialized and returns 1.0
+        // by default. The window size must be smaller than the logical
+        // resolution, else QT clamps the width and height according to logical
+        // resolution and creates a window with improper aspect ratio.
+        skin_winsys_get_monitor_logical_rect(&monitor);
     } else {
         monitor.pos.x = window->monitor.pos.x;
         monitor.pos.y = window->monitor.pos.y;
@@ -1945,7 +1951,13 @@ static void skin_window_resize(SkinWindow* window, int resize_container) {
 
     SkinRect monitor;
     if (window->monitor.size.h == 0 || window->monitor.size.w == 0) {
-        skin_winsys_get_monitor_rect(&monitor);
+        // On MacOS with retina display, the device pixel ratio is 2.0 and
+        // logical width and height are half of the physical width and height.
+        // The device pixel ratio above is not yet initialized and returns 1.0
+        // by default. The window size must be smaller than the logical
+        // resolution, else QT clamps the width and height according to logical
+        // resolution and creates a window with improper aspect ratio.
+        skin_winsys_get_monitor_logical_rect(&monitor);
     } else {
         monitor.pos.x = window->monitor.pos.x;
         monitor.pos.y = window->monitor.pos.y;

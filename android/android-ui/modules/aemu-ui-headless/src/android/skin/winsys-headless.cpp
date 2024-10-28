@@ -173,6 +173,10 @@ extern void skin_winsys_get_monitor_rect(SkinRect* rect) {
       rect->size.h);
 }
 
+extern void skin_winsys_get_monitor_logical_rect(SkinRect* rect) {
+    return skin_winsys_get_monitor_rect(rect);
+}
+
 extern int skin_winsys_get_device_pixel_ratio(double* dpr) {
     D("skin_winsys_get_device_pixel_ratio");
     *dpr = 1.0;
