@@ -1722,8 +1722,6 @@ extern "C" int main(int argc, char** argv) {
                 fc::setIfNotOverriden(fc::VulkanShaderFloat16Int8, true);
                 fc::setIfNotOverriden(fc::KeycodeForwarding, true);
                 fc::setIfNotOverriden(fc::VulkanQueueSubmitWithCommands, true);
-                fc::setIfNotOverriden(fc::VulkanBatchedDescriptorSetUpdate,
-                                      true);
                 fc::setIfNotOverriden(fc::VirtioGpuFenceContexts, false);
                 fc::setIfNotOverriden(fc::HostComposition, true);
                 fc::setIfNotOverriden(fc::AsyncComposeSupport, true);
