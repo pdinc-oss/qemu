@@ -152,7 +152,7 @@ config XLNX_USB_SUBSYS
     bool
     select USB_DWC3
 
-config USB_NPCM8XX
+config USB_NPCM
     bool
     select USB_REDIRECT_HOST
 
