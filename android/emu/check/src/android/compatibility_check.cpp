@@ -40,15 +40,19 @@ void AvdCompatibilityManager::registerCheck(CompatibilityCheck checkFn,
 
 std::vector<AvdCompatibilityCheckResult> AvdCompatibilityManager::check(
         AvdInfo* avd) {
+    if (mRanChecks) {
+        return mResults;
+    }
+    mResults.clear();
     LOG(INFO) << "Checking system compatibility:";
-    std::vector<AvdCompatibilityCheckResult> results;
     for (auto& [name, check] : mChecks) {
         LOG(INFO) << "  Checking: " << name;
         auto result = check(avd);
         LOG(INFO) << "     " << result.status << ": " << result.description;
-        results.emplace_back(result);
+        mResults.emplace_back(result);
     }
-    return results;
+    mRanChecks = true;
+    return mResults;
 }
 
 bool AvdCompatibilityManager::hasCompatibilityErrors(
