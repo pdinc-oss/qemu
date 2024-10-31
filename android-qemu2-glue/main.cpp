@@ -3358,6 +3358,13 @@ extern "C" int main(int argc, char** argv) {
         std::vector<std::string> kernelCmdLineUserspaceBootOpts;
         if (fc::isEnabled(fc::AndroidbootProps) ||
             fc::isEnabled(fc::AndroidbootProps2)) {
+            if (VERBOSE_CHECK(init)) {
+                dinfo("Android bootconfig:");
+                for (const std::pair<std::string, std::string>& kv : userspaceBootOpts) {
+                    dinfo("  %s=\"%s\"", kv.first.c_str(), kv.second.c_str());
+                }
+            }
+
             const int r = createRamdiskWithBootconfig(
                     hw->disk_ramdisk_path, bootconfigInitrdPath.c_str(),
                     userspaceBootOpts);
