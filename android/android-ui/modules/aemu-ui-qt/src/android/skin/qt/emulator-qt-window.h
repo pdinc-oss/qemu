@@ -443,6 +443,7 @@ private:
     void checkVgkAndWarn();
     void checkHaxmAndWarn();
     void checkNestedAndWarn();
+    void displayCheckWarnings();
 
     bool mouseInside();
     SkinMouseButtonType getSkinMouseButton(const QMouseEvent* event) const;
