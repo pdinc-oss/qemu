@@ -81,9 +81,14 @@ class AvdCompatibilityManager final {
 public:
     /**
      * @brief Runs all registered compatibility checks on the specified AVD.
-     * @param avd A pointer to the AvdInfo struct representing the AVD to check
-     * @return A vector of AvdCompatibilityCheckResult structs, each containing
-     * the result of a single check
+     *
+     * This function executes all registered compatibility checks on the given
+     * AVD. Results are cached, so subsequent calls will return the cached
+     * results unless the checks are explicitly invalidated.
+     *
+     * @param avd A pointer to the AvdInfo struct representing the AVD to check.
+     * @return A vector of AvdCompatibilityCheckResult structs, one for each
+     *         compatibility check performed.
      */
     std::vector<AvdCompatibilityCheckResult> check(AvdInfo* avd);
 
@@ -125,18 +130,31 @@ public:
      */
     std::vector<std::string_view> registeredChecks();
 
-   /**
-    * @brief Checks the compatibility of an AVD and terminates the program if errors are found
-    * @param avd A pointer to the AvdInfo struct representing the AVD to be checked
-    */
-   static void ensureAvdCompatibility(AvdInfo* avd);
+    /**
+     * @brief Invalidates the cached compatibility check results for the
+     * specified AVD.
+     *
+     * This function clears the cached compatibility check results, forcing the
+     * next call to `check()` to re-run all the checks.
+     */
+    void invalidate() {
+        mRanChecks = false;
+    }
+
+    /**
+     * @brief Checks the compatibility of an AVD and terminates the program if
+     * errors are found
+     * @param avd A pointer to the AvdInfo struct representing the AVD to be
+     * checked
+     */
+    static void ensureAvdCompatibility(AvdInfo* avd);
+
 private:
     AvdCompatibilityManager() = default;
 
-    /**
-     * @brief Stores the registered checks as pairs of name and check function
-     */
     std::vector<std::pair<std::string_view, CompatibilityCheck>> mChecks;
+    bool mRanChecks{false};
+    std::vector<AvdCompatibilityCheckResult> mResults;
 
     // Testing..
     friend class AvdCompatibilityManagerTest;
