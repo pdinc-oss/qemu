@@ -19,6 +19,7 @@ extern "C" {
 #include "android-qemu2-glue/emulation/virtio-wifi.h"
 #include "migration/register.h"
 #include "standard-headers/linux/virtio_ids.h"
+#include <qemu/iov.h>
 }
 
 #include <algorithm>
@@ -123,52 +124,33 @@ struct virtio_wifi_config {
     uint16_t mtu;
 } __attribute__((packed));
 
-static bool virtio_wifi_has_buffers(VirtQueue* vq) {
-    if (virtio_queue_empty(vq)) {
-        virtio_queue_set_notification(vq, 1);
-
-        /* To avoid a race condition where the guest has made some buffers
-         * available after the above check but before notification was
-         * enabled, check for available buffers again.
-         */
-        if (virtio_queue_empty(vq)) {
-            return false;
-        }
-    }
-
-    virtio_queue_set_notification(vq, 0);
-    return true;
-}
-
 static ssize_t virtio_wifi_add_buf(VirtIODevice* vdev,
                                    VirtQueue* vq,
                                    const uint8_t* buf,
                                    uint32_t size) {
     android::RecursiveScopedVmLock lock;
-    if (!virtio_wifi_has_buffers(vq)) {
-        LOG(DEBUG) << "VirtIO WiFi: unexpected full virtqueue";
-        return -1;
-    }
     VirtQueueElement* elem = static_cast<VirtQueueElement*>(
             virtqueue_pop(vq, sizeof(VirtQueueElement)));
     if (!elem) {
-        LOG(DEBUG) << "VirtIO WiFi: unexpected empty virtqueue";
+        virtio_queue_set_notification(vq, 0);
         return -1;
     }
-    if (elem->in_num < 1) {
-        virtqueue_detach_element(vq, elem, 0);
-        g_free(elem);
-        return -1;
+
+    const uint32_t elemCapacity = iov_size(elem->in_sg, elem->in_num);
+    if (elemCapacity < size) {
+        LOG(WARNING) << "VirtIO WiFi: received a very large (" << size
+                     << " bytes) buffer, truncating to " << elemCapacity << " bytes.";
+        size = elemCapacity;
     }
-    IOVector iovec(elem->in_sg, elem->in_sg + elem->in_num);
-    size = std::min(size, Ieee80211Frame::MAX_FRAME_LEN);
-    iovec.copyFrom(buf, 0, size);
-    /* signal other side */
-    virtqueue_fill(vq, elem, size, 0);
-    // Use C free API because virtqueue_pop is using C alloc.
+
+    virtio_queue_set_notification(vq, 1);
+
+    iov_from_buf(elem->in_sg, elem->in_num, 0, buf, size);
+    virtqueue_push(vq, elem, size);
     g_free(elem);
-    virtqueue_flush(vq, 1);
+
     virtio_notify(vdev, vq);
+
     return size;
 }
 
@@ -220,25 +202,25 @@ static ssize_t virtio_wifi_flush_tx(VirtIOWifiQueue* q) {
         if (!elem) {
             break;
         }
-        if (elem->out_num < 1) {
-            virtqueue_detach_element(vq, elem, 0);
-            g_free(elem);
-            return -EINVAL;
-        }
 
         IOVector iovec(elem->out_sg, elem->out_sg + elem->out_num);
-        if (state.wifiService->send(iovec) == -EBUSY) {
+        const int sendResult = state.wifiService->send(iovec);
+        if (sendResult == -EBUSY) {
             virtio_queue_set_notification(vq, 0);
             q->async_tx.elem = elem;
             return -EBUSY;
         }
+
         virtqueue_push(vq, elem, 0);
-        virtio_notify(vdev, vq);
-        // Use C free API because virtqueue_pop is using C alloc.
         g_free(elem);
+
         if (++num_packets >= n->tx_burst) {
             break;
         }
+    }
+
+    if (num_packets > 0) {
+        virtio_notify(vdev, vq);
     }
     return num_packets;
 }
@@ -249,13 +231,17 @@ static void virtio_wifi_tx_complete(size_t queue_index) {
     VirtIOWifi* n = globalState()->wifi;
     VirtIOWifiQueue* q = &n->vqs[queue_index];
     VirtIODevice* vdev = VIRTIO_DEVICE(n);
+
+    virtio_queue_set_notification(q->tx, 1);
+
     if (q->async_tx.elem) {
         virtqueue_push(q->tx, q->async_tx.elem, 0);
-        virtio_notify(vdev, q->tx);
         g_free(q->async_tx.elem);
         q->async_tx.elem = NULL;
+
+        virtio_notify(vdev, q->tx);
     }
-    virtio_queue_set_notification(q->tx, 1);
+
     virtio_wifi_flush_tx(q);
 }
 
