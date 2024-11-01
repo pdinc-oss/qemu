@@ -280,41 +280,70 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
             // This might happen because of unsupported API level or GPU
             dfatal("Vulkan is not supported: GuestAngle feature won't work!");
         }
-        // TODO(joshuaduong): Only disable on playstore image??
-        // ANGLE features:
-        // - supportsTransformFeedbackExtension:
-        //     enables tessellation/geometry shaders
-        // - allowAstcFormats:
-        //     GL_KHR_texture_compression_astc_hdr, GL_KHR_texture_compression_astc_sliced_3d
-        std::string angle_overrides_disabled = System::get()->envGet("AEMU_ANGLE_OVERRIDES_DISABLED");
-        if (angle_overrides_disabled.empty()) {
-            std::stringstream ss;
-            ss << "textureCompressionAstcLdrKHR" << ":";
-            ss << "sampleShadingOES" << ":";
-            ss << "sampleVariablesOES" << ":";
-            ss << "shaderMultisampleInterpolationOES" << ":";
-            ss << "copyImageEXT" << ":";
-            ss << "drawBuffersIndexedEXT" << ":";
-            ss << "geometryShaderEXT" << ":";
-            ss << "gpuShader5EXT" << ":";
-            ss << "primitiveBoundingBoxEXT" << ":";
-            ss << "shaderIoBlocksEXT" << ":";
-            ss << "textureBorderClampEXT" << ":";
-            ss << "textureBufferEXT" << ":";
-            ss << "textureCubeMapArrayEXT" << ":";
-            // Other extensions
-            ss << "drawElementsBaseVertexOES" << ":";
-            ss << "colorBufferFloatEXT" << ":";
-            ss << "robustnessKHR" << ":";
-            // Turn off tessellation shader (Required in ES 3.2)
-            ss << "tessellationShaderEXT" << ":";
-            ss << "tessellationShaderOES" << ":";
-            // Turn off geometry shader (Required in ES 3.2)
-            ss << "geometryShaderEXT" << ":";
-            ss << "geometryShaderOES";
-            params.push_back({"androidboot.qemu.angle.aemu_feature_overrides_disabled", ss.str()});
-        } else {
-            params.push_back({"androidboot.qemu.angle.aemu_feature_overrides_disabled", angle_overrides_disabled});
+
+        if (apiLevel == 35) {
+            // There's an emulator-specific hack in API 35 to disable specific GL extensions. You
+            // can provide your own colon-delimited list or set to 0 to not disable any extensions,
+            // as we disable a large set of GL extensions by default. See below.
+            std::string aemu_angle_overrides_disabled =
+                    System::get()->envGet("AEMU_ANGLE_OVERRIDES_DISABLED");
+            // The official angle feature set. See angle source code for more info.
+            std::string angle_overrides_enabled =
+                    System::get()->envGet("ANGLE_FEATURE_OVERRIDES_ENABLED");
+            std::string angle_overrides_disabled =
+                    System::get()->envGet("ANGLE_FEATURE_OVERRIDES_DISABLED");
+
+            if (!angle_overrides_enabled.empty()) {
+                params.push_back({"androidboot.hardware.angle_feature_overrides_enabled",
+                                angle_overrides_enabled});
+            }
+
+            if (angle_overrides_disabled.empty()) {
+                // Without turning off exposeNonConformantExtensionsAndVersions, ANGLE will bypass
+                // the supported extensions check when guest creates a GL context, which means a ES
+                // 3.2 context can be created even without the above extensions.
+                params.push_back({"androidboot.hardware.angle_feature_overrides_disabled",
+                                "exposeNonConformantExtensionsAndVersions"});
+            } else {
+                params.push_back({"androidboot.hardware.angle_feature_overrides_disabled",
+                                angle_overrides_disabled});
+            }
+
+            // TODO(b/376893591): The feature set below is only tested on API 35. Adjust accordingly
+            // for other APIs.
+            if (aemu_angle_overrides_disabled.empty()) {
+                // Turning these off effectively disables support for GLES 3.2.
+                std::stringstream ss;
+                ss << "textureCompressionAstcLdrKHR" << ":";
+                ss << "sampleShadingOES" << ":";
+                ss << "sampleVariablesOES" << ":";
+                ss << "shaderMultisampleInterpolationOES" << ":";
+                ss << "copyImageEXT" << ":";
+                ss << "drawBuffersIndexedEXT" << ":";
+                ss << "geometryShaderEXT" << ":";
+                ss << "gpuShader5EXT" << ":";
+                ss << "primitiveBoundingBoxEXT" << ":";
+                ss << "shaderIoBlocksEXT" << ":";
+                ss << "textureBorderClampEXT" << ":";
+                ss << "textureBufferEXT" << ":";
+                ss << "textureCubeMapArrayEXT" << ":";
+                // Other extensions
+                ss << "drawElementsBaseVertexOES" << ":";
+                ss << "colorBufferFloatEXT" << ":";
+                ss << "robustnessKHR" << ":";
+                // Turn off tessellation shader (Required in ES 3.2)
+                ss << "tessellationShaderEXT" << ":";
+                ss << "tessellationShaderOES" << ":";
+                // Turn off geometry shader (Required in ES 3.2)
+                ss << "geometryShaderEXT" << ":";
+                ss << "geometryShaderOES";
+                aemu_angle_overrides_disabled = ss.str();
+            }
+
+            if (aemu_angle_overrides_disabled != "0") {
+                params.push_back({"androidboot.qemu.angle.aemu_feature_overrides_disabled",
+                                aemu_angle_overrides_disabled});
+            }
         }
     }
 
