@@ -549,7 +549,19 @@ public:
           LOG(DEBUG) << errorStr;
           return errorStr;
         }
-        lastSuccessfulValue = osName.toString();
+
+        string osNameCorrected = osName.toString();
+        // Change "Windows 10" to "Windows 11" based on Windows Build Number
+        // The product name of Windows 11 variants is "Windows 10" in the
+        // registry. Before finding a official API to get the correct product
+        // name, let's correct the name manually based on build number.
+        if (!osNameCorrected.compare(0, 10, "Windows 10")) {
+            auto ver = android::base::Win32Utils::getWindowsVersion();
+            auto osBuildNumber = ver->dwBuildNumber;
+            if (osBuildNumber >= 22000)
+                osNameCorrected.replace(8, 2, "11");
+        }
+        lastSuccessfulValue = osNameCorrected;
         return lastSuccessfulValue;
 #elif defined(__APPLE__)
         // Taken from https://opensource.apple.com/source/DarwinTools/DarwinTools-1/sw_vers.c

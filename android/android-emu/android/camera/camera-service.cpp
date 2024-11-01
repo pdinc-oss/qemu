@@ -18,6 +18,8 @@
  * Contains emulated camera service implementation.
  */
 
+#include <algorithm>
+
 #include "android/camera/camera-service.h"
 
 #include "android/boot-properties.h"
@@ -299,29 +301,30 @@ _camera_info_get_by_device_name(const char* device_name, CameraInfo* arr, int nu
 
 static int _camera_client_get_max_resolution(const CameraInfo* info,
                                              int* width, int* height) {
-    CameraFrameDim *dim, *chosen;
-    int maxArea = 0, area;
-
     if (!info || !width || !height) {
         return -1;
     }
-    dim = info->frame_sizes;
-    if (!dim) {
+
+    const CameraFrameDim *maxDim = info->frame_sizes;
+    if (!maxDim) {
         return -1;
     }
-    for (int i = 0; i < info->frame_sizes_num; i++) {
-        if (dim->width > 1280 || dim->height > 1280) {
-            continue;
-        }
-        area = dim->width * dim->height;
-        if (area > maxArea) {
-            maxArea = area;
-            chosen = dim;
-        }
-        dim++;
+    const int frameSizesNum = info->frame_sizes_num;
+    if (frameSizesNum <= 0) {
+        return -1;
     }
-    *width = chosen->width;
-    *height = chosen->height;
+
+    using MaxSoFar = std::pair<const CameraFrameDim *, int>;
+
+    maxDim = std::accumulate(maxDim + 1, maxDim + frameSizesNum,
+        std::make_pair(maxDim, maxDim->width * maxDim->height),
+        [](const MaxSoFar maxSoFar, const CameraFrameDim &dim) -> MaxSoFar {
+            const int area = dim.width * dim.height;
+            return (area > maxSoFar.second) ? std::make_pair(&dim, area) : maxSoFar;
+        }).first;
+
+    *width = maxDim->width;
+    *height = maxDim->height;
     return 0;
 }
 
