@@ -112,7 +112,10 @@ void VhalTable::initVhalPropertyTable() {
         return;
     }
     // Extend VHAL properties dictionaries with json descriptions
-    QFileInfo sysImgFileInfo(avdInfo_getSystemImagePath(getConsoleAgents()->settings->avdInfo()));
+    char* sysImagePath =
+            avdInfo_getSystemImagePath(getConsoleAgents()->settings->avdInfo())
+                    ?: avdInfo_getSystemInitImagePath(getConsoleAgents()->settings->avdInfo());
+    QFileInfo sysImgFileInfo(sysImagePath);
     QString sysImgPath(sysImgFileInfo.absolutePath());
 
     QString avdPath(avdInfo_getContentPath(getConsoleAgents()->settings->avdInfo()));
