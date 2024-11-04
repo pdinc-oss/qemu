@@ -270,8 +270,7 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
             default_shortcuts += "Ctrl+Shift+I SHOW_PANE_SENSOR_REPLAY\n";
         } else if (avdFlavor == AVD_DEV_2024) {
             default_shortcuts +=
-                "Ctrl+Shift+/   XR_SCREEN_RECENTER\n"
-                "Ctrl+Shift+T   XR_SHOW_TASKBAR\n";
+                "Ctrl+Shift+/   XR_SCREEN_RECENTER\n";
         } else if (android::featurecontrol::isEnabled(
                            android::featurecontrol::MultiDisplay) &&
                    !android_foldable_any_folded_area_configured() &&
@@ -1132,24 +1131,6 @@ void ToolWindow::handleUICommand(QtUICommand cmd,
                 }
             }
             break;
-        case QtUICommand::XR_SHOW_TASKBAR:
-            if (android_is_xr_mode()) {
-                if (down) {
-                    float mode = 1;
-                    LOG(DEBUG) << "Sending XR Show Taskbar";
-                    EmulatorQtWindow* emuQtWindow = EmulatorQtWindow::getInstance();
-                    if (emuQtWindow == nullptr) {
-                        VLOG(foldable) << "Error send Event, null emulator qt window";
-                        return;
-                    }
-                    android::base::AutoLock lock(mLock);
-                    emuQtWindow->getAdbInterface()->enqueueCommand(
-                            {"shell", "am", "broadcast",
-                            "-a", "ix.moohan.sysui.KEYBOARD_SHORTCUT",
-                            "--es", "SHORTCUT", "TASKBAR_TOGGLE_VISIBILITY"});
-                }
-            }
-            break;
         case QtUICommand::SHOW_MULTITOUCH:
         // Multitouch is handled in EmulatorQtWindow, and doesn't
         // really need an element in the QtUICommand enum. This
@@ -1708,11 +1689,6 @@ void ToolWindow::on_xr_input_mode_button_clicked() {
 void ToolWindow::on_xr_screen_recenter_button_clicked() {
     mEmulatorWindow->activateWindow();
     handleUICommand(QtUICommand::XR_SCREEN_RECENTER, true);
-}
-
-void ToolWindow::on_xr_show_taskbar_button_clicked() {
-    mEmulatorWindow->activateWindow();
-    handleUICommand(QtUICommand::XR_SHOW_TASKBAR, true);
 }
 
 void ToolWindow::on_dismiss_xr_environment_mode_dialog() {

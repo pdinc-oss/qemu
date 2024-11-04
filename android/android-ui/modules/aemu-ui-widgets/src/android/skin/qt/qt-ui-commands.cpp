@@ -98,7 +98,6 @@ constexpr CommandInfo kCommands[] = {
         INIT_COMMAND(XR_VIEWPORT_CONTROL_MODE_PAN, "Drag mouse to pan"),
         INIT_COMMAND(XR_VIEWPORT_CONTROL_MODE_DOLLY, "Drag mouse to dolly backwards/forwards"),
         INIT_COMMAND(XR_VIEWPORT_CONTROL_MODE_ROTATE, "Drag mouse to rotate"),
-        INIT_COMMAND(XR_SHOW_TASKBAR, "Show taskbar"),
 };
 
 bool parseQtUICommand(const QString& string, QtUICommand* command) {
