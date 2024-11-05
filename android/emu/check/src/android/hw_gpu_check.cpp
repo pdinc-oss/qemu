@@ -27,7 +27,7 @@ AvdCompatibilityCheckResult hasSufficientHwGpu(AvdInfo* avd) {
     if (avd == nullptr) {
         return {
                 .description =
-                        "No avd present, cannot check for GPU capabilities.",
+                        "No avd present, cannot check for GPU capabilities",
                 .status = AvdCompatibility::Warning,
         };
     }
@@ -85,7 +85,7 @@ AvdCompatibilityCheckResult hasSufficientHwGpu(AvdInfo* avd) {
     if (!requiresHwGpuCheck) {
         return {
                 .description = absl::StrFormat(
-                        "Hardware GPU requirements to run avd: `%s` are passed.",
+                        "Hardware GPU requirements to run avd: `%s` are passed",
                         name),
                 .status = AvdCompatibility::Ok,
         };
@@ -105,7 +105,7 @@ AvdCompatibilityCheckResult hasSufficientHwGpu(AvdInfo* avd) {
         return {
                 .description = absl::StrFormat(
                         "Could not detect GPU for Vulkan compatibility "
-                        "checks. Please try updating your GPU Drivers."),
+                        "checks. Please try updating your GPU Drivers"),
                 .status = AvdCompatibility::Error,
         };
     }
@@ -137,7 +137,7 @@ AvdCompatibilityCheckResult hasSufficientHwGpu(AvdInfo* avd) {
                 .description = absl::StrFormat(
                         "GPU driver is not supported to run avd: `%s`. "
                         "Your '%s' GPU has Vulkan API version %d.%d.%d, "
-                        "and is not supported for Vulkan.",
+                        "and is not supported for Vulkan",
                         name, vendorName.c_str(), vkMajor, vkMinor,
                         vkPatch),
                 .status = AvdCompatibility::Error,
