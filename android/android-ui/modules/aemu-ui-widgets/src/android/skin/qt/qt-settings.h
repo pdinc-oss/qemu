@@ -41,6 +41,7 @@ constexpr char SHOW_VIRTUALSCENE_INFO[] = "showVirtualSceneInfo";
 constexpr char SHOW_VGK_WARNING[] = "showVgkWarning";
 constexpr char SHOW_HAXM_WARNING[] = "showHaxmWarning";
 constexpr char SHOW_NESTED_WARNING[] = "showNestedWarning";
+constexpr char SHOW_COMPATIBILITY_WARNING[] = "showCompatibilityWarning";
 
 // Note: The "set/" here is because these settings are
 //       associated with "settings-page", not because

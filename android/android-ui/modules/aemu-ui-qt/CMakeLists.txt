@@ -60,6 +60,7 @@ android_qt_lib(
        aemu::recording
        android-emu
        android-emu-base
+       android-emu-check-impl
        android-emu-curl
        android-emu-location
        android-emu-protobuf
