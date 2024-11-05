@@ -775,9 +775,16 @@ EmulatorQtWindow::EmulatorQtWindow(QWidget* parent)
     setAttribute(Qt::WA_NoSystemBackground);
     setAttribute(Qt::WA_AcceptTouchEvents);
 
-    bool shortcutBool =
+    bool shortcutBool = false;
+    if (!android::featurecontrol::isEnabled(
+                android::featurecontrol::QtRawKeyboardInput)) {
+        // If RawKeyboardInput feature is not enabled, read the settings value.
+        // RawKeyboardInput feature always forwards the keyboard shortcuts to
+        // the Device, which are not used by the emulator host itself.
+        shortcutBool =
             settings.value(Ui::Settings::FORWARD_SHORTCUTS_TO_DEVICE, false)
                     .toBool();
+    }
     setForwardShortcutsToDevice(shortcutBool ? 1 : 0);
 
     initErrorDialog(this, getConsoleAgents()
