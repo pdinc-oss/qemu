@@ -56,11 +56,8 @@ public:
 };
 
 void initlogs_once() {
-    static bool mInitialized = false;
-    if (!mInitialized)
-        absl::InitializeLog();
-    absl::SetStderrThreshold(absl::LogSeverityAtLeast::kInfinity);
-    mInitialized = true;
+    absl::InitializeLog();
+    absl::SetStderrThreshold(absl::LogSeverityAtLeast::kFatal);
 }
 
 static absl::once_flag initlogs;
@@ -106,15 +103,22 @@ AvdCompatibilityCheckResult sampleOkayCheck(AvdInfo* foravd) {
 
 AvdCompatibilityCheckResult alwaysErrorBar(AvdInfo* foravd) {
     return {
-            .description = "You need more bar!",
+            .description = "You need more bar",
             .status = AvdCompatibility::Error,
     };
 };
 
 AvdCompatibilityCheckResult alwaysErrorFoo(AvdInfo* foravd) {
     return {
-            .description = "You need more foo!",
+            .description = "You need more foo",
             .status = AvdCompatibility::Error,
+    };
+};
+
+AvdCompatibilityCheckResult alwaysWarnBaz(AvdInfo* foravd) {
+    return {
+            .description = "You are low on baz, more baz would be good for you",
+            .status = AvdCompatibility::Warning,
     };
 };
 
@@ -142,14 +146,28 @@ TEST_F(AvdCompatibilityCheckResultTest, auto_registration_should_work) {
                 ContainsString("alwaysErrorFoo"));
 }
 
+TEST_F(AvdCompatibilityCheckResultTest, ensureAvdCompatibility_will_fatal) {
+    AvdCompatibilityManagerTest::clear();
+    AvdCompatibilityManager::instance().registerCheck(alwaysErrorBar,
+                                                      "alwaysErrorBar");
+
+    EXPECT_DEATH(
+            AvdCompatibilityManager::instance().ensureAvdCompatibility(nullptr),
+            ".*You need more bar.*")
+            << "We did not exit the system with the message we expected to "
+               "see.";
+}
+
 TEST_F(AvdCompatibilityCheckResultTest,
-       auto_registration_results_print_user_messages) {
-    auto results = AvdCompatibilityManager::instance().check(nullptr);
-    AvdCompatibilityManager::instance().printResults(results);
-    EXPECT_THAT(
-            buffer.str(),
-            testing::HasSubstr(
-                    "USER_ERROR   | You need more bar!  You need more foo!"));
+       ensureAvdCompatibility_will_log_warning) {
+    AvdCompatibilityManagerTest::clear();
+    AvdCompatibilityManager::instance().registerCheck(alwaysWarnBaz,
+                                                      "alwaysWarnbaz");
+    AvdCompatibilityManager::instance().ensureAvdCompatibility(nullptr);
+    EXPECT_THAT(buffer.str(), testing::StartsWith("USER_WARNING |"));
+    EXPECT_THAT(buffer.str(),
+                testing::HasSubstr(
+                        "You are low on baz, more baz would be good for you."));
 }
 
 TEST_F(AvdCompatibilityCheckResultTest, actually_calls_registered_tests) {
@@ -158,7 +176,7 @@ TEST_F(AvdCompatibilityCheckResultTest, actually_calls_registered_tests) {
             [&wascalled](AvdInfo* info) {
                 wascalled = true;
                 return AvdCompatibilityCheckResult{
-                        "This check always fails with an error!",
+                        "This check always fails with an error",
                         AvdCompatibility::Error};
             },
             "dynamic_test");
@@ -166,7 +184,9 @@ TEST_F(AvdCompatibilityCheckResultTest, actually_calls_registered_tests) {
     EXPECT_THAT(wascalled, testing::Eq(true));
 }
 
-TEST_F(AvdCompatibilityCheckResultTest, checks_only_once) {
+TEST_F(AvdCompatibilityCheckResultTest, checks_are_run_only_once) {
+    AvdCompatibilityManagerTest::clear();
+    AvdCompatibilityManager::instance().registerCheck(runCounter, "runCounter");
     gRunCount = 0;
     AvdCompatibilityManager::instance().check(nullptr);
     AvdCompatibilityManager::instance().check(nullptr);
@@ -174,11 +194,91 @@ TEST_F(AvdCompatibilityCheckResultTest, checks_only_once) {
 }
 
 TEST_F(AvdCompatibilityCheckResultTest, checks_again_invalidate) {
+    AvdCompatibilityManagerTest::clear();
+    AvdCompatibilityManager::instance().registerCheck(runCounter, "runCounter");
     gRunCount = 0;
     AvdCompatibilityManager::instance().check(nullptr);
     AvdCompatibilityManager::instance().invalidate();
     AvdCompatibilityManager::instance().check(nullptr);
     EXPECT_THAT(gRunCount, testing::Eq(2));
+}
+
+TEST_F(AvdCompatibilityCheckResultTest, constructIssueString_error_one) {
+    AvdCompatibilityManagerTest::clear();
+    AvdCompatibilityManager::instance().registerCheck(alwaysErrorBar,
+                                                      "alwaysErrorBar");
+    AvdCompatibilityManager::instance().registerCheck(alwaysErrorFoo,
+                                                      "alwaysErrorFoo");
+    auto results = AvdCompatibilityManager::instance().check(nullptr);
+    auto errorString = AvdCompatibilityManager::instance().constructIssueString(
+            results, AvdCompatibility::Error);
+    EXPECT_EQ(errorString, "You need more bar, You need more foo.");
+}
+
+TEST_F(AvdCompatibilityCheckResultTest,
+       constructIssueString_error_two_injects_a_comma) {
+    AvdCompatibilityManagerTest::clear();
+    AvdCompatibilityManager::instance().registerCheck(alwaysErrorBar,
+                                                      "alwaysErrorBar");
+    AvdCompatibilityManager::instance().registerCheck(alwaysErrorFoo,
+                                                      "alwaysErrorFoo");
+    auto results = AvdCompatibilityManager::instance().check(nullptr);
+    auto errorString = AvdCompatibilityManager::instance().constructIssueString(
+            results, AvdCompatibility::Error);
+    EXPECT_EQ(errorString, "You need more bar, You need more foo.");
+}
+
+TEST_F(AvdCompatibilityCheckResultTest,
+       constructIssueString_error_to_many_adds_message) {
+    AvdCompatibilityManagerTest::clear();
+    AvdCompatibilityManager::instance().registerCheck(alwaysErrorBar,
+                                                      "alwaysErrorBar");
+    AvdCompatibilityManager::instance().registerCheck(alwaysErrorFoo,
+                                                      "alwaysErrorFoo");
+
+    AvdCompatibilityManager::instance().registerCheck(alwaysErrorFoo,
+                                                      "alwaysErrorFoo2");
+    auto results = AvdCompatibilityManager::instance().check(nullptr);
+    auto errorString = AvdCompatibilityManager::instance().constructIssueString(
+            results, AvdCompatibility::Error);
+    EXPECT_EQ(errorString, "You need more bar, You need more foo, and more.");
+}
+
+TEST_F(AvdCompatibilityCheckResultTest, constructIssueString_warning) {
+    AvdCompatibilityManagerTest::clear();
+    AvdCompatibilityManager::instance().registerCheck(alwaysWarnBaz,
+                                                      "alwaysWarnBaz");
+    auto results = AvdCompatibilityManager::instance().check(nullptr);
+    auto warningString =
+            AvdCompatibilityManager::instance().constructIssueString(
+                    results, AvdCompatibility::Warning);
+    EXPECT_EQ(warningString,
+              "You are low on baz, more baz would be good for you.");
+}
+
+TEST_F(AvdCompatibilityCheckResultTest,
+       constructIssueString_noIssues_has_empty_strings) {
+    AvdCompatibilityManagerTest::clear();
+    AvdCompatibilityManager::instance().registerCheck(sampleOkayCheck,
+                                                      "sampleOkayCheck");
+    auto results = AvdCompatibilityManager::instance().check(nullptr);
+    auto errorString = AvdCompatibilityManager::instance().constructIssueString(
+            results, AvdCompatibility::Error);
+    auto warningString =
+            AvdCompatibilityManager::instance().constructIssueString(
+                    results, AvdCompatibility::Warning);
+    EXPECT_EQ(errorString, "");
+    EXPECT_EQ(warningString, "");
+}
+
+TEST_F(AvdCompatibilityCheckResultTest, no_issues_no_logging) {
+    AvdCompatibilityManagerTest::clear();
+    AvdCompatibilityManager::instance().registerCheck(sampleOkayCheck,
+                                                      "sampleOkayCheck");
+    auto results = AvdCompatibilityManager::instance().check(nullptr);
+
+    AvdCompatibilityManager::instance().ensureAvdCompatibility(nullptr);
+    EXPECT_THAT(buffer.str(), testing::IsEmpty());
 }
 
 }  // namespace emulation

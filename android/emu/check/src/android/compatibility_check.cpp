@@ -70,40 +70,42 @@ void AvdCompatibilityManager::ensureAvdCompatibility(AvdInfo* avd) {
     auto results = acm.check(avd);
 
     // Prints the results for android studio.
-    acm.printResults(results);
     if (acm.hasCompatibilityErrors(results)) {
         const char* name = avdInfo_getName(avd);
-        LOG(FATAL) << "The current system is not compatible with the avd: `"
-                   << name << "`, exiting";
-        exit(1);
+        LOG(FATAL) << acm.constructIssueString(results,
+                                               AvdCompatibility::Error);
+    }
+    auto warning = acm.constructIssueString(results, AvdCompatibility::Warning);
+    if (!warning.empty()) {
+        USER_MESSAGE(WARNING) << warning;
     }
 }
 
-void AvdCompatibilityManager::printResults(
-        const std::vector<AvdCompatibilityCheckResult>& results) {
-    using namespace std::literals::string_view_literals;
+std::string AvdCompatibilityManager::constructIssueString(
+        const std::vector<AvdCompatibilityCheckResult>& results,
+        AvdCompatibility status) {
+    std::string message;
+    int issueCount = 0;
 
-    constexpr auto separator = "  "sv;
-
-    std::string error;
-    std::string warning;
     for (auto& result : results) {
-        switch (result.status) {
-            case AvdCompatibility::Ok:
-                break;
-            case AvdCompatibility::Warning:
-                absl::StrAppend(&warning, result.description, separator);
-                break;
-            case AvdCompatibility::Error:
-                absl::StrAppend(&error, result.description, separator);
-                break;
+        if (result.status == status) {
+            if (issueCount < 2) {
+                if (!message.empty()) {
+                    absl::StrAppend(&message, ", ");
+                }
+                absl::StrAppend(&message, result.description);
+            }
+            issueCount++;
         }
     }
 
-    if (!warning.empty())
-        USER_MESSAGE(WARNING) << warning;
-    if (!error.empty())
-        USER_MESSAGE(ERROR) << error;
+    if (issueCount > 2) {
+        if (!message.empty()) {
+            absl::StrAppend(&message, ", and more");
+        }
+    }
+
+    return message.empty() ? message : absl::StrCat(message, ".");
 }
 
 std::vector<std::string_view> AvdCompatibilityManager::registeredChecks() {

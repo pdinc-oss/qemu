@@ -23,7 +23,7 @@ using android::base::System;
 AvdCompatibilityCheckResult hasSufficientDiskSpace(AvdInfo* avd) {
     if (avd == nullptr) {
         return {
-                .description = "No avd present, cannot check for disk space.",
+                .description = "No avd present, cannot check for disk space",
                 .status = AvdCompatibility::Warning,
         };
     }
@@ -32,14 +32,14 @@ AvdCompatibilityCheckResult hasSufficientDiskSpace(AvdInfo* avd) {
     if (underPressure) {
         return {
                 .description = absl::StrFormat(
-                        "Not enough disk space available to run avd: `%s`.", name),
+                        "Not enough disk space available to run avd: `%s`", name),
                 .status = AvdCompatibility::Error,
         };
     }
 
     return {
             .description = absl::StrFormat(
-                    "Disk space requirements to run avd: `%s` are met.", name),
+                    "Disk space requirements to run avd: `%s` are met", name),
             .status = AvdCompatibility::Ok,
     };
 };
