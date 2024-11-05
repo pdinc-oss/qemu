@@ -83,6 +83,8 @@ bool pullSnapshot(const char* snapshotName,
     if (format != FileFormat::DIRECTORY) {
         tmpdir = base::pj(base::System::get()->getTempDir(), snapshot->name().data());
         android_mkdir(tmpdir.data(), 0700);
+        if (outputDirectory == nullptr)
+            outputDirectory = tmpdir.c_str();
     }
     const char* targetDir = outputDirectory;
 
