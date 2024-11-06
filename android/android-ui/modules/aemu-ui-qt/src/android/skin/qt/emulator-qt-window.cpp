@@ -3659,8 +3659,8 @@ void EmulatorQtWindow::displayCheckWarnings() {
         QMessageBox* nestedGeneralWarningBox = new QMessageBox(
                 QMessageBox::Information, tr("Compatibility Warnings"),
                 QString::fromStdString(warningString), QMessageBox::Ok,
-                nullptr);
-        LOG(INFO) << "Displaying warning message dialog with " << warningString << " to user."
+                this);
+        LOG(INFO) << "Displaying warning message dialog with " << warningString << " to user.";
         QCheckBox* checkbox =
                 new QCheckBox(QString::fromStdString(absl::StrFormat(
                         "Never show warnings for avd `%s` again.", name)));
