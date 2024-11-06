@@ -3745,16 +3745,18 @@ void EmulatorQtWindow::displayCheckWarnings() {
 
     auto key = absl::StrCat(Ui::Settings::SHOW_COMPATIBILITY_WARNING, "_", name);
     bool showWarnings = settings.value(key, true).toBool();
-    if (!opts->no_window && showWarnings) {
-        auto results = AvdCompatibilityManager::instance().check(avd);
-        auto warningString =
-                AvdCompatibilityManager::instance().constructIssueString(
-                        results, AvdCompatibility::Warning);
 
+    auto results = AvdCompatibilityManager::instance().check(avd);
+    auto warningString =
+            AvdCompatibilityManager::instance().constructIssueString(
+                    results, AvdCompatibility::Warning);
+
+    if (!opts->no_window && showWarnings && !warningString.empty()) {
         QMessageBox* nestedGeneralWarningBox = new QMessageBox(
                 QMessageBox::Information, tr("Compatibility Warnings"),
                 QString::fromStdString(warningString), QMessageBox::Ok,
-                nullptr);
+                this);
+        LOG(INFO) << "Displaying warning message dialog with " << warningString << " to user.";
         QCheckBox* checkbox =
                 new QCheckBox(QString::fromStdString(absl::StrFormat(
                         "Never show warnings for avd `%s` again.", name)));
