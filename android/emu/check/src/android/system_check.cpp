@@ -49,16 +49,6 @@ AvdCompatibilityCheckResult hasSufficientSystem(AvdInfo* avd) {
         };
     }
 
-    if (sys->envGet("ANDROID_SDK_ROOT").empty() &&
-        sys->envGet("ANDROID_HOME").empty()) {
-        return {
-                .description =
-                        "Neither ANDROID_SDK_ROOT nor ANDROID_HOME environment "
-                        "variable is set",
-                .status = AvdCompatibility::Warning,
-        };
-    }
-
     const char* avdName = avdInfo_getName(avd);
     const bool isXrAvd = (avdInfo_getAvdFlavor(avd) == AVD_DEV_2024);
 
