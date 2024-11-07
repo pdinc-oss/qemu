@@ -26,16 +26,26 @@ AvdCompatibilityCheckResult hasSufficientSystem(AvdInfo* avd) {
     if (avd == nullptr) {
         return {
                 .description =
-                        "No avd present, cannot check for system capabilities.",
-                .status = AvdCompatibility::Warning,
+                        "No avd present, cannot check for system capabilities",
+                .status = AvdCompatibility::Error,
         };
     }
 
+    auto sys = System::get();
     // Allow users and tests to skip compatibility checks
-    if (System::get()->envGet("ANDROID_EMU_SKIP_SYSTEM_CHECKS") == "1") {
+    if (sys->envGet("ANDROID_EMU_SKIP_SYSTEM_CHECKS") == "1") {
         return {
                 .description = "System compatibility checks are disabled",
                 .status = AvdCompatibility::Warning,
+        };
+    }
+    if (sys->envGet("ANDROID_EMU_ABORT_SYSTEM_CHECKS") == "1") {
+        return {
+                .description =
+                        "The user forced a compatibility error, unset "
+                        "ANDROID_EMU_ABORT_SYSTEM_CHECKS environment variable "
+                        "to launch the emulator",
+                .status = AvdCompatibility::Error,
         };
     }
 
@@ -46,20 +56,21 @@ AvdCompatibilityCheckResult hasSufficientSystem(AvdInfo* avd) {
     const int minNumCores = 2;
     const int idealMinNumCores = 4;
     if (numCores < minNumCores) {
+        // < 0.1% of our users as of 11/24
         return {
                 .description =
-                        absl::StrFormat("Not enough number of CPU cores to run "
-                                        "avd: '%s'. Available: %d, minimum "
-                                        "required: %d",
+                        absl::StrFormat("AVD '%s' requires %d CPU cores to "
+                                        "run. Only %d cores are available.",
                                         avdName, numCores, minNumCores),
                 .status = AvdCompatibility::Error,
         };
     } else if (numCores < idealMinNumCores) {
+        // < 2% of our users as of 11/24
         return {
-                .description = absl::StrFormat(
-                        "Suggested minimum number of CPU cores to run "
-                        "avd '%s' is %d (available: %d).",
-                        avdName, idealMinNumCores, numCores),
+                .description =
+                        absl::StrFormat("AVD '%s' will run more smoothly with "
+                                        "%d CPU cores (currently using %d).",
+                                        avdName, idealMinNumCores, numCores),
                 .status = AvdCompatibility::Warning,
         };
     }
@@ -69,13 +80,14 @@ AvdCompatibilityCheckResult hasSufficientSystem(AvdInfo* avd) {
     if (memUsage.total_phys_memory == 0) {
         return {
                 .description = absl::StrFormat(
-                        "Could not check available system memory"),
+                        "Unable to determine available system memory"),
                 .status = AvdCompatibility::Warning,
         };
     }
     const uint64_t ramMB = (memUsage.total_phys_memory / (1024 * 1024));
     const uint64_t minRamMB = 2048;
-    const uint64_t idealMinRamMB = 8192;
+    const uint64_t idealMinRamMB = 4096; // < 5% of our users as of
+    // TODO(b/376873919): Improve the reporting to account for avd requirements.
     if (ramMB < minRamMB) {
         return {
                 .description = absl::StrFormat(
@@ -89,7 +101,7 @@ AvdCompatibilityCheckResult hasSufficientSystem(AvdInfo* avd) {
         return {
                 .description =
                         absl::StrFormat("Suggested minimum system RAM to run "
-                                        "avd '%s' is %d MB (available: %d MB).",
+                                        "avd '%s' is %d MB (available: %d MB)",
                                         avdName, idealMinRamMB, ramMB),
                 .status = AvdCompatibility::Warning,
         };
@@ -97,12 +109,11 @@ AvdCompatibilityCheckResult hasSufficientSystem(AvdInfo* avd) {
 
     return {
             .description = absl::StrFormat(
-                    "System requirements to run avd: `%s` are met.", avdName),
+                    "System requirements to run avd: `%s` are met", avdName),
             .status = AvdCompatibility::Ok,
     };
 }
 
 REGISTER_COMPATIBILITY_CHECK(hasSufficientSystem);
-
 }  // namespace emulation
 }  // namespace android
