@@ -25,7 +25,15 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "android/metrics/tests/MockMetricsReporter.h"
+#include "android/metrics/tests/MockMetricsWriter.h"
+
 namespace android {
+
+namespace metrics {
+extern void set_unittest_Reporter(MetricsReporter::Ptr newPtr);
+}
+
 namespace emulation {
 
 using ::testing::EndsWith;
@@ -60,6 +68,14 @@ void initlogs_once() {
     absl::SetStderrThreshold(absl::LogSeverityAtLeast::kFatal);
 }
 
+static constexpr const char* kVersion = "version";
+static constexpr const char* kFullVersion = "fullVersion";
+static constexpr const char* kQemuVersion = "qemuVersion";
+static constexpr const char* kSessionId = "session";
+
+using EventInterceptor =
+        std::function<void(android_studio::AndroidStudioEvent*)>;
+
 static absl::once_flag initlogs;
 class AvdCompatibilityCheckResultTest : public ::testing::Test {
 protected:
@@ -75,6 +91,7 @@ protected:
         oldCout = std::cout.rdbuf();
         std::cout.rdbuf(buffer.rdbuf());
         AvdCompatibilityManager::instance().invalidate();
+        createReporter();
     }
 
     void TearDown() override {
@@ -85,9 +102,31 @@ protected:
         buffer.clear();
     }
 
+    void createReporter(EventInterceptor event_interceptor =
+                                [](android_studio::AndroidStudioEvent*) {}) {
+        // auto reporter = [conditional](android_studio::AndroidStudioEvent* ev)
+        // {
+        //     conditional(ev);
+        // };
+        auto reporter =
+                [event_interceptor = std::move(event_interceptor)](
+                        metrics::MockMetricsReporter::ConditionalCallback
+                                callback) {
+                    android_studio::AndroidStudioEvent event;
+                    callback(&event);
+                    event_interceptor(&event);
+                };
+        android::metrics::set_unittest_Reporter(
+                std::make_unique<metrics::MockMetricsReporter>(
+                        true, mWriter, kVersion, kFullVersion, kQemuVersion,
+                        reporter));
+    }
+
     std::unique_ptr<CaptureLogSink> log_sink_;
     std::streambuf* oldCout;
     std::stringstream buffer;
+    std::shared_ptr<metrics::MockMetricsWriter> mWriter{
+            std::make_shared<metrics::MockMetricsWriter>(kSessionId)};
 };
 
 struct AvdCompatibilityManagerTest {
@@ -102,10 +141,14 @@ AvdCompatibilityCheckResult sampleOkayCheck(AvdInfo* foravd) {
 };
 
 AvdCompatibilityCheckResult alwaysErrorBar(AvdInfo* foravd) {
-    return {
-            .description = "You need more bar",
+    android_studio::EmulatorCompatibilityInfo metrics;
+    metrics.set_check(android_studio::EmulatorCompatibilityInfo::
+                              AVD_COMPATIBILITY_CHECK_UNKNOWN);
+    metrics.set_details("more bar");
+
+    return {.description = "You need more bar",
             .status = AvdCompatibility::Error,
-    };
+            .metrics = metrics};
 };
 
 AvdCompatibilityCheckResult alwaysErrorFoo(AvdInfo* foravd) {
@@ -116,10 +159,14 @@ AvdCompatibilityCheckResult alwaysErrorFoo(AvdInfo* foravd) {
 };
 
 AvdCompatibilityCheckResult alwaysWarnBaz(AvdInfo* foravd) {
-    return {
-            .description = "You are low on baz, more baz would be good for you",
+    android_studio::EmulatorCompatibilityInfo metrics;
+    metrics.set_check(android_studio::EmulatorCompatibilityInfo::
+                              AVD_COMPATIBILITY_CHECK_UNKNOWN);
+    metrics.set_details("more baz");
+
+    return {.description = "You are low on baz, more baz would be good for you",
             .status = AvdCompatibility::Warning,
-    };
+            .metrics = metrics};
 };
 
 static int gRunCount = 0;
@@ -279,6 +326,68 @@ TEST_F(AvdCompatibilityCheckResultTest, no_issues_no_logging) {
 
     AvdCompatibilityManager::instance().ensureAvdCompatibility(nullptr);
     EXPECT_THAT(buffer.str(), testing::IsEmpty());
+}
+
+TEST_F(AvdCompatibilityCheckResultTest, no_issues_no_reporting) {
+    createReporter([](auto e) {
+        EXPECT_FALSE(true)
+                << "No metrics should have been reported for the ok case.";
+    });
+    AvdCompatibilityManagerTest::clear();
+    AvdCompatibilityManager::instance().registerCheck(sampleOkayCheck,
+                                                      "sampleOkayCheck");
+    auto results = AvdCompatibilityManager::instance().check(nullptr);
+    AvdCompatibilityManager::instance().reportMetrics(results);
+    AvdCompatibilityManager::instance().ensureAvdCompatibility(nullptr);
+}
+
+TEST_F(AvdCompatibilityCheckResultTest, report_warning_metrics) {
+    bool report_called = false;
+    createReporter([&report_called](android_studio::AndroidStudioEvent* e) {
+        EXPECT_TRUE(e->emulator_details().has_emu_compat_info());
+        EXPECT_EQ(e->emulator_details().emu_compat_info().status(),
+                  android_studio::EmulatorCompatibilityInfo::
+                          AVD_COMPATIBILITY_STATUS_WARNING);
+
+        EXPECT_EQ(e->emulator_details().emu_compat_info().check(),
+                  android_studio::EmulatorCompatibilityInfo::
+                          AVD_COMPATIBILITY_CHECK_UNKNOWN);
+        EXPECT_EQ(e->emulator_details().emu_compat_info().details(),
+                  "more baz");
+        report_called = true;
+    });
+    AvdCompatibilityManagerTest::clear();
+    AvdCompatibilityManager::instance().registerCheck(alwaysWarnBaz,
+                                                      "alwaysWarnBaz");
+    auto results = AvdCompatibilityManager::instance().check(nullptr);
+    AvdCompatibilityManager::instance().reportMetrics(results);
+
+    EXPECT_TRUE(report_called) << "The reporter callback was not invoked, so "
+                                  "metrics were not generated.";
+}
+
+TEST_F(AvdCompatibilityCheckResultTest, report_error_metrics) {
+    bool report_called = false;
+    createReporter([&report_called](android_studio::AndroidStudioEvent* e) {
+        EXPECT_TRUE(e->emulator_details().has_emu_compat_info());
+        EXPECT_EQ(e->emulator_details().emu_compat_info().status(),
+                  android_studio::EmulatorCompatibilityInfo::
+                          AVD_COMPATIBILITY_STATUS_ERROR);
+        EXPECT_EQ(e->emulator_details().emu_compat_info().check(),
+                  android_studio::EmulatorCompatibilityInfo::
+                          AVD_COMPATIBILITY_CHECK_UNKNOWN);
+        EXPECT_EQ(e->emulator_details().emu_compat_info().details(),
+                  "more bar");
+        report_called = true;
+    });
+    AvdCompatibilityManagerTest::clear();
+    AvdCompatibilityManager::instance().registerCheck(alwaysErrorBar,
+                                                      "alwaysErrorBar");
+    auto results = AvdCompatibilityManager::instance().check(nullptr);
+    AvdCompatibilityManager::instance().reportMetrics(results);
+
+    EXPECT_TRUE(report_called) << "The reporter callback was not invoked, so "
+                                  "metrics were not generated.";
 }
 
 }  // namespace emulation
