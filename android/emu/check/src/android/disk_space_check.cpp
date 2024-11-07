@@ -32,7 +32,7 @@ AvdCompatibilityCheckResult hasSufficientDiskSpace(AvdInfo* avd) {
     if (underPressure) {
         return {
                 .description = absl::StrFormat(
-                        "Not enough disk space available to run avd: `%s`", name),
+                        "Your device does not have enough disk space to run avd: `%s`", name),
                 .status = AvdCompatibility::Error,
         };
     }

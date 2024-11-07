@@ -164,9 +164,10 @@ public:
      *
      * Example log lines:
      *
-     *     USER_WARNING | Suggested minimum number of CPU cores to run avd 'x'
-     * is 4 (available: 2). FATAL        | Not enough disk space available to
-     * run avd: `x`.
+     * USER_WARNING | Suggested minimum number of CPU cores to run avd 'x'
+     * is 4 (available: 2).
+     * FATAL        | Your device does not have enough disk
+     * space to run: `x`.
      *
      * @param avd A pointer to the AvdInfo struct representing the AVD to be
      * checked.
