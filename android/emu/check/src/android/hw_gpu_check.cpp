@@ -50,8 +50,8 @@ AvdCompatibilityCheckResult hasSufficientHwGpu(AvdInfo* avd) {
 #if defined(__APPLE__) && !defined(__arm64__)
         return {
                 .description =
-                        absl::StrFormat("Emulator for XR avd: `%s` is not "
-                                        "supported on this system.",
+                        absl::StrFormat("`%s` is not supported to run on "
+                                        "Mac with Intel processors",
                                         name),
                 .status = AvdCompatibility::Error,
         };
@@ -61,8 +61,8 @@ AvdCompatibilityCheckResult hasSufficientHwGpu(AvdInfo* avd) {
 #ifdef __linux__
         return {
                 .description =
-                        absl::StrFormat("Emulator for XR avd: `%s` is not "
-                                        "fully supported on this platform.",
+                        absl::StrFormat("`%s` is not yet "
+                                        "fully supported on this platform",
                                         name),
                 .status = AvdCompatibility::Warning,
         };
@@ -135,9 +135,9 @@ AvdCompatibilityCheckResult hasSufficientHwGpu(AvdInfo* avd) {
     if (isUnsupportedGpuDriver) {
         return {
                 .description = absl::StrFormat(
-                        "GPU driver is not supported to run avd: `%s`. "
+                        "Your GPU driver is not supported to run avd: `%s`. "
                         "Your '%s' GPU has Vulkan API version %d.%d.%d, "
-                        "and is not supported for Vulkan",
+                        "and is not supported for this AVD",
                         name, vendorName.c_str(), vkMajor, vkMinor,
                         vkPatch),
                 .status = AvdCompatibility::Error,
@@ -161,7 +161,7 @@ AvdCompatibilityCheckResult hasSufficientHwGpu(AvdInfo* avd) {
         return {
                 .description = absl::StrFormat(
                         "GPU memory available (%llu MB) to run avd: `%s` is below "
-                        "the suggested level (%llu MB).",
+                        "the suggested level (%llu MB)",
                         deviceMemMiB, name, avdMinGpuMemMiB),
                 .status = AvdCompatibility::Warning,
         };

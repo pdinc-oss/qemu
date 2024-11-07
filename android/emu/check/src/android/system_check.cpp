@@ -70,7 +70,7 @@ AvdCompatibilityCheckResult hasSufficientSystem(AvdInfo* avd) {
         return {
                 .description =
                         absl::StrFormat("AVD '%s' will run more smoothly with "
-                                        "%d CPU cores (currently using %d).",
+                                        "%d CPU cores (currently using %d)",
                                         avdName, idealMinNumCores, numCores),
                 .status = AvdCompatibility::Warning,
         };
@@ -88,7 +88,7 @@ AvdCompatibilityCheckResult hasSufficientSystem(AvdInfo* avd) {
     const uint64_t ramMB = (memUsage.total_phys_memory / (1024 * 1024));
     const uint64_t minRamMB = 2048;
     const uint64_t idealMinRamMB = isXrAvd ? 16384 : 4096;
-   // < 5% of our users as of November 2024
+    // < 5% of our users as of November 2024
     // TODO(b/376873919): Improve the reporting to account for avd requirements.
     if (ramMB < minRamMB) {
         return {
@@ -103,7 +103,7 @@ AvdCompatibilityCheckResult hasSufficientSystem(AvdInfo* avd) {
         return {
                 .description = absl::StrFormat(
                         "Suggested minimum system RAM to run "
-                        "avd '%s' is %d MiB (available: %d MiB).",
+                        "avd '%s' is %d MiB (available: %d MiB)",
                         avdName, idealMinRamMB, ramMB),
                 .status = AvdCompatibility::Warning,
         };
