@@ -210,12 +210,14 @@ std::shared_ptr<DeviceInfo> get_netsim_device_info() {
 void register_netsim(const std::string address,
                      const std::string name,
                      const std::string dns_server,
+                     const std::string http_proxy,
                      const std::string netsim_args) {
     netsim::packet::SetPacketStreamEndpoint(address);
     gNetsimConfiguration.options = {
             .no_cli_ui = !feature_is_enabled(kFeature_NetsimCliUi),
             .no_web_ui = !feature_is_enabled(kFeature_NetsimWebUi),
             .host_dns = dns_server,
+            .http_proxy = http_proxy,
             .netsim_args = netsim_args,
     };
     DD("Producing channel: no_cli_ui: %d, no_web_ui %d, dns_server %s, "

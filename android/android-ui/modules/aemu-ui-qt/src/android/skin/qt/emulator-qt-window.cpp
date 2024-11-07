@@ -12,14 +12,17 @@
 
 #include "android/skin/qt/emulator-qt-window.h"
 
-#include "aemu/base/Optional.h"
 #include "aemu/base/async/ThreadLooper.h"
 #include "aemu/base/files/PathUtils.h"
 #include "aemu/base/memory/LazyInstance.h"
 #include "aemu/base/memory/ScopedPtr.h"
+#include "aemu/base/Optional.h"
 #include "aemu/base/synchronization/Lock.h"
 #include "aemu/base/system/Win32Utils.h"
 #include "aemu/base/threads/Async.h"
+#include "android/emu/check/include/android/emulation/compatibility_check.h"
+#include "android/emulation/control/globals_agent.h"
+#include "android_modem_v2.h"
 #include "android/android.h"
 #include "android/avd/info.h"
 #include "android/base/system/System.h"
@@ -27,6 +30,7 @@
 #include "android/console.h"
 #include "android/cpu_accelerator.h"
 #include "android/crashreport/CrashReporter.h"
+#include "android/emulation/compatibility_check.h"
 #include "android/emulation/control/user_event_agent.h"
 #include "android/emulator-window.h"
 #include "android/hw-sensors.h"
@@ -37,41 +41,40 @@
 #include "android/skin/EmulatorSkin.h"
 #include "android/skin/event.h"
 #include "android/skin/keycode.h"
-#include "android/skin/qt/FramelessDetector.h"
-#include "android/skin/qt/QtLooper.h"
+#include "android/skin/qt/car-cluster-window.h"
 #include "android/skin/qt/event-serializer.h"
+#include "android/skin/qt/extended-pages/car-cluster-connector/car-cluster-connector.h"
 #include "android/skin/qt/extended-pages/common.h"
 #include "android/skin/qt/extended-pages/microphone-page.h"
 #include "android/skin/qt/extended-pages/multi-display-page.h"
 #include "android/skin/qt/extended-pages/settings-page.h"
-#include "android/skin/qt/extended-pages/snapshot-page.h"
 #include "android/skin/qt/extended-pages/snapshot-page-grpc.h"
+#include "android/skin/qt/extended-pages/snapshot-page.h"
 #include "android/skin/qt/extended-pages/telephony-page.h"
+#include "android/skin/qt/FramelessDetector.h"
+#include "android/skin/qt/multi-display-widget.h"
+#include "android/skin/qt/qt-keycode.h"
 #include "android/skin/qt/qt-settings.h"
+#include "android/skin/qt/QtLooper.h"
 #include "android/skin/qt/screen-mask.h"
 #include "android/skin/qt/winsys-qt.h"
 #include "android/skin/rect.h"
 #include "android/skin/winsys.h"
 #include "android/snapshot/Snapshotter.h"
-#include "snapshot/common.h"
 #include "android/test/checkboot.h"
 #include "android/ui-emu-agent.h"
 #include "android/utils/eintr_wrapper.h"
 #include "android/utils/filelock.h"
 #include "android/utils/x86_cpuid.h"
 #include "android/virtualscene/TextureUtils.h"
-#include "android/skin/qt/car-cluster-window.h"
-#include "android/skin/qt/extended-pages/car-cluster-connector/car-cluster-connector.h"
-#include "android/skin/qt/multi-display-widget.h"
-#include "android/skin/qt/qt-keycode.h"
-#include "android_modem_v2.h"
-#include "host-common/FeatureControl.h"
-#include "host-common/Features.h"
 #include "host-common/crash-handler.h"
 #include "host-common/feature_control.h"
+#include "host-common/FeatureControl.h"
+#include "host-common/Features.h"
 #include "host-common/multi_display_agent.h"
-#include "host-common/opengl/emugl_config.h"
 #include "host-common/MultiDisplay.h"
+#include "host-common/opengl/emugl_config.h"
+#include "snapshot/common.h"
 #include "studio_stats.pb.h"
 
 #define DEBUG 1
@@ -145,6 +148,8 @@ using android::base::System;
 using android::crashreport::CrashReporter;
 using android::emulation::ApkInstaller;
 using android::emulation::FilePusher;
+using android::emulation::AvdCompatibility;
+using android::emulation::AvdCompatibilityManager;
 using android::virtualscene::TextureUtils;
 
 namespace {
@@ -587,6 +592,7 @@ EmulatorQtWindow::EmulatorQtWindow(QWidget* parent)
                            "And typically the performance is not quite good."),
                         QMessageBox::Ok,
                         this),
+
       mEventLogger(
               std::make_shared<UIEventRecorder<android::base::CircularBuffer>>(
                       &mEventCapturer,
@@ -2313,6 +2319,7 @@ void EmulatorQtWindow::slot_showWindow(SkinSurface* surface,
         checkVgkAndWarn();
         checkHaxmAndWarn();
         checkNestedAndWarn();
+        displayCheckWarnings();
         mFirstShowWindowCall = false;
     }
 }
@@ -3630,6 +3637,47 @@ void EmulatorQtWindow::checkNestedAndWarn() {
         mNestedWarningBox->setWindowModality(Qt::NonModal);
         mNestedWarningBox->setCheckBox(checkbox);
         mNestedWarningBox->show();
+    }
+}
+
+void EmulatorQtWindow::displayCheckWarnings() {
+    QSettings settings;
+
+    auto avd = getConsoleAgents()->settings->avdInfo();
+    auto opts = getConsoleAgents()->settings->android_cmdLineOptions();
+    auto name = avdInfo_getName(avd);
+
+    auto key = absl::StrCat(Ui::Settings::SHOW_COMPATIBILITY_WARNING, "_", name);
+    bool showWarnings = settings.value(key, true).toBool();
+
+    auto results = AvdCompatibilityManager::instance().check(avd);
+    auto warningString =
+            AvdCompatibilityManager::instance().constructIssueString(
+                    results, AvdCompatibility::Warning);
+
+    if (!opts->no_window && showWarnings && !warningString.empty()) {
+        QMessageBox* nestedGeneralWarningBox = new QMessageBox(
+                QMessageBox::Information, tr("Compatibility Warnings"),
+                QString::fromStdString(warningString), QMessageBox::Ok,
+                this);
+        LOG(INFO) << "Displaying warning message dialog with " << warningString << " to user.";
+        QCheckBox* checkbox =
+                new QCheckBox(QString::fromStdString(absl::StrFormat(
+                        "Never show warnings for avd `%s` again.", name)));
+        checkbox->setCheckState(Qt::Unchecked);
+        nestedGeneralWarningBox->setWindowModality(Qt::NonModal);
+        nestedGeneralWarningBox->setCheckBox(checkbox);
+        QAbstractButton* okButton =
+                nestedGeneralWarningBox->button(QMessageBox::Ok);
+        QObject::connect(okButton, &QAbstractButton::clicked, [key, checkbox, nestedGeneralWarningBox]() {
+            if (checkbox->checkState() == Qt::Checked) {
+                QSettings settings;
+                settings.setValue(key, false);
+            }
+            nestedGeneralWarningBox->deleteLater();
+            checkbox->deleteLater();
+        });
+        nestedGeneralWarningBox->show();
     }
 }
 
