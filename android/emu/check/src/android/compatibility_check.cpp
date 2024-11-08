@@ -26,6 +26,8 @@
 namespace android {
 namespace emulation {
 
+using base::EXIT_WITH_FATAL_MESSAGE;
+
 AvdCompatibilityManager& AvdCompatibilityManager::instance() {
     static AvdCompatibilityManager sInstance;
     return sInstance;
@@ -72,8 +74,7 @@ void AvdCompatibilityManager::ensureAvdCompatibility(AvdInfo* avd) {
     // Prints the results for android studio.
     if (acm.hasCompatibilityErrors(results)) {
         const char* name = avdInfo_getName(avd);
-        LOG(FATAL) << acm.constructIssueString(results,
-                                               AvdCompatibility::Error);
+        EXIT_WITH_FATAL_MESSAGE(acm.constructIssueString(results, AvdCompatibility::Error));
     }
     auto warning = acm.constructIssueString(results, AvdCompatibility::Warning);
     if (!warning.empty()) {

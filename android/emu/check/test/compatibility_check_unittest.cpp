@@ -22,6 +22,7 @@
 #include "absl/log/log_sink_registry.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "android/base/logging/StudioLogSink.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -71,9 +72,9 @@ protected:
         log_sink_ = std::make_unique<CaptureLogSink>();
         absl::AddLogSink(log_sink_.get());
         absl::SetVLogLevel("*", 2);
-
-        oldCout = std::cout.rdbuf();
-        std::cout.rdbuf(buffer.rdbuf());
+        base::studio_sink()->SetOutputStream(&std::cerr);
+        oldCerr = std::cerr.rdbuf();
+        std::cerr.rdbuf(buffer.rdbuf());
         AvdCompatibilityManager::instance().invalidate();
     }
 
@@ -81,12 +82,12 @@ protected:
         // Remove the CaptureLogSink
         absl::RemoveLogSink(log_sink_.get());
         // Capture and restore stdout
-        std::cout.rdbuf(oldCout);
+        std::cerr.rdbuf(oldCerr);
         buffer.clear();
     }
 
     std::unique_ptr<CaptureLogSink> log_sink_;
-    std::streambuf* oldCout;
+    std::streambuf* oldCerr;
     std::stringstream buffer;
 };
 
@@ -147,6 +148,10 @@ TEST_F(AvdCompatibilityCheckResultTest, auto_registration_should_work) {
 }
 
 TEST_F(AvdCompatibilityCheckResultTest, ensureAvdCompatibility_will_fatal) {
+    // Remove our std:err redirect, we are going to exit so we can only grab
+    // stderr!
+    std::cerr.rdbuf(oldCerr);
+
     AvdCompatibilityManagerTest::clear();
     AvdCompatibilityManager::instance().registerCheck(alwaysErrorBar,
                                                       "alwaysErrorBar");
