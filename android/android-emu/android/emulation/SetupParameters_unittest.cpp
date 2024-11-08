@@ -168,7 +168,7 @@ TEST(SetupParameters, setupVirtualSerialPorts) {
                     &kAvdMarshmallowX86, false, false,
             },
             {
-                    "console=ttyGF0,38400",
+                    "console=ttyGF0,38400 earlyprintk=ttyGF0",
                     "-serial foo-serial", &kAvdMarshmallowX86, true, false,
             },
             {
@@ -176,7 +176,7 @@ TEST(SetupParameters, setupVirtualSerialPorts) {
                     "-serial foo-serial", &kAvdMarshmallowX86, false, true,
             },
             {
-                    "console=ttyGF0,38400",
+                    "console=ttyGF0,38400 earlyprintk=ttyGF0",
                     "-serial foo-serial", &kAvdMarshmallowX86, true, true,
             },
 
@@ -186,7 +186,7 @@ TEST(SetupParameters, setupVirtualSerialPorts) {
                     &kAvdMarshmallowMips, false, false,
             },
             {
-                    "console=ttyS0,38400", "-serial foo-serial",
+                    "console=ttyS0,38400 earlyprintk=ttyS0", "-serial foo-serial",
                     &kAvdMarshmallowMips, true, false,
             },
             {
@@ -194,7 +194,7 @@ TEST(SetupParameters, setupVirtualSerialPorts) {
                     "-serial foo-serial", &kAvdMarshmallowMips, false, true,
             },
             {
-                    "console=ttyS0,38400",
+                    "console=ttyS0,38400 earlyprintk=ttyS0",
                     "-serial foo-serial", &kAvdMarshmallowMips, true, true,
             },
             // Nougat ARM
@@ -239,7 +239,7 @@ TEST(SetupParameters, setupVirtualSerialPorts) {
                     &kAvdNougatX86, false, false,
             },
             {
-                    "console=ttyGF0,38400",
+                    "console=ttyGF0,38400 earlyprintk=ttyGF0",
                     "-serial foo-serial", &kAvdNougatX86, true, false,
             },
             {
@@ -247,7 +247,7 @@ TEST(SetupParameters, setupVirtualSerialPorts) {
                     "-serial foo-serial", &kAvdNougatX86, false, true,
             },
             {
-                    "console=ttyGF0,38400",
+                    "console=ttyGF0,38400 earlyprintk=ttyGF0",
                     "-serial foo-serial", &kAvdNougatX86, true, true,
             },
 
@@ -257,7 +257,7 @@ TEST(SetupParameters, setupVirtualSerialPorts) {
                     &kAvdNougatX86_64, false, false,
             },
             {
-                    "console=ttyGF0,38400",
+                    "console=ttyGF0,38400 earlyprintk=ttyGF0",
                     "-serial foo-serial", &kAvdNougatX86_64, true, false,
             },
             {
@@ -265,7 +265,7 @@ TEST(SetupParameters, setupVirtualSerialPorts) {
                     "-serial foo-serial", &kAvdNougatX86_64, false, true,
             },
             {
-                    "console=ttyGF0,38400",
+                    "console=ttyGF0,38400 earlyprintk=ttyGF0",
                     "-serial foo-serial", &kAvdNougatX86_64, true, true,
             },
 
@@ -311,7 +311,7 @@ TEST(SetupParameters, setupVirtualSerialPorts) {
                     &kAvdOcX86, false, false,
             },
             {
-                    "console=ttyGF0,38400",
+                    "console=ttyGF0,38400 earlyprintk=ttyGF0",
                     "-serial foo-serial", &kAvdOcX86, true, false,
             },
             {
@@ -319,7 +319,7 @@ TEST(SetupParameters, setupVirtualSerialPorts) {
                     "-serial foo-serial", &kAvdOcX86, false, true,
             },
             {
-                    "console=ttyGF0,38400",
+                    "console=ttyGF0,38400 earlyprintk=ttyGF0",
                     "-serial foo-serial", &kAvdOcX86, true, true,
             },
 
@@ -329,7 +329,7 @@ TEST(SetupParameters, setupVirtualSerialPorts) {
                     &kAvdOcX86_64, false, false,
             },
             {
-                    "console=ttyGF0,38400",
+                    "console=ttyGF0,38400 earlyprintk=ttyGF0",
                     "-serial foo-serial", &kAvdOcX86_64, true, false,
             },
             {
@@ -337,7 +337,7 @@ TEST(SetupParameters, setupVirtualSerialPorts) {
                     "-serial foo-serial", &kAvdOcX86_64, false, true,
             },
             {
-                    "console=ttyGF0,38400",
+                    "console=ttyGF0,38400 earlyprintk=ttyGF0",
                     "-serial foo-serial", &kAvdOcX86_64, true, true,
             },
 
