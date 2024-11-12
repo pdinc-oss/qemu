@@ -13,6 +13,7 @@
 
 #include <string.h>   // for strcmp, strchr
 #include <algorithm>  // for replace_if
+#include <map>        // for dedup user options
 #include <ostream>    // for operator<<, ostream
 #include <string>     // for string, operator+
 
@@ -623,5 +624,23 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
         }
     }
 
-    return params;
+    std::map<std::string, std::string> key_to_val_map;
+    for (int i = 0; i < params.size(); ++i) {
+        const std::string& key = params[i].first;
+        const std::string& val = params[i].second;
+        if (key_to_val_map.find(key) != key_to_val_map.end()) {
+            dwarning(
+                    "found new value '%s' for option '%s', override previous "
+                    "value '%s'",
+                    val.c_str(), key.c_str(), key_to_val_map[key].c_str());
+        }
+        key_to_val_map[key] = params[i].second;
+    }
+
+    std::vector<std::pair<std::string, std::string>> unique_params;
+    for (const auto& it : key_to_val_map) {
+        unique_params.push_back({it.first, it.second});
+    }
+
+    return unique_params;
 }
