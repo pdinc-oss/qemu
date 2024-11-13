@@ -3641,6 +3641,10 @@ void EmulatorQtWindow::checkNestedAndWarn() {
 }
 
 void EmulatorQtWindow::displayCheckWarnings() {
+    // Do not check for AVD configurations in Fuchsia mode.
+    if (getConsoleAgents()->settings->is_fuchsia())
+        return;
+
     QSettings settings;
 
     auto avd = getConsoleAgents()->settings->avdInfo();
