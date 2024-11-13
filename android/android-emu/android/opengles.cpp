@@ -377,8 +377,12 @@ int android_startOpenglesRenderer(
     }
 
     gfxstream::host::FeatureDependencyHandler gfxstreamFeaturesDependencyHandler(gfxstreamFeatures);
+    const bool enableFeatureDepsCheck =
+            android::base::getEnvironmentVariable(
+                    "ANDROID_EMU_VK_DISABLE_FEATURE_DEPS_CHECK")
+                    .empty();
     gfxstream::host::FeatureResult res =  gfxstreamFeaturesDependencyHandler.checkAllDependentFeaturesAreEnabled();
-    if (!res.first) {
+    if (enableFeatureDepsCheck && !res.first) {
         E(res.second.c_str());
         return -1;
     }
