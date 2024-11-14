@@ -57,12 +57,13 @@ AvdCompatibilityCheckResult hasSufficientHwGpu(AvdInfo* avd) {
         };
 #endif
 
-        // Linux platform is not very well tested
+        // Linux platform is not very well tested on XR scenarios, independently of the GPU
+// TODO(b/373601997) Change this warning when we will have more tests
 #ifdef __linux__
         return {
                 .description =
                         absl::StrFormat("`%s` is not yet "
-                                        "fully supported on this platform",
+                                        "fully supported on Linux",
                                         name),
                 .status = AvdCompatibility::Warning,
         };
