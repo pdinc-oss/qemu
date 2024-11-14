@@ -116,6 +116,9 @@ void setupVirtualSerialPorts(ParameterList* kernelParams,
 
             if (isARMish) {
                 kernelParams->add("keep_bootcon");
+            }
+
+            if (optionShowKernel || isARMish) {
                 kernelParams->addFormat("earlyprintk=%s0", kernelSerialPrefix);
             }
         }

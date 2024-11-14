@@ -402,7 +402,6 @@ int main(int argc, char** argv) {
     bool doListAvds = false;
     bool doListSnapshots = false;
     bool doListUSB = false;
-    bool force32bit = false;
     bool isHeadless = false;
     bool useSystemLibs = false;
     bool forceEngineLaunch = false;
@@ -548,8 +547,7 @@ int main(int argc, char** argv) {
 
     /* Parse command-line and look for
      * 1) an avd name either in the form or '-avd <name>' or '@<name>'
-     * 2) '-force-32bit' which always use 32-bit emulator on 64-bit platforms
-     * 3) '-verbose'/'-debug-all'/'-debug all'/'-debug-init'/'-debug init'
+     * 2) '-verbose'/'-debug-all'/'-debug all'/'-debug-init'/'-debug init'
      *    to enable verbose mode.
      */
     for (int nn = 1; nn < argc; nn++) {
@@ -647,11 +645,6 @@ int main(int argc, char** argv) {
         if (!strcmp(opt, "-engine") && nn + 1 < argc) {
             engine = argv[nn + 1];
             nn++;
-            continue;
-        }
-
-        if (!strcmp(opt, "-force-32bit")) {
-            force32bit = true;
             continue;
         }
 
@@ -839,45 +832,9 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    /* If ANDROID_EMULATOR_FORCE_32BIT is set to 'true' or '1' in the
-     * environment, set -force-32bit automatically.
-     */
-    {
-        const char kEnvVar[] = "ANDROID_EMULATOR_FORCE_32BIT";
-        const char* val = getenv(kEnvVar);
-        if (val && (!strcmp(val, "true") || !strcmp(val, "1"))) {
-            if (!force32bit) {
-                D("Auto-config: -force-32bit (%s=%s)", kEnvVar, val);
-                force32bit = true;
-            }
-        }
-    }
-
     static_assert(sizeof(void*) == 8, "We only support 64 bit binaries.");
     int hostBitness = 64;
     int wantedBitness = hostBitness;
-
-#if defined(__linux__)
-    // Linux binaries are compiled for 64 bit, so none of the 32 bit settings
-    // will make any sense.
-    force32bit = false;
-#endif  // __linux__
-
-    if (force32bit) {
-        wantedBitness = 32;
-    }
-
-#if defined(__APPLE__)
-    // Not sure when the android_getHostBitness will break again
-    // but we are not shiping 32bit for OSX long time ago.
-    // https://code.google.com/p/android/issues/detail?id=196779
-    if (force32bit) {
-        fprintf(stderr,
-                "WARNING: 32-bit OSX Android emulator binaries are not "
-                "supported, use 64bit.\n");
-    }
-    wantedBitness = 64;
-#endif
 
     // When running in a platform build environment, point to the output
     // directory where image partition files are located.
