@@ -693,31 +693,33 @@ void myMessageOutput(QtMsgType type,
                      const QMessageLogContext& context,
                      const QString& msg) {
     QtLogger* q = QtLogger::get();
-    QByteArray localMsg = msg.toLocal8Bit();
+    QString _msg;
+    QByteArray localMsg;
+
     switch (type) {
         case QtDebugMsg:
-            q->write("Debug: %s (%s:%u, %s)\n", localMsg.constData(),
-                     context.file, context.line, context.function);
+            QTextStream(&_msg) << "Debug: ";
             break;
         case QtInfoMsg:
-            q->write("Info: %s (%s:%u, %s)\n", localMsg.constData(),
-                     context.file, context.line, context.function);
+            QTextStream(&_msg) << "Info: ";
             break;
         case QtWarningMsg:
-            q->write("Warning: %s (%s:%u, %s)\n", localMsg.constData(),
-                     context.file, context.line, context.function);
+            QTextStream(&_msg) << "Warning: ";
             break;
         case QtCriticalMsg:
-            q->write("Critical: %s (%s:%u, %s)\n", localMsg.constData(),
-                     context.file, context.line, context.function);
+            QTextStream(&_msg) << "Critical: ";
             break;
         case QtFatalMsg:
-            fprintf(stderr, "Fatal: %s (%s:%u, %s)\n", localMsg.constData(),
-                    context.file, context.line, context.function);
-            q->write("Fatal: %s (%s:%u, %s)\n", localMsg.constData(),
-                     context.file, context.line, context.function);
+            QTextStream(&_msg) << "Fatal: ";
             break;
     }
+    QTextStream(&_msg) << msg << " (";
+    QTextStream(&_msg) << context.file << ":";
+    QTextStream(&_msg) << context.line << ", ";
+    QTextStream(&_msg) << context.function << ")";
+
+    localMsg = _msg.toUtf8();
+    q->write(localMsg.constData());
 }
 
 extern int skin_winsys_snapshot_control_start() {
