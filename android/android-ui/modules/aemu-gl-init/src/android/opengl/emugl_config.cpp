@@ -33,6 +33,7 @@
 #include "host-common/feature_control.h"
 #include "host-common/opengles.h"
 #include "vulkan/vulkan.h"
+#include "vulkan/vk_enum_string_helper.h"
 
 #if defined(__APPLE__)
 #if (VK_HEADER_VERSION > 216)
@@ -424,8 +425,8 @@ void emuglConfig_get_vulkan_hardware_gpu(char** vendor,
     VkResult result = pvkCreateInstance(&createInfo, 0, &instance);
 
     if (result != VK_SUCCESS) {
-        derror("%s: Failed to create vulkan instance error code: %d\n",
-                 __func__, result);
+        derror("%s: Failed to create vulkan instance. Error: [%s] %d\n",
+                 __func__, string_VkResult(result), result);
         return;
     }
     dprint("%s: Successfully created vulkan instance\n", __func__);
@@ -434,8 +435,8 @@ void emuglConfig_get_vulkan_hardware_gpu(char** vendor,
     result = pvkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
     if (result != VK_SUCCESS) {
         pvkDestroyInstance(instance, nullptr);
-        derror("%s: Failed to query physical devices count %d\n", __func__,
-                 result);
+        derror("%s: Failed to query physical devices count. Error: %s [%d]\n", __func__,
+                 string_VkResult(result), result);
         return;
     }
     dprint("%s: Physical devices count is %d\n", __func__,
@@ -446,7 +447,8 @@ void emuglConfig_get_vulkan_hardware_gpu(char** vendor,
             pvkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
     if (result != VK_SUCCESS) {
         pvkDestroyInstance(instance, nullptr);
-        derror("%s: Failed to query physical devices %d\n", __func__, result);
+        derror("%s: Failed to query physical devices. Error: %s [%d]\n",
+               __func__, string_VkResult(result), result);
         return;
     }
 
