@@ -179,6 +179,25 @@ static void build_android_dt_aml(GoldfishMachineState *ams, Aml *scope,
   aml_append(scope, dev);
 }
 
+static void build_goldfish_device_aml(Aml *scope, const char *dev_name,
+                                      const char *hid_name,
+                                      const char *str_name, uint32_t iomem_base,
+                                      uint32_t iomem_size,
+                                      uint32_t irq_number) {
+  Aml *dev = aml_device("%s", dev_name);
+  Aml *crs;
+
+  aml_append(dev, aml_name_decl("_HID", aml_string("%s", hid_name)));
+  aml_append(dev, aml_name_decl("_STR", aml_unicode(str_name)));
+
+  crs = aml_resource_template();
+  aml_append(crs, aml_memory32_fixed(iomem_base, iomem_size, AML_READ_WRITE));
+  aml_append(crs, aml_interrupt(AML_CONSUMER_PRODUCER, AML_EDGE,
+                                AML_ACTIVE_HIGH, AML_SHARED, &irq_number, 1));
+  aml_append(dev, aml_name_decl("_CRS", crs));
+  aml_append(scope, dev);
+}
+
 /**
  * Adds the Goldfish Device State Table (DSDT) to the AML table.
  *
@@ -197,6 +216,9 @@ void add_goldfish_dsdt(MachineState *machine, Aml *table) {
   Aml *scope = aml_scope("_SB");
 
   // TODO(jansene): Not used for fuchsia
+  build_goldfish_device_aml(scope, "GFBY", "GFSH0001", "goldfish battery",
+                            GOLDFISH_BATTERY_IOMEM_BASE,
+                            GOLDFISH_BATTERY_IOMEM_SIZE, GOLDFISH_BATTERY_IRQ);
   build_android_dt_aml(ams, scope, "ANDT", "ANDR0001", "android device tree");
   aml_append(table, scope);
 }
