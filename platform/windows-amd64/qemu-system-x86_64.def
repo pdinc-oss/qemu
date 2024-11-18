@@ -109,6 +109,7 @@ EXPORTS
     iov_size
     iov_to_buf_full
     memory_region_init
+    memory_region_init_io
     memory_region_size
     message_with_timestamp
     migrate_add_blocker
@@ -177,6 +178,7 @@ EXPORTS
     qapi_free_SocketAddress
     qbase64_decode
     qcrypto_tls_creds_check_endpoint
+    qdev_find_recursive
     qdev_prop_bit
     qdev_prop_size
     qdev_prop_uint32
@@ -250,6 +252,7 @@ EXPORTS
     qemu_register_shutdown_notifier
     qemu_set_cloexec
     qemu_set_fd_handler
+    qemu_set_irq
     qemu_socket_set_block
     qemu_system_shutdown_request
     qemu_thread_create
@@ -316,6 +319,8 @@ EXPORTS
     socket_local_address
     strstart
     sysbus_get_default
+    sysbus_init_irq
+    sysbus_init_mmio
     tcg_allowed
     tcg_flush_jmp_cache
     tcg_register_thread

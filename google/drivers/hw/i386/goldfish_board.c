@@ -13,9 +13,9 @@
 // limitations under the License.
 #include "qemu/osdep.h"
 
-#include "google/drivers/hw/i386/goldfish_board.h"
-
 #include "google/drivers/hw/acpi/goldfish_acpi.h"
+#include "google/drivers/hw/acpi/goldfish_defs.h"
+#include "google/drivers/hw/i386/goldfish_board.h"
 #include "hw/boards.h"
 #include "hw/char/parallel-isa.h"
 #include "hw/cxl/cxl_host.h"
@@ -69,6 +69,11 @@ static void pc_init_goldfish(MachineState *machine) {
 
   machine_class = find_machine("pc", machines);
   machine_class->init(machine);
+
+  // Add the battery device.
+  X86MachineState *x86ms = X86_MACHINE(machine);
+  sysbus_create_simple("goldfish_battery", GOLDFISH_BATTERY_IOMEM_BASE,
+                       x86ms ->gsi[GOLDFISH_BATTERY_IRQ]);
 
   // Make sure we override dsdt function, as we want to configure the board
   // properly.
