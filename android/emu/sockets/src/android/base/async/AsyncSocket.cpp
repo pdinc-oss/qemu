@@ -50,30 +50,46 @@ AsyncSocket::~AsyncSocket() {
         mConnecting = false;
         mConnectThread->join();
     }
+    mClosing = true;
+    // Note that mInflight will now only decrease
+    std::unique_lock<std::mutex> lock(mInflightMutex);
+    mInflightCv.wait(lock, [this] { return mInflight == 0; });
 }
 
 AsyncSocket::AsyncSocket(Looper* looper, int port)
-    : mLooper(looper), mPort(port), mWriteQueue(WRITE_BUFFER_SIZE, mWriteQueueLock) {}
+    : mPort(port), mLooper(looper), mWriteQueue(WRITE_BUFFER_SIZE, mWriteQueueLock) {}
 
 AsyncSocket::AsyncSocket(Looper* looper, ScopedSocket socket)
-    : mLooper(looper),
+    : mSocket(std::move(socket)),
       mPort(-1),
-      mSocket(std::move(socket)),
+      mLooper(looper),
       mWriteQueue(WRITE_BUFFER_SIZE, mWriteQueueLock) {
     socketSetNonBlocking(mSocket.get());
     mFdWatch = std::unique_ptr<Looper::FdWatch>(
             mLooper->createFdWatch(mSocket.get(), socket_watcher, this));
+    wantRead();
 }
 
-void AsyncSocket::wantRead() {
-    if (!mFdWatch) {
-        return;
-    }
+void AsyncSocket::scheduleCallback(std::function<void()> callback) {
+    if (mClosing) return;
+
     if (mLooper->onLooperThread()) {
-        mFdWatch->wantRead();
+        callback();
         return;
     }
-    mLooper->scheduleCallback([this] {
+
+    std::lock_guard<std::mutex> lock(mInflightMutex);
+    mInflight++;
+    mLooper->scheduleCallback([&, cb = std::move(callback)]() {
+        cb();
+        std::lock_guard<std::mutex> lock(mInflightMutex);
+        mInflight--;
+        mInflightCv.notify_all();
+    });
+};
+
+void AsyncSocket::wantRead() {
+    scheduleCallback([this]() {
         if (mFdWatch) {
             mFdWatch->wantRead();
         }
@@ -113,19 +129,11 @@ void AsyncSocket::onRead() {
 }
 
 void AsyncSocket::wantWrite() {
-    if (!mFdWatch) {
-        return;
-    }
-    // Okay schedule left overs..
-    if (mLooper->onLooperThread()) {
-        mFdWatch->wantWrite();
-    } else {
-        mLooper->scheduleCallback([this] {
-            if (mFdWatch) {
-                mFdWatch->wantWrite();
-            }
-        });
-    }
+    scheduleCallback([this]() {
+        if (mFdWatch) {
+            mFdWatch->wantWrite();
+        }
+    });
 }
 
 ssize_t AsyncSocket::send(const char* buffer, uint64_t bufferSize) {
@@ -140,6 +148,7 @@ ssize_t AsyncSocket::send(const char* buffer, uint64_t bufferSize) {
         }
         mSendBuffer += bufferSize;
     }
+    VLOG(1) << "Pushed " << bufferSize;
     wantWrite();
     return bufferSize;
 }
@@ -195,7 +204,7 @@ void AsyncSocket::close() {
         // Already closed
         return;
     }
-    if (mLooper->onLooperThread()) {
+    scheduleCallback([this]() {
         std::lock_guard<std::mutex> watchLock(mWatchLock);
         mFdWatch.reset();
         mSocket.close();
@@ -204,21 +213,7 @@ void AsyncSocket::close() {
             mListener->onClose(this, errno);
         }
         mWatchLockCv.notify_all();
-    } else {
-        mLooper->scheduleCallback([this] {
-            std::lock_guard<std::mutex> watchLock(mWatchLock);
-            if (!mFdWatch) {
-                return;
-            }
-            mFdWatch.reset();
-            mSocket.close();
-            mConnecting = false;
-            if (mListener) {
-                mListener->onClose(this, errno);
-            }
-            mWatchLockCv.notify_all();
-        });
-    }
+    });
 }
 
 bool AsyncSocket::connect() {
