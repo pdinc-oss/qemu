@@ -19,10 +19,8 @@ This document is intended for developers and testers working with the Android em
 1. Generate a cl to trigger a presubmit
 
    Usually you just have created a change to the meson build configuration and need a new bazel build.
-
-   * Create topic that adds this cl: <http://aosp/3063204>. This will run the bazel meson backend.
-   * Trigger a presubmit run: <https://android-build.corp.google.com/abtd/runs/> make sure to include the windows, mac and linux targets.
-   * Once this is completed you should get a series of presubmit builds (P123, P234, etc..)
+   The build system should detect changes in the QEMU branch, and during presubmit will create the build files
+   for you.
 
 2. Run the tool:
 

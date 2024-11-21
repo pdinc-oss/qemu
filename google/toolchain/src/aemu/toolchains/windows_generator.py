@@ -64,10 +64,9 @@ class WindowsToWindowsGenerator(ToolchainGenerator):
         self.compat_path = (
             (
                 self.aosp
-                / "external"
-                / "qemu"
+                / "hardware"
                 / "google"
-                / "compat"
+                / "aemu"
                 / "windows"
                 / "includes"
             )
