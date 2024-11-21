@@ -311,7 +311,7 @@ def is_subset_of(branch_name, main_branch):
         return False
 
 
-def find_deletable_branches(main_branch, dry_run):
+def find_deletable_branches(main_branch, dry_run, older):
     """Find branches that are deletable in the Git repository.
 
     This function searches for branches that can be deleted based on whether they are a subset of the main branch.
@@ -319,6 +319,7 @@ def find_deletable_branches(main_branch, dry_run):
     Args:
         main_branch (str): The main branch to compare against.
         dry_run (bool): If True, performs a dry run without deleting branches.
+        older (int): Delete branches that are older than this number of days.
     """
     logging.debug("Finding deletable branches.")
     result = subprocess.run(
@@ -331,11 +332,17 @@ def find_deletable_branches(main_branch, dry_run):
         if branch_name:
             age = get_latest_commit_date(branch_name)
             today = datetime.now(timezone.utc)
+            age_in_days = (today - age).days
             logging.info(
-                "Checking branch %s (%s days old):", branch_name, (today - age).days
+                "Checking branch %s (%s days old):", branch_name, age_in_days
             )
             try:
-                if is_subset_of(branch_name, main_branch):
+                if age_in_days > older:
+                    if not dry_run:
+                        delete_local_branch(branch_name)
+                    else:
+                        logging.info("You can delete the old branch%s", branch_name)
+                elif is_subset_of(branch_name, main_branch):
                     if not dry_run:
                         delete_local_branch(branch_name)
                     else:
@@ -413,6 +420,13 @@ def main():
         default=False,
         help="Delete the branches, versus telling you that the can be deleted",
     )
+    parser.add_argument(
+        "-o",
+        "--older",
+        type=int,
+        default=3600,
+        help="Delete branches older than x days",
+    )
 
     subparsers = parser.add_subparsers(help="commands", dest="command")
 
@@ -471,7 +485,7 @@ def main():
 
     elif args.command == "prune-all":
         # Perform 'prune-all' command
-        find_deletable_branches(main_branch, dry_run)
+        find_deletable_branches(main_branch, dry_run, args.older)
 
 
 if __name__ == "__main__":
