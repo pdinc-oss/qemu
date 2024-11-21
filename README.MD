@@ -24,7 +24,7 @@ While stock QEMU is built using `meson`, the Android emulator is built using `ba
 
 To add generic drivers for the wider QEMU community, make the modifications to the `meson` build scripts and ensure they compile on all platforms of interest. Please try to upstream these drivers, if possible, to make them available to the wider community and reduce maintenance costs.
 
-Once your modifications are successful, you need to generate the `bazel` build files. See the [README.md](google/scripts/fetch_bazel/README.md) document for details on how to create the `bazel` build files from the `meson` build files.
+Once your modifications are successful, you need to generate the `bazel` build files. See the [google/scripts/fetch_bazel/README.md](google/scripts/fetch_bazel/) document for details on how to create the `bazel` build files from the `meson` build files.
 
 ## Building stock QEMU
 
@@ -58,16 +58,20 @@ Once this is finished you should be able to run the qemu binaries in the build d
 
 ## Making changes to the QEMU code base
 
+Only QEMU specific changes should be made here.
+
 ### Upstream first
 
-When making changes that are not specific to Google's implementation, consider upstreaming them to the official QEMU repository. This involves a two-step process:
+When making changes that are not specific to Google's implementation, consider upstreaming them to the official QEMU repository.
+
+**If you are within Google**
 
 - First, submit your changes to the internal mimik branch (go/qemu). This is the branch Google uses to prepare patches for upstreaming.
 - Once integrated into the mimik branch, the changes will automatically flow back to dependent repositories within Google. Additionally, follow up with the mimik team to make sure that attempts will be made to upstream the changes to the official QEMU repository.
 
 ### Minimize impact on base QEMU changes
 
-This repository received regulary updates from the `remotes/aosp/mirror-qemu-internal-staging-v8.1.0` branch. To minimize conflicts during merging updates, we adhere to the following principles:
+This repository received regulary updates from the `remotes/aosp/mirror-qemu-internal-staging-xxx` (where xxxx is the current active branch). To minimize conflicts during merging updates, we adhere to the following principles:
 
 - *Build System:* We adopt the QEMU meson build system for consistency.
 - *Dependencies:* Do not introduce new high-level dependencies not already used by upstream QEMU, such as protobuf, gRPC, or WebRTC.
@@ -83,17 +87,16 @@ x = x + 1;
 #endif
 ```
 
-Note: Try to make drivers to live as plugins in //hardware/generic/goldfish
-
 ### Android changes that cannot be upstreamed should live in google
 
 All Android-specific code resides in the [google](google) subdirectory. This includes goldfish drivers, Android-specific CPU boards, scripts, compatibility layers, and toolchain configurators.
+You should only add drivers that cannot be loaded as plugins (such as motherboards) in this directory.
 
 By following these guidelines, wec can ensure clean and consistent contributions to the codebase, facilitating efficient integration and future maintenance.
 
 ## Building the Android Emulator release
 
-The android emulator consists of a series of plugins that can be loaded into stock qemu. The android emulator itself is built using bazel. You can create a release by running
+The android emulator consists of a series of plugins that can be loaded into "stock" qemu. The android emulator itself is built using bazel. You can create a release by running
 
 ```sh
 bazel build //hardware/generic/goldfish/emulator:release
@@ -119,20 +122,11 @@ You can run the qemu binaries directly, but you will have
 You can also run the emulator directly from within bazel:
 
 ```sh
-bazel run //hardware/generic/goldfish/emulator/launcher:goldfish -- --avd V --vnc :8
+bazel run //hardware/generic/goldfish/emulator/launcher:goldfish -- @V
 ```
 
-This will launch the goldfish emulator with avd *V* and creates a vnc connection on port 5908. You can now attach your favorite debugger to debug any issues.
-
-Note that on linux you will have to set the following source mapping:
-
-```sh
-$ lldb
-(lldb) settings set target.source-map /proc/self/cwd /my/bazel/workspace/root
-```
-
-Where `/my/bazel/workspace/root` points to your bazel workspace root.
+This will launch the goldfish emulator with avd *V* and creates a vnc connection on port 5901. You can now attach your favorite debugger to debug any issues.
 
 ## Adding emulator functionality
 
-All the code related to emulator can be found in //hardware/generic/goldfish. See the [//hardware/generic/goldfish/README.MD](../../hardware/generic/goldfish//README.MD) for more information.
+All the code related to emulator can be found in //hardware/generic/goldfish. See the [//hardware/generic/goldfish/README.MD](https://android.googlesource.com/platform/hardware/generic/goldfish/+/refs/heads/emu-dev) for more information on how to debug and build the emulator.
