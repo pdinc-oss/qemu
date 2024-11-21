@@ -147,6 +147,11 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
     const bool isX86ish =
             !strcmp(targetArch, "x86") || !strcmp(targetArch, "x86_64");
     const bool hasShellConsole = opts->logcat || opts->shell;
+#ifdef _WIN32
+    constexpr const bool isWindows = true;
+#else
+    constexpr const bool isWindows = false;
+#endif
 
     const char* androidbootVerityMode;
     const char* checkjniProp;
@@ -281,70 +286,98 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
             // This might happen because of unsupported API level or GPU
             dfatal("Vulkan is not supported: GuestAngle feature won't work!");
         }
+        // There's an emulator-specific hack in API 35 to disable specific GL
+        // extensions. You can provide your own colon-delimited list or set to 0
+        // to not disable any extensions, as we disable a large set of GL
+        // extensions by default. See below.
+        std::string aemu_angle_overrides_disabled =
+                System::get()->envGet("AEMU_ANGLE_OVERRIDES_DISABLED");
+        // The official angle feature set. See angle source code for more info.
+        std::string angle_overrides_enabled =
+                System::get()->envGet("ANGLE_FEATURE_OVERRIDES_ENABLED");
+        std::string angle_overrides_disabled =
+                System::get()->envGet("ANGLE_FEATURE_OVERRIDES_DISABLED");
+
+        // GuestAngle boot parameters are only valid for some system images with
+        // API level 34 and above.
+        if (apiLevel >= 34) {
+            if (angle_overrides_disabled.empty()) {
+                // Without turning off exposeNonConformantExtensionsAndVersions,
+                // ANGLE will bypass the supported extensions check when guest
+                // creates a GL context, which means a ES 3.2 context can be
+                // created even without the above extensions.
+                angle_overrides_disabled =
+                        "exposeNonConformantExtensionsAndVersions";
+
+                // b/264575911: Nvidia seems to have issues with YUV samplers
+                // with 'lowp' and 'mediump' precision qualifiers.
+                // This should ideally use graphicsdetecto rresults at
+                // GraphicsDetectorVkPrecisionQualifiersOnYuvSamplers.cpp
+                const bool hwGpuRequested =
+                        (emuglConfig_get_current_renderer() ==
+                         SELECTED_RENDERER_HOST);
+                if (isWindows && hwGpuRequested) {
+                    char* vkVendor = nullptr;
+                    int vkMajor, vkMinor, vkPatch;
+                    emuglConfig_get_vulkan_hardware_gpu(
+                            &vkVendor, &vkMajor, &vkMinor, &vkPatch, nullptr);
+                    bool isNVIDIA =
+                            (vkVendor && strncmp("NVIDIA", vkVendor, 6) == 0);
+                    if (isNVIDIA) {
+                        angle_overrides_disabled +=
+                                ":enablePrecisionQualifiers";
+                    }
+                }
+            }
+        }
 
         if (apiLevel == 35) {
-            // There's an emulator-specific hack in API 35 to disable specific GL extensions. You
-            // can provide your own colon-delimited list or set to 0 to not disable any extensions,
-            // as we disable a large set of GL extensions by default. See below.
-            std::string aemu_angle_overrides_disabled =
-                    System::get()->envGet("AEMU_ANGLE_OVERRIDES_DISABLED");
-            // The official angle feature set. See angle source code for more info.
-            std::string angle_overrides_enabled =
-                    System::get()->envGet("ANGLE_FEATURE_OVERRIDES_ENABLED");
-            std::string angle_overrides_disabled =
-                    System::get()->envGet("ANGLE_FEATURE_OVERRIDES_DISABLED");
-
-            if (!angle_overrides_enabled.empty()) {
-                params.push_back({"androidboot.hardware.angle_feature_overrides_enabled",
-                                angle_overrides_enabled});
-            }
-
-            if (angle_overrides_disabled.empty()) {
-                // Without turning off exposeNonConformantExtensionsAndVersions, ANGLE will bypass
-                // the supported extensions check when guest creates a GL context, which means a ES
-                // 3.2 context can be created even without the above extensions.
-                params.push_back({"androidboot.hardware.angle_feature_overrides_disabled",
-                                "exposeNonConformantExtensionsAndVersions"});
-            } else {
-                params.push_back({"androidboot.hardware.angle_feature_overrides_disabled",
-                                angle_overrides_disabled});
-            }
-
-            // TODO(b/376893591): The feature set below is only tested on API 35. Adjust accordingly
-            // for other APIs.
+            // TODO(b/376893591): The feature set below is only tested on
+            // API 35. Adjust accordingly for other APIs.
             if (aemu_angle_overrides_disabled.empty()) {
                 // Turning these off effectively disables support for GLES 3.2.
-                std::stringstream ss;
-                ss << "textureCompressionAstcLdrKHR" << ":";
-                ss << "sampleShadingOES" << ":";
-                ss << "sampleVariablesOES" << ":";
-                ss << "shaderMultisampleInterpolationOES" << ":";
-                ss << "copyImageEXT" << ":";
-                ss << "drawBuffersIndexedEXT" << ":";
-                ss << "geometryShaderEXT" << ":";
-                ss << "gpuShader5EXT" << ":";
-                ss << "primitiveBoundingBoxEXT" << ":";
-                ss << "shaderIoBlocksEXT" << ":";
-                ss << "textureBorderClampEXT" << ":";
-                ss << "textureBufferEXT" << ":";
-                ss << "textureCubeMapArrayEXT" << ":";
-                // Other extensions
-                ss << "drawElementsBaseVertexOES" << ":";
-                ss << "colorBufferFloatEXT" << ":";
-                ss << "robustnessKHR" << ":";
-                // Turn off tessellation shader (Required in ES 3.2)
-                ss << "tessellationShaderEXT" << ":";
-                ss << "tessellationShaderOES" << ":";
-                // Turn off geometry shader (Required in ES 3.2)
-                ss << "geometryShaderEXT" << ":";
-                ss << "geometryShaderOES";
-                aemu_angle_overrides_disabled = ss.str();
+                aemu_angle_overrides_disabled =
+                        "textureCompressionAstcLdrKHR"
+                        ":sampleShadingOES"
+                        ":sampleVariablesOES"
+                        ":shaderMultisampleInterpolationOES"
+                        ":copyImageEXT"
+                        ":drawBuffersIndexedEXT"
+                        ":geometryShaderEXT"
+                        ":gpuShader5EXT"
+                        ":primitiveBoundingBoxEXT"
+                        ":shaderIoBlocksEXT"
+                        ":textureBorderClampEXT"
+                        ":textureBufferEXT"
+                        ":textureCubeMapArrayEXT"
+                        // Other extensions
+                        ":drawElementsBaseVertexOES"
+                        ":colorBufferFloatEXT"
+                        ":robustnessKHR"
+                        // Turn off tessellation shader (Required in ES 3.2)
+                        ":tessellationShaderEXT"
+                        ":tessellationShaderOES"
+                        // Turn off geometry shader (Required in ES 3.2)
+                        ":geometryShaderEXT"
+                        ":geometryShaderOES";
             }
+        }
 
-            if (aemu_angle_overrides_disabled != "0") {
-                params.push_back({"androidboot.qemu.angle.aemu_feature_overrides_disabled",
-                                aemu_angle_overrides_disabled});
-            }
+        // Set the boot parameters for GuestAngle mode
+        if (aemu_angle_overrides_disabled != "0") {
+            params.push_back(
+                    {"androidboot.hardware.aemu_feature_overrides_disabled",
+                     aemu_angle_overrides_disabled});
+        }
+        if (angle_overrides_disabled != "0") {
+            params.push_back(
+                    {"androidboot.hardware.angle_feature_overrides_disabled",
+                     angle_overrides_disabled});
+        }
+        if (angle_overrides_enabled != "0") {
+            params.push_back(
+                    {"androidboot.hardware.angle_feature_overrides_enabled",
+                     angle_overrides_enabled});
         }
     }
 
