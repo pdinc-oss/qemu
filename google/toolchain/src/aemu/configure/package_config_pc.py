@@ -115,7 +115,8 @@ class PackageConfigPc:
         match = rpath_regex.match(rpathline)
         if match:
             bazel_name = dylib.parent / match.group(1)
-            bazel_name.symlink_to(dylib)
+            if not bazel_name.exists():
+                bazel_name.symlink_to(dylib)
             logging.info("Patching up bazel @path %s -> %s", bazel_name, dylib)
         else:
             logging.info("Not patching %s", dylib)
