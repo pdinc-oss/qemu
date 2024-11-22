@@ -13,31 +13,35 @@
 #include "android/base/system/System.h"
 #include "android/emulation/compatibility_check.h"
 
-#include "host-common/opengl/emugl_config.h"
 #include "host-common/FeatureControl.h"  // for isEnabled
+#include "host-common/opengl/emugl_config.h"
 
 namespace android {
 namespace emulation {
 
 using android::base::System;
+using android_studio::EmulatorCompatibilityInfo;
 
 // A check to make sure there is a enough GPU capabilities available
 // for the given avd.
 AvdCompatibilityCheckResult hasSufficientHwGpu(AvdInfo* avd) {
+    EmulatorCompatibilityInfo metrics;
     if (avd == nullptr) {
-        return {
-                .description =
-                        "No avd present, cannot check for GPU capabilities",
-                .status = AvdCompatibility::Warning,
-        };
+        metrics.set_check(
+                EmulatorCompatibilityInfo::AVD_COMPATIBILITY_CHECK_NO_AVD);
+        return {.description =
+                        "No avd present, cannot check for system capabilities",
+                .status = AvdCompatibility::Error,
+                .metrics = metrics};
     }
 
     // Allow users and tests to skip compatibility checks
     if (System::get()->envGet("ANDROID_EMU_SKIP_GPU_CHECKS") == "1") {
-        return {
-                .description = "GPU compatibility checks are disabled",
+        metrics.set_check(EmulatorCompatibilityInfo::
+                                  AVD_COMPATIBILITY_CHECK_GPU_CHECK_SKIP);
+        return {.description = "GPU compatibility checks are disabled",
                 .status = AvdCompatibility::Warning,
-        };
+                .metrics = metrics};
     }
 
     const char* name = avdInfo_getName(avd);
@@ -84,12 +88,11 @@ AvdCompatibilityCheckResult hasSufficientHwGpu(AvdInfo* avd) {
     }
 
     if (!requiresHwGpuCheck) {
-        return {
-                .description = absl::StrFormat(
+        return {.description = absl::StrFormat(
                         "Hardware GPU requirements to run avd: `%s` are passed",
                         name),
                 .status = AvdCompatibility::Ok,
-        };
+                .metrics = metrics};
     }
 
     char* vkVendor = nullptr;
@@ -98,17 +101,17 @@ AvdCompatibilityCheckResult hasSufficientHwGpu(AvdInfo* avd) {
     int vkPatch = 0;
     uint64_t vkDeviceMemBytes = 0;
 
-    emuglConfig_get_vulkan_hardware_gpu(&vkVendor, &vkMajor, &vkMinor,
-                                        &vkPatch, &vkDeviceMemBytes);
+    emuglConfig_get_vulkan_hardware_gpu(&vkVendor, &vkMajor, &vkMinor, &vkPatch,
+                                        &vkDeviceMemBytes);
 
     if (!vkVendor) {
         // Could not properly detect the hardware parameters, disable Vulkan
-        return {
-                .description = absl::StrFormat(
+        metrics.set_details("VulkanFail");
+        return {.description = absl::StrFormat(
                         "Could not detect GPU for Vulkan compatibility "
                         "checks. Please try updating your GPU Drivers"),
                 .status = AvdCompatibility::Error,
-        };
+                .metrics = metrics};
     }
 
     bool isAMD = (strncmp("AMD", vkVendor, 3) == 0);
@@ -134,28 +137,35 @@ AvdCompatibilityCheckResult hasSufficientHwGpu(AvdInfo* avd) {
     free(vkVendor);
 
     if (isUnsupportedGpuDriver) {
-        return {
-                .description = absl::StrFormat(
-                        "Your GPU driver is not supported to run avd: `%s`. "
+        metrics.set_check(
+                EmulatorCompatibilityInfo::
+                        AVD_COMPATIBILITY_CHECK_GPU_CHECK_UNSUPPORTED_VULKAN_VERSION);
+        metrics.set_details(absl::StrFormat("GPU:%s, API: %d.%d.%d",
+                                            vendorName.c_str(), vkMajor,
+                                            vkMinor, vkPatch));
+        return {.description = absl::StrFormat(
+                        "GPU driver is not supported to run avd: `%s`. "
                         "Your '%s' GPU has Vulkan API version %d.%d.%d, "
-                        "and is not supported for this AVD",
-                        name, vendorName.c_str(), vkMajor, vkMinor,
-                        vkPatch),
+                        "and is not supported for Vulkan",
+                        name, vendorName.c_str(), vkMajor, vkMinor, vkPatch),
                 .status = AvdCompatibility::Error,
-        };
+                .metrics = metrics};
     }
 
     // Check available GPU memory
     const uint64_t deviceMemMiB = vkDeviceMemBytes / (1024 * 1024);
     const uint64_t avdMinGpuMemMiB = isXrAvd ? 2048 : 0;
     if (deviceMemMiB < avdMinGpuMemMiB) {
-        return {
-                .description = absl::StrFormat(
+        metrics.set_check(
+                EmulatorCompatibilityInfo::
+                        AVD_COMPATIBILITY_CHECK_GPU_CHECK_INSUFFICIENT_MEMORY);
+        metrics.set_details(std::to_string(deviceMemMiB));
+        return {.description = absl::StrFormat(
                         "Not enough GPU memory available to run avd: `%s`. "
                         "Available: %llu MB, minimum required: %llu MB",
                         name, deviceMemMiB, avdMinGpuMemMiB),
                 .status = AvdCompatibility::Error,
-        };
+                .metrics = metrics};
     }
     const uint64_t avdSuggestedGpuMemMiB = isXrAvd ? 4096 : 0;
     if (deviceMemMiB < avdSuggestedGpuMemMiB) {
@@ -168,12 +178,10 @@ AvdCompatibilityCheckResult hasSufficientHwGpu(AvdInfo* avd) {
         };
     }
 
-    return {
-            .description = absl::StrFormat(
-                    "Hardware GPU requirements to run avd: `%s` are met",
-                    name),
+    return {.description = absl::StrFormat(
+                    "Hardware GPU requirements to run avd: `%s` are met", name),
             .status = AvdCompatibility::Ok,
-    };
+            .metrics = metrics};
 }
 
 REGISTER_COMPATIBILITY_CHECK(hasSufficientHwGpu);
