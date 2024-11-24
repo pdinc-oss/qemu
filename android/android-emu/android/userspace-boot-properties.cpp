@@ -364,6 +364,9 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
         }
 
         // Set the boot parameters for GuestAngle mode
+        INFO("aemu_feature_overrides_disabled=%s", aemu_angle_overrides_disabled.c_str());
+        INFO("angle_feature_overrides_disabled=%s", angle_overrides_disabled.c_str());
+        INFO("angle_feature_overrides_enabled=%s", angle_overrides_enabled.c_str());
         if (aemu_angle_overrides_disabled != "0") {
             params.push_back(
                     {"androidboot.hardware.aemu_feature_overrides_disabled",
