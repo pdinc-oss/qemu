@@ -147,10 +147,10 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
     const bool isX86ish =
             !strcmp(targetArch, "x86") || !strcmp(targetArch, "x86_64");
     const bool hasShellConsole = opts->logcat || opts->shell;
-#ifdef _WIN32
-    constexpr const bool isWindows = true;
+#ifdef __APPLE__
+    constexpr const bool isMac = true;
 #else
-    constexpr const bool isWindows = false;
+    constexpr const bool isMac = false;
 #endif
 
     const char* androidbootVerityMode;
@@ -308,13 +308,6 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
         // API level 34 and above.
         if (apiLevel >= 34) {
             if (angle_overrides_disabled.empty()) {
-                // Without turning off exposeNonConformantExtensionsAndVersions,
-                // ANGLE will bypass the supported extensions check when guest
-                // creates a GL context, which means a ES 3.2 context can be
-                // created even without the above extensions.
-                angle_overrides_disabled =
-                        "exposeNonConformantExtensionsAndVersions";
-
                 // b/264575911: Nvidia seems to have issues with YUV samplers
                 // with 'lowp' and 'mediump' precision qualifiers.
                 // This should ideally use graphicsdetecto rresults at
@@ -322,7 +315,7 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
                 const bool hwGpuRequested =
                         (emuglConfig_get_current_renderer() ==
                          SELECTED_RENDERER_HOST);
-                if (isWindows && hwGpuRequested) {
+                if (!isMac && hwGpuRequested) {
                     char* vkVendor = nullptr;
                     int vkMajor, vkMinor, vkPatch;
                     emuglConfig_get_vulkan_hardware_gpu(
@@ -330,9 +323,37 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
                     bool isNVIDIA =
                             (vkVendor && strncmp("NVIDIA", vkVendor, 6) == 0);
                     if (isNVIDIA) {
+                        angle_overrides_disabled = "enablePrecisionQualifiers";
+
+                        // TODO(b/378737781): Usage of external fence/semaphore
+                        // fd objects causes device lost crashes and hangs.
                         angle_overrides_disabled +=
-                                ":enablePrecisionQualifiers";
+                                ":supportsExternalFenceFd"
+                                ":supportsExternalSemaphoreFd";
                     }
+                }
+
+                // Without turning off exposeNonConformantExtensionsAndVersions,
+                // ANGLE will bypass the supported extensions check when guest
+                // creates a GL context, which means a ES 3.2 context can be
+                // created even without the above extensions.
+                // TODO(b/238024366): this may not fit into character
+                // limitations
+                const char* extensionLimitStr =
+                        "exposeNonConformantExtensionsAndVersions";
+                const int MAX_PARAM_LENGTH = 92;
+                const bool safeToAdd =
+                        (angle_overrides_disabled.size() +
+                         strlen(extensionLimitStr)) < MAX_PARAM_LENGTH;
+                if (safeToAdd) {
+                    if (!angle_overrides_disabled.size()) {
+                        angle_overrides_disabled += ":";
+                    }
+                    angle_overrides_disabled += extensionLimitStr;
+                } else {
+                    WARN("Cannot add angle boot parameter '%s', character "
+                         "limit exceeded.",
+                         extensionLimitStr);
                 }
             }
         }
