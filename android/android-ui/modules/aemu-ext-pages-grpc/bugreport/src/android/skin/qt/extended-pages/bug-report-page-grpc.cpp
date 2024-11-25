@@ -77,12 +77,9 @@ static const int kReproStepsCharacterLimit = 2000;
 static const System::Duration kAdbCommandTimeoutMs = System::kInfinite;
 static const System::Duration kTaskInterval = 1000;  // ms
 
-// TODO b/355525050  DO NOT commit the component=1546215 for the Public version
-// component=1546215 is for XR EAP
-// component=192708 is for the Public version
 static const char FILE_BUG_URL[] =
         "https://issuetracker.google.com/issues/new"
-        "?component=1546215&description=%s&template=840533";
+        "?component=192708&description=%s&template=840533";
 // In reference to
 // https://developer.android.com/studio/report-bugs.html#emulator-bugs
 static const char BUG_REPORT_TEMPLATE[] =

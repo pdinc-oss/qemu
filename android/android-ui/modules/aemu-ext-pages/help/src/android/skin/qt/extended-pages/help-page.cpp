@@ -51,12 +51,9 @@ using android::base::Uri;
 static const char DOCS_URL[] =
         "http://developer.android.com/r/studio-ui/emulator.html";
 
-// TODO b/355525050  DO NOT commit the component=1546215 for the Public version
-// component=1546215 is for XR EAP
-// component=192708 is for the Public version
 static const char SEND_FEEDBACK_URL[] =
         "https://issuetracker.google.com/issues/new"
-        "?component=1546215&description=%s&template=840533";
+        "?component=192708&description=%s&template=840533";
 
 static const char FEATURE_REQUEST_TEMPLATE[] =
         R"(Feature Request:
