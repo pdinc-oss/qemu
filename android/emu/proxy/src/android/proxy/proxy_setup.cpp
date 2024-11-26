@@ -21,7 +21,13 @@
 #include <string.h>
 
 int android_http_proxy_setup(const char* http_proxy, bool verbose) {
-    if (!http_proxy) {
+    if (verbose) {
+        proxy_set_verbose(1);
+    }
+
+    if (http_proxy) {
+        VERBOSE_DPRINT(proxy, "Setting http proxy to '%s'", http_proxy);
+    } else {
         VERBOSE_DPRINT(proxy, "Not using any http proxy");
         return PROXY_ERR_OK;
     }
@@ -32,10 +38,6 @@ int android_http_proxy_setup(const char* http_proxy, bool verbose) {
     if (result.mError) {
         dwarning("Ignoring invalid http proxy: %s", result.mError->c_str());
         return PROXY_ERR_BAD_FORMAT;
-    }
-
-    if (verbose) {
-        proxy_set_verbose(1);
     }
 
     std::string proxy = result.mServerAddress.toString();
