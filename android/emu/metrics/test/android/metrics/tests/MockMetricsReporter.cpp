@@ -25,21 +25,16 @@ MockMetricsReporter::MockMetricsReporter()
                       {},
                       {}) {}
 
-MockMetricsReporter::MockMetricsReporter(
-        bool enabled,
-        MetricsWriter::Ptr writer,
-        std::string_view emulatorVersion,
-        std::string_view emulatorFullVersion,
-        std::string_view qemuVersion,
-        OnReportConditional onReportConditional,
-        OnFinishPendingReports onFinishPendingReports)
+MockMetricsReporter::MockMetricsReporter(bool enabled,
+                                         MetricsWriter::Ptr writer,
+                                         std::string_view emulatorVersion,
+                                         std::string_view emulatorFullVersion,
+                                         std::string_view qemuVersion)
     : MetricsReporter(enabled,
                       writer,
                       emulatorVersion,
                       emulatorFullVersion,
-                      qemuVersion),
-      mOnReportConditional(onReportConditional),
-      mOnFinishPendingReports(onFinishPendingReports) {}
+                      qemuVersion) {}
 
 void MockMetricsReporter::reportConditional(
         MetricsReporter::ConditionalCallback callback) {

@@ -346,13 +346,6 @@ static int genHwIniFile(AndroidHwConfig* hw, const char* coreHwIniPath) {
     return 0;
 }
 
-extern "C" void android_report_compatibility_checks() {
-    // Reload the compatibility checks and report them.
-    auto results = AvdCompatibilityManager::instance().check(
-            getConsoleAgents()->settings->avdInfo());
-    AvdCompatibilityManager::instance().reportMetrics(results);
-}
-
 static void updateDataSystemSubdirectory(const char* dataDirectory,
                                          const char* skin,
                                          const char* srcDir,
