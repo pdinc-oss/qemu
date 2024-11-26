@@ -29,9 +29,7 @@ public:
                         MetricsWriter::Ptr writer,
                         std::string_view emulatorVersion,
                         std::string_view emulatorFullVersion,
-                        std::string_view qemuVersion,
-                        OnReportConditional onReportConditional = nullptr,
-                        OnFinishPendingReports onFinishPendingReports = nullptr);
+                        std::string_view qemuVersion);
 
     void reportConditional(ConditionalCallback callback) override;
     void finishPendingReports() override;
