@@ -1620,6 +1620,7 @@ static void stream_out_cb(void *opaque, int avail) {
 static bool virtio_snd_process_tx(VirtQueue *vq, VirtQueueElement *e, VirtIOSound *snd) {
     const size_t req_size = iov_size(e->out_sg, e->out_num);
     struct virtio_snd_pcm_xfer xfer;
+    uint32_t status = VIRTIO_SND_S_OK;
 
     if (req_size < sizeof(xfer)) {
         vq_consume_element(vq, e, 0);
@@ -1628,19 +1629,31 @@ static bool virtio_snd_process_tx(VirtQueue *vq, VirtQueueElement *e, VirtIOSoun
 
     iov_to_buf(e->out_sg, e->out_num, 0, &xfer, sizeof(xfer));
     if (xfer.stream_id >= VIRTIO_SND_NUM_PCM_STREAMS) {
-        vq_consume_element(vq, e, el_send_pcm_status(e, 0, VIRTIO_SND_S_BAD_MSG, 0));
-        return FAILURE(true);
+        DPRINTF("stream_id=%u", xfer.stream_id);
+        status = VIRTIO_SND_S_BAD_MSG;
+        goto done;
     }
 
     VirtIOSoundPCMStream *stream = &snd->streams[xfer.stream_id];
-    VirtIOSoundVqRingBufferItem item;
-    item.el = e;
 
     qemu_mutex_lock(&stream->mtx);
-    if (!vq_ring_buffer_push(&stream->gpcm_buf, &item)) {
-        ABORT("vq_ring_buffer_push");
+    if (stream->state < VIRTIO_PCM_STREAM_STATE_PREPARED) {
+        DPRINTF("stream_id=%u, state=%u", xfer.stream_id, stream->state);
+        status = VIRTIO_SND_S_IO_ERR;
+    } else {
+        VirtIOSoundVqRingBufferItem item;
+        item.el = e;
+        if (!vq_ring_buffer_push(&stream->gpcm_buf, &item)) {
+            ABORT("vq_ring_buffer_push");
+        }
     }
     qemu_mutex_unlock(&stream->mtx);
+
+done:
+    if (status != VIRTIO_SND_S_OK) {
+        vq_consume_element(vq, e, el_send_pcm_status(e, 0, status, 0));
+        return FAILURE(true);
+    }
     return false;
 }
 
@@ -1774,6 +1787,7 @@ static void stream_in_cb(void *opaque, int avail) {
 static bool virtio_snd_process_rx(VirtQueue *vq, VirtQueueElement *e, VirtIOSound *snd) {
     const size_t req_size = iov_size(e->out_sg, e->out_num);
     struct virtio_snd_pcm_xfer xfer;
+    uint32_t status = VIRTIO_SND_S_OK;
 
     if (req_size < sizeof(xfer)) {
         vq_consume_element(vq, e, 0);
@@ -1782,8 +1796,9 @@ static bool virtio_snd_process_rx(VirtQueue *vq, VirtQueueElement *e, VirtIOSoun
 
     iov_to_buf(e->out_sg, e->out_num, 0, &xfer, sizeof(xfer));
     if (xfer.stream_id >= VIRTIO_SND_NUM_PCM_STREAMS) {
-        vq_consume_element(vq, e, el_send_pcm_status(e, 0, VIRTIO_SND_S_BAD_MSG, 0));
-        return FAILURE(true);
+        DPRINTF("stream_id=%u", xfer.stream_id);
+        status = VIRTIO_SND_S_BAD_MSG;
+        goto done;
     }
 
     VirtIOSoundPCMStream *stream = &snd->streams[xfer.stream_id];
@@ -1791,10 +1806,20 @@ static bool virtio_snd_process_rx(VirtQueue *vq, VirtQueueElement *e, VirtIOSoun
     item.el = e;
 
     qemu_mutex_lock(&stream->mtx);
-    if (!vq_ring_buffer_push(&stream->gpcm_buf, &item)) {
+    if (stream->state < VIRTIO_PCM_STREAM_STATE_PREPARED) {
+        DPRINTF("stream_id=%u, state=%u", xfer.stream_id, stream->state);
+        status = VIRTIO_SND_S_IO_ERR;
+        goto done;
+    } else if (!vq_ring_buffer_push(&stream->gpcm_buf, &item)) {
         ABORT("ring_buffer_push");
     }
     qemu_mutex_unlock(&stream->mtx);
+
+done:
+    if (status != VIRTIO_SND_S_OK) {
+        vq_consume_element(vq, e, el_send_pcm_status(e, 0, status, 0));
+        return FAILURE(true);
+    }
     return false;
 }
 
