@@ -277,6 +277,7 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
     }
 
     params.push_back({"androidboot.hardware", "ranchu"});
+    const char* qemuUirendererPropValue = nullptr;
 
     if (opts->guest_angle) {
         dwarning(
@@ -330,6 +331,13 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
                         angle_overrides_disabled +=
                                 ":supportsExternalFenceFd"
                                 ":supportsExternalSemaphoreFd";
+
+                        // NVIDIA cards can satisfy 2-graphics-queue requirement
+                        // for SkiaVK, and it works better with GuestAngle.
+                        qemuUirendererPropValue = "skiavk";
+                        params.push_back(
+                                {"androidboot.debug.renderengine.backend",
+                                 "skiavk"});
                     }
                 }
 
@@ -506,8 +514,12 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
     params.push_back({qemuOpenglesVersionProp,
                       StringFormat("%d", bootPropOpenglesVersion)});
 
-    if (fc::isEnabled(fc::GLESDynamicVersion)) {
-        params.push_back({qemuUirendererProp, "skiagl"});
+    if (fc::isEnabled(fc::GLESDynamicVersion) && !qemuUirendererPropValue) {
+        qemuUirendererPropValue = "skiagl";
+    }
+
+    if (qemuUirendererPropValue) {
+        params.push_back({qemuUirendererProp, qemuUirendererPropValue});
     }
 
     if (androidbootLogcatProp) {
