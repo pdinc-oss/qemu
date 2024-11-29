@@ -100,12 +100,14 @@ AvdCompatibilityCheckResult hasSufficientHwGpu(AvdInfo* avd) {
         // 6 bits = tertiary branch/build version (up to 63)
         const uint32_t major = (vkDriverVersion >> 22) & 0x3ff;
         const uint32_t minor = (vkDriverVersion >> 14) & 0x0ff;
-        uint32_t secondaryBranch = (vkDriverVersion >> 6) & 0x0ff;
-        uint32_t tertiaryBranch = (vkDriverVersion) & 0x003f;
 
-        driverVersionStr = std::to_string(major) + "." + std::to_string(minor) +
-                           "." + std::to_string(secondaryBranch) + "." +
-                           std::to_string(tertiaryBranch);
+        driverVersionStr = std::to_string(major) + "." + std::to_string(minor);
+
+        // Disallow driver versions below 553.35 as they may cause BSODs
+        // (ref:b/379178011).
+        if (major < 553 || (major == 553 && minor < 35)) {
+            isUnsupportedGpuDriver = true;
+        }
     } else {
         // Use regular VK_API_VERSION encoding to print the version.
         driverVersionStr =
