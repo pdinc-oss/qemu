@@ -13,8 +13,9 @@
 #include "android/base/system/System.h"
 #include "android/emulation/compatibility_check.h"
 
-#include "host-common/opengl/emugl_config.h"
+#include <vulkan/vulkan_core.h>
 #include "host-common/FeatureControl.h"  // for isEnabled
+#include "host-common/opengl/emugl_config.h"
 
 namespace android {
 namespace emulation {
@@ -68,10 +69,10 @@ AvdCompatibilityCheckResult hasSufficientHwGpu(AvdInfo* avd) {
     int vkMinor = 0;
     int vkPatch = 0;
     uint64_t vkDeviceMemBytes = 0;
+    uint32_t vkDriverVersion = 0;
 
-    emuglConfig_get_vulkan_hardware_gpu(&vkVendor, &vkMajor, &vkMinor,
-                                        &vkPatch, &vkDeviceMemBytes);
-
+    emuglConfig_get_vulkan_hardware_gpu(&vkVendor, &vkMajor, &vkMinor, &vkPatch,
+                                        &vkDeviceMemBytes, &vkDriverVersion);
     if (!vkVendor) {
         // Could not properly detect the hardware parameters, disable Vulkan
         return {
@@ -82,26 +83,54 @@ AvdCompatibilityCheckResult hasSufficientHwGpu(AvdInfo* avd) {
         };
     }
 
+    // TODO(b/381540970): Use servers side flags and deny listings for filtering
+    // GPU compatibility
     bool isAMD = (strncmp("AMD", vkVendor, 3) == 0);
     bool isIntel = (strncmp("Intel", vkVendor, 5) == 0);
+    bool isNvidia = (strncmp("NVIDIA", vkVendor, 6) == 0);
     bool isUnsupportedGpuDriver = false;
+    std::string driverVersionStr;
+    if (isNvidia) {
+        // Decode Nvidia driver version to make it meaningful to the users
+        // Reference: VulkanDeviceInfo::getDriverVersion() at 
+        // https://github.com/SaschaWillems/VulkanCapsViewer/blob/master/vulkanDeviceInfo.cpp
+        // 10 bits = major version (up to r1023)
+        // 8 bits = minor version (up to 255)
+        // 8 bits = secondary branch version/build version (up to 255)
+        // 6 bits = tertiary branch/build version (up to 63)
+        const uint32_t major = (vkDriverVersion >> 22) & 0x3ff;
+        const uint32_t minor = (vkDriverVersion >> 14) & 0x0ff;
+        uint32_t secondaryBranch = (vkDriverVersion >> 6) & 0x0ff;
+        uint32_t tertiaryBranch = (vkDriverVersion) & 0x003f;
+
+        driverVersionStr = std::to_string(major) + "." + std::to_string(minor) +
+                           "." + std::to_string(secondaryBranch) + "." +
+                           std::to_string(tertiaryBranch);
+    } else {
+        // Use regular VK_API_VERSION encoding to print the version.
+        driverVersionStr =
+                std::to_string(VK_API_VERSION_MAJOR(vkDriverVersion)) + "." +
+                std::to_string(VK_API_VERSION_MINOR(vkDriverVersion)) + "." +
+                std::to_string(VK_API_VERSION_PATCH(vkDriverVersion));
+
 #if defined(_WIN32)
-    // Based on androidEmuglConfigInit
-    if (isAMD) {
-        if (vkMajor == 1 && vkMinor < 3) {
-            // on windows, amd gpu with api 1.2.x does not work
-            // for vulkan, disable it
-            isUnsupportedGpuDriver = true;
+        // Based on androidEmuglConfigInit
+        if (isAMD) {
+            if (vkMajor == 1 && vkMinor < 3) {
+                // on windows, amd gpu with api 1.2.x does not work
+                // for vulkan, disable it
+                isUnsupportedGpuDriver = true;
+            }
+        } else if (isIntel) {
+            if (vkMajor == 1 &&
+                ((vkMinor == 3 && vkPatch < 240) || (vkMinor < 3))) {
+                // intel gpu with api < 1.3.240 does not work
+                // for vulkan, disable it
+                isUnsupportedGpuDriver = true;
+            }
         }
-    } else if (isIntel) {
-        if (vkMajor == 1 &&
-            ((vkMinor == 3 && vkPatch < 240) || (vkMinor < 3))) {
-            // intel gpu with api < 1.3.240 does not work
-            // for vulkan, disable it
-            isUnsupportedGpuDriver = true;
-        }
-    }
 #endif
+    }
 
     const std::string vendorName = vkVendor;
     free(vkVendor);
@@ -110,10 +139,10 @@ AvdCompatibilityCheckResult hasSufficientHwGpu(AvdInfo* avd) {
         return {
                 .description = absl::StrFormat(
                         "GPU driver is not supported to run avd: `%s`. "
-                        "Your '%s' GPU has Vulkan API version %d.%d.%d, "
-                        "and is not supported for Vulkan",
-                        name, vendorName.c_str(), vkMajor, vkMinor,
-                        vkPatch),
+                        "Your '%s' GPU has Vulkan API version `%d.%d.%d`, "
+                        "driver version `%s` and is not supported for Vulkan",
+                        name, vendorName.c_str(), vkMajor, vkMinor, vkPatch,
+                        driverVersionStr.c_str()),
                 .status = AvdCompatibility::Error,
         };
     }
