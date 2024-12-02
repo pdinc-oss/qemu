@@ -124,7 +124,8 @@ bool androidEmuglConfigInit(EmuglConfig* config,
         int vkPatch = 0;
         uint64_t vkDeviceMemBytes = 0;
         emuglConfig_get_vulkan_hardware_gpu(&vkVendor, &vkMajor, &vkMinor,
-                                            &vkPatch, &vkDeviceMemBytes);
+                                            &vkPatch, &vkDeviceMemBytes,
+                                            nullptr);
         const uint64_t deviceMemMB = vkDeviceMemBytes / (1024 * 1024);
         dinfo("GPU device local memory = %lluMB", deviceMemMB);
 
