@@ -324,7 +324,8 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
                     bool isNVIDIA =
                             (vkVendor && strncmp("NVIDIA", vkVendor, 6) == 0);
                     if (isNVIDIA) {
-                        angle_overrides_disabled = "enablePrecisionQualifiers";
+                        // enablePrecisionQualifiers
+                        angle_overrides_disabled = "enablePrec*";
 
                         // TODO(b/378737781): Usage of external fence/semaphore
                         // fd objects causes device lost crashes and hangs.
@@ -348,20 +349,22 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
                 // TODO(b/238024366): this may not fit into character
                 // limitations
                 const char* extensionLimitStr =
-                        "exposeNonConformantExtensionsAndVersions";
+                        "exposeN*";
                 const int MAX_PARAM_LENGTH = 92;
                 const bool safeToAdd =
                         (angle_overrides_disabled.size() +
                          strlen(extensionLimitStr)) < MAX_PARAM_LENGTH;
                 if (safeToAdd) {
-                    if (!angle_overrides_disabled.size()) {
+                    if (angle_overrides_disabled.size()) {
                         angle_overrides_disabled += ":";
                     }
                     angle_overrides_disabled += extensionLimitStr;
                 } else {
                     WARN("Cannot add angle boot parameter '%s', character "
-                         "limit exceeded.",
-                         extensionLimitStr);
+                         "limit exceeded (len=%u max=%u).",
+                         extensionLimitStr,
+                         angle_overrides_disabled.size() + strlen(extensionLimitStr),
+                         MAX_PARAM_LENGTH);
                 }
             }
         }
