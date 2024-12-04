@@ -370,7 +370,28 @@ void emuglConfig_get_vulkan_hardware_gpu(char** vendor,
     const VkPhysicalDeviceProperties& physicalProp = vkProps.physdevProps;
     const VkPhysicalDeviceMemoryProperties& memProps = vkProps.memProperties;
 
-    *vendor = strdup(physicalProp.deviceName);
+    // TODO: expose emuglConfig_get_vulkan_hardware_gpu_support_info outside
+    // Here we make sure sure 'vendor' starts with the vendor's name.
+    // We do not expose vendorID with this code path, and the resulting value
+    // is actually used as 'device name'. But some old code will incorrectly
+    // depend on string comparison for vendor matching.
+    std::string vendorName = physicalProp.deviceName;
+    std::vector<std::pair<uint32_t, std::string>> vendorIdPairs = {
+        {4318, "NVIDIA"},
+        {32902, "Intel"},
+        {4098, "AMD"},
+    };
+    for (auto& p : vendorIdPairs) {
+        if (physicalProp.vendorID == p.first) {
+            if (vendorName.rfind(p.second, 0) != 0) {
+                // Doesn't start with vendor name
+                vendorName = p.second + " " + vendorName;
+            }
+            break;
+        }
+    }
+    *vendor = strdup(vendorName.c_str());
+
     vkProps.getApiVersion(major, minor, patch);
     if (deviceMemBytes) {
         *deviceMemBytes = vkProps.getDeviceLocalMemorySize();
