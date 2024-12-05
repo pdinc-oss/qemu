@@ -379,6 +379,7 @@ Feature: 'AndroidVirtualizationFramework' (103), value: 0, default: 0, is overri
 Feature: 'BypassVulkanDeviceFeatureOverrides' (107), value: 0, default: 0, is overridden: 0
 Feature: 'VulkanDebugUtils' (108), value: 0, default: 0, is overridden: 0
 Feature: 'VulkanCommandBufferCheckpoints' (109), value: 0, default: 0, is overridden: 0
+Feature: 'VulkanVirtualQueue' (110), value: 0, default: 0, is overridden: 0
 )#";
     EXPECT_EQ(feature_list, ss.str());
 }
