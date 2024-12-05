@@ -380,6 +380,8 @@ Feature: 'XrModeUI' (104), value: 0, default: 0, is overridden: 0
 Feature: 'VirtioDualModeMouse' (105), value: 0, default: 0, is overridden: 0
 Feature: 'DualModeMouseDisplayHostCursor' (106), value: 0, default: 0, is overridden: 0
 Feature: 'BypassVulkanDeviceFeatureOverrides' (107), value: 0, default: 0, is overridden: 0
+Feature: 'VulkanDebugUtils' (108), value: 0, default: 0, is overridden: 0
+Feature: 'VulkanCommandBufferCheckpoints' (109), value: 0, default: 0, is overridden: 0
 )#";
     EXPECT_EQ(feature_list, ss.str());
 }

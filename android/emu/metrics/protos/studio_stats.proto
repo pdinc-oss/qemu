@@ -1589,10 +1589,12 @@ message EmulatorFeatureFlagState {
         GUEST_ANGLE = 111;
         ANDROID_VIRTUALIZATION_FRAMEWORK = 112;
         BYPASS_VULKAN_DEVICE_FEATURE_OVERRIDES = 113;
+        VULKAN_DEBUG_UTILS = 114;
+        VULKAN_COMMAND_BUFFER_CHECKPOINTS = 115;
         // Intentional gap to avoid merge conflicts.
         VIRTIO_DUAL_MODE_MOUSE = 131;
         DUAL_MODE_MOUSE_DISPLAY_HOST_CURSOR = 132;
-        // Next tag: 114
+        // Next tag: 133
     }
     // Which features were enabled by default or through the server-side config.
     repeated EmulatorFeatureFlag attempted_enabled_feature_flags = 1;
