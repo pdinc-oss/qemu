@@ -704,6 +704,10 @@ toClearcutFeatureFlag(android::featurecontrol::Feature feature) {
             return android_studio::EmulatorFeatureFlagState::ANDROID_VIRTUALIZATION_FRAMEWORK;
         case android::featurecontrol::BypassVulkanDeviceFeatureOverrides:
             return android_studio::EmulatorFeatureFlagState::BYPASS_VULKAN_DEVICE_FEATURE_OVERRIDES;
+        case android::featurecontrol::VulkanDebugUtils:
+            return android_studio::EmulatorFeatureFlagState::VULKAN_DEBUG_UTILS;
+        case android::featurecontrol::VulkanCommandBufferCheckpoints:
+            return android_studio::EmulatorFeatureFlagState::VULKAN_COMMAND_BUFFER_CHECKPOINTS;
     }
     return android_studio::EmulatorFeatureFlagState::
             EMULATOR_FEATURE_FLAG_UNSPECIFIED;
