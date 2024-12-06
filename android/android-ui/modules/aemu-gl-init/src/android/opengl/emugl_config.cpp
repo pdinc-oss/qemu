@@ -499,12 +499,18 @@ bool emuglConfig_get_vulkan_hardware_gpu_support_info(DeviceSupportInfo* outProp
     result = pvkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
     if (result != VK_SUCCESS) {
         pvkDestroyInstance(instance, nullptr);
-        derror("%s: Failed to query physical devices count. Error: %s [%d]\n", __func__,
-                 string_VkResult(result), result);
+        derror("%s: Failed to query physical devices count. Error: %s [%d]\n",
+               __func__, string_VkResult(result), result);
         return false;
     }
-    dprint("%s: Physical devices count is %d\n", __func__,
-               (int)(deviceCount));
+    dprint("%s: Physical devices count is %d\n", __func__, (int)(deviceCount));
+    if (deviceCount == 0) {
+        pvkDestroyInstance(instance, nullptr);
+        derror("%s: Could not find any Vulkan supported devices, try updating "
+               "your GPU drivers.\n",
+               __func__);
+        return false;
+    }
 
     std::vector<VkPhysicalDevice> devices(deviceCount);
     result =
