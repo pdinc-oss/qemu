@@ -130,7 +130,7 @@ QAndroidUserEventAgent sLoggingUserEventAgent = {
         .eventsDropped = agent_fwd(realUserEventAgent, eventsDropped)};
 
 
-const QAndroidUserEventAgent* const
+const QAndroidUserEventAgent*
 AndroidLoggingConsoleFactory::android_get_QAndroidUserEventAgent() const {
     realUserEventAgent =
             (QAndroidUserEventAgent*)getConsoleAgents()->user_event;

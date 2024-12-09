@@ -24,19 +24,19 @@ namespace emulation {
 // Creates a series of AEMU Agents that can be used by GfxStream backend.
 class AemuGraphicsAgentFactory : public GraphicsAgentFactory {
 public:
-    const QAndroidEmulatorWindowAgent* const
+    const QAndroidEmulatorWindowAgent*
         android_get_QAndroidEmulatorWindowAgent() const override;
 
-    const QAndroidDisplayAgent* const
+    const QAndroidDisplayAgent*
         android_get_QAndroidDisplayAgent() const override;
 
-    const QAndroidRecordScreenAgent* const
+    const QAndroidRecordScreenAgent*
         android_get_QAndroidRecordScreenAgent() const override;
 
-    const QAndroidMultiDisplayAgent* const
+    const QAndroidMultiDisplayAgent*
         android_get_QAndroidMultiDisplayAgent() const override;
 
-    const QAndroidVmOperations* const
+    const QAndroidVmOperations*
         android_get_QAndroidVmOperations() const override;
 };
 
