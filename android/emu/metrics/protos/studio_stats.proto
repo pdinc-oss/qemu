@@ -1591,6 +1591,7 @@ message EmulatorFeatureFlagState {
         BYPASS_VULKAN_DEVICE_FEATURE_OVERRIDES = 113;
         VULKAN_DEBUG_UTILS = 114;
         VULKAN_COMMAND_BUFFER_CHECKPOINTS = 115;
+        VULKAN_VIRTUAL_QUEUE = 116;
         // Intentional gap to avoid merge conflicts.
         VIRTIO_DUAL_MODE_MOUSE = 131;
         DUAL_MODE_MOUSE_DISPLAY_HOST_CURSOR = 132;
