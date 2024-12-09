@@ -1590,7 +1590,8 @@ message EmulatorFeatureFlagState {
         BYPASS_VULKAN_DEVICE_FEATURE_OVERRIDES = 113;
         VULKAN_DEBUG_UTILS = 114;
         VULKAN_COMMAND_BUFFER_CHECKPOINTS = 115;
-        // Next tag: 116
+        VULKAN_VIRTUAL_QUEUE = 116;
+        // Next tag: 117
     }
     // Which features were enabled by default or through the server-side config.
     repeated EmulatorFeatureFlag attempted_enabled_feature_flags = 1;
