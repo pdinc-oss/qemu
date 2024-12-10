@@ -17,7 +17,7 @@
 namespace android {
 namespace emulation {
 class AndroidLoggingConsoleFactory : public AndroidConsoleFactory {
-    const QAndroidUserEventAgent* const android_get_QAndroidUserEventAgent()
+    const QAndroidUserEventAgent* android_get_QAndroidUserEventAgent()
             const override;
 };
 }  // namespace emulation

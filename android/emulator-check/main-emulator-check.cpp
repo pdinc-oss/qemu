@@ -23,7 +23,7 @@
 #include "android/cpu_accelerator.h"
 #include "android/emulation/CpuAccelerator.h"
 #include "android/cmdline-definitions.h"
-#include "android/avd/info.h"  
+#include "android/avd/info.h"
 #include "android/emulation/control/AndroidAgentFactory.h"
 #include "android/emulation/control/globals_agent.h"
 #include "android/emulator-check/PlatformInfo.h"
@@ -163,7 +163,7 @@ static const QAndroidGlobalVarsAgent globalVarsAgent = {
 namespace android::emulation {
 class MockAndroidConsoleFactory : public AndroidConsoleFactory {
 public:
-    const QAndroidGlobalVarsAgent* const android_get_QAndroidGlobalVarsAgent()
+    const QAndroidGlobalVarsAgent* android_get_QAndroidGlobalVarsAgent()
             const override {
         return &globalVarsAgent;
     };
