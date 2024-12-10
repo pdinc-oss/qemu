@@ -30,7 +30,7 @@ struct QAndroidAutomationAgent;
 namespace android {
 namespace emulation {
 #define ANDROID_DEFINE_CONSOLE_GETTER(typ, name) \
-    virtual const typ* const android_get_##typ() const;
+    virtual const typ* android_get_##typ() const;
 
 // The default android console factory will not do anything, it will
 // leave the console agents intact.
