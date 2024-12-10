@@ -88,6 +88,7 @@ constexpr int CRASHREPORT_COMBOBOX_ALWAYS = 0;
 constexpr int CRASHREPORT_COMBOBOX_NEVER = 1;
 constexpr int CRASHREPORT_COMBOBOX_ASK = 2;
 
+constexpr char GUEST_GLES_DRIVER_PREFERENCE[] = "set/guestGlesDriverPreference";
 constexpr char GLESBACKEND_PREFERENCE[] = "set/glesBackendPreference";
 constexpr char GLESAPILEVEL_PREFERENCE[] ="set/glesApiLevelPreference";
 

@@ -90,6 +90,11 @@ void skin_winsys_set_preferred_gles_backend(enum WinsysPreferredGlesBackend);
 // Returns current preferred gles api level specified through the emulator UI.
 enum WinsysPreferredGlesApiLevel skin_winsys_get_preferred_gles_apilevel();
 
+// Overrides UI setting of guest renderer
+void skin_winsys_set_preferred_gles_driver(enum WinsysGuestGlesDriverPreference);
+// Returns current preferred guest renderer specified through extender controls.
+enum WinsysGuestGlesDriverPreference skin_winsys_get_preferred_gles_driver();
+
 // Start just the Snapshot control sub-page.
 // This is invoked using the command line parameter "-ui-only snapshot-control".
 int skin_winsys_snapshot_control_start();

@@ -467,6 +467,20 @@ WinsysPreferredGlesBackend skin_winsys_override_glesbackend_if_auto(
     return currentPreferred;
 }
 
+extern WinsysGuestGlesDriverPreference skin_winsys_get_preferred_gles_driver() {
+    D("skin_winsys_get_preferred_gles_driver");
+    QSettings settings;
+    return (WinsysGuestGlesDriverPreference)settings
+            .value(Ui::Settings::GUEST_GLES_DRIVER_PREFERENCE, 0)
+            .toInt();
+}
+
+void skin_winsys_set_preferred_gles_driver(WinsysGuestGlesDriverPreference renderer) {
+    D("skin_winsys_set_preferred_gles_driver");
+    QSettings settings;
+    settings.setValue(Ui::Settings::GUEST_GLES_DRIVER_PREFERENCE, renderer);
+}
+
 extern WinsysPreferredGlesBackend skin_winsys_get_preferred_gles_backend() {
     D("skin_winsys_get_preferred_gles_backend");
     QSettings settings;
