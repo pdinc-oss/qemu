@@ -7,12 +7,14 @@ android_add_library(
       android/disk_space_check.cpp
       android/hw_gpu_check.cpp
       android/system_check.cpp
+      android/hypervisor_check.cpp
   DEPS absl::absl_log
        absl::str_format
        android-emu-avd
        android-emu-base
        android-emu-base-headers
        android-emu-base-logging
+       android-emu-feature
        android-emu-files
        android-hw-config
        aemu-gl-init
