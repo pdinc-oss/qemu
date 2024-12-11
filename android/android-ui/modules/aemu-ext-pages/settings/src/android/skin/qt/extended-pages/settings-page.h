@@ -76,6 +76,7 @@ private slots:
     void on_set_crashReportPrefComboBox_currentIndexChanged(int index);
     void on_set_glesBackendPrefComboBox_currentIndexChanged(int index);
     void on_set_glesApiLevelPrefComboBox_currentIndexChanged(int index);
+    void on_set_guestGlesDriverPrefComboBox_currentIndexChanged(int index);
     void on_set_resetNotifications_pressed();
     void on_perfstatsButton_pressed();
     void on_tabChanged();

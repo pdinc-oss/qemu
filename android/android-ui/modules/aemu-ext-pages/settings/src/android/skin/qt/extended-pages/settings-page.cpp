@@ -341,6 +341,36 @@ SettingsPage::SettingsPage(QWidget* parent)
         }
     }
 
+    WinsysGuestGlesDriverPreference settings_guestGlesDriver_pref = static_cast<WinsysGuestGlesDriverPreference>(
+                    settings.value(Ui::Settings::GUEST_GLES_DRIVER_PREFERENCE, 0)
+                            .toInt());
+
+    mUi->set_guestGlesDriverPrefComboBox->setCurrentIndex(settings_guestGlesDriver_pref);
+    for (int i = 0; i < mUi->set_guestGlesDriverPrefComboBox->count(); i++) {
+        WinsysGuestGlesDriverPreference guestGlesDriverPreference =
+                (WinsysGuestGlesDriverPreference)(mUi->set_guestGlesDriverPrefComboBox
+                                                     ->itemData(i)
+                                                     .toInt());
+
+        if ((int)settings_guestGlesDriver_pref == guestGlesDriverPreference) {
+            switch (settings_guestGlesDriver_pref) {
+                case WINSYS_GUEST_GLES_DRIVER_PREFERENCE_AUTO:
+                case WINSYS_GUEST_GLES_DRIVER_PREFERENCE_GUESTANGLE:
+                case WINSYS_GUEST_GLES_DRIVER_PREFERENCE_NATIVE:
+                    mUi->set_guestGlesDriverPrefComboBox->setCurrentIndex(i);
+                    break;
+                default:
+                    dwarning(
+                            "%s: unknown Guest Renderer preference value 0x%x. "
+                            "Setting to auto.",
+                            __func__, (unsigned int)settings_guestGlesDriver_pref);
+                    mUi->set_guestGlesDriverPrefComboBox->setCurrentIndex(
+                            WINSYS_GUEST_GLES_DRIVER_PREFERENCE_AUTO);
+                    break;
+            }
+        }
+    }
+
     WinsysPreferredGlesBackend settings_glesbackend_pref =
             static_cast<WinsysPreferredGlesBackend>(
                     settings.value(Ui::Settings::GLESBACKEND_PREFERENCE, 0)
@@ -745,6 +775,11 @@ static SaveSnapshotOnExit getSaveOnExitChoice() {
 }
 #endif
 
+static void set_guestGlesDriver_to(WinsysGuestGlesDriverPreference v) {
+    QSettings settings;
+    settings.setValue(Ui::Settings::GUEST_GLES_DRIVER_PREFERENCE, v);
+}
+
 static void set_glesBackend_to(WinsysPreferredGlesBackend v) {
     QSettings settings;
     settings.setValue(Ui::Settings::GLESBACKEND_PREFERENCE, v);
@@ -777,12 +812,24 @@ void SettingsPage::on_set_glesBackendPrefComboBox_currentIndexChanged(
 }
 
 void SettingsPage::on_set_glesApiLevelPrefComboBox_currentIndexChanged(
-        int index) {
+    int index) {
     switch (index) {
         case WINSYS_GLESAPILEVEL_PREFERENCE_AUTO:
         case WINSYS_GLESAPILEVEL_PREFERENCE_MAX:
         case WINSYS_GLESAPILEVEL_PREFERENCE_COMPAT:
             set_glesApiLevel_to((WinsysPreferredGlesApiLevel)index);
+            break;
+        default:
+            break;
+    }
+}
+void SettingsPage::on_set_guestGlesDriverPrefComboBox_currentIndexChanged(
+        int index) {
+    switch (index) {
+        case WINSYS_GUEST_GLES_DRIVER_PREFERENCE_AUTO:
+        case WINSYS_GUEST_GLES_DRIVER_PREFERENCE_GUESTANGLE:
+        case WINSYS_GUEST_GLES_DRIVER_PREFERENCE_NATIVE:
+            set_guestGlesDriver_to((WinsysGuestGlesDriverPreference)index);
             break;
         default:
             break;
