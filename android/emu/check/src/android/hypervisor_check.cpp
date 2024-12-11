@@ -43,7 +43,7 @@ AvdCompatibilityCheckResult hasCompatibleHypervisor(AvdInfo* avd) {
     AndroidCpuAccelerator accelerator = androidCpuAcceleration_getAccelerator();
 
     if (isXrAvd && (accelerator == ANDROID_CPU_ACCELERATOR_AEHD ||
-                    accelerator == ANDROID_CPU_ACCELERATOR_HAXM)) {
+                    accelerator == ANDROID_CPU_ACCELERATOR_HAX)) {
         return {
                 .description = absl::StrFormat(
                         "Your current hypervisor (AEHD or HAXM) is not compatible with Android XR AVD %s. "
