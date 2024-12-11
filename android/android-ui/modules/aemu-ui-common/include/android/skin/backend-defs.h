@@ -33,7 +33,16 @@ enum WinsysPreferredGlesApiLevel {
     WINSYS_GLESAPILEVEL_PREFERENCE_COMPAT = 2,
     WINSYS_GLESAPILEVEL_PREFERENCE_NUM = 3,
 };
-#endif 
+#endif
+
+#ifndef DECL_WinsysGuestGlesDriverPreference
+#define DECL_WinsysGuestGlesDriverPreference
+enum WinsysGuestGlesDriverPreference {
+    WINSYS_GUEST_GLES_DRIVER_PREFERENCE_AUTO = 0,
+    WINSYS_GUEST_GLES_DRIVER_PREFERENCE_GUESTANGLE = 1,
+    WINSYS_GUEST_GLES_DRIVER_PREFERENCE_NATIVE = 2,
+};
+#endif
 
 #ifdef __cplusplus
 }
