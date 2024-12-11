@@ -302,38 +302,42 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
         // GuestAngle boot parameters are only valid for some system images with
         // API level 34 and above.
         if (apiLevel >= 34) {
+
+            bool isNVIDIA = false;
+            const bool hwGpuRequested =
+                    (emuglConfig_get_current_renderer() ==
+                        SELECTED_RENDERER_HOST);
+            if (!isMac && hwGpuRequested) {
+                char* vkVendor = nullptr;
+                int vkMajor, vkMinor, vkPatch;
+                emuglConfig_get_vulkan_hardware_gpu(
+                        &vkVendor, &vkMajor, &vkMinor, &vkPatch, nullptr, nullptr);
+                isNVIDIA = (vkVendor && strncmp("NVIDIA", vkVendor, 6) == 0);
+            }
+
+            if (isNVIDIA) {
+                // NVIDIA cards can satisfy 2-graphics-queue requirement
+                // for SkiaVK, and it works better with GuestAngle.
+                qemuUirendererPropValue = "skiavk";
+                params.push_back(
+                        {"androidboot.debug.renderengine.backend",
+                            "skiavk"});
+            }
+
             if (angle_overrides_disabled.empty()) {
                 // b/264575911: Nvidia seems to have issues with YUV samplers
                 // with 'lowp' and 'mediump' precision qualifiers.
                 // This should ideally use graphicsdetecto rresults at
                 // GraphicsDetectorVkPrecisionQualifiersOnYuvSamplers.cpp
-                const bool hwGpuRequested =
-                        (emuglConfig_get_current_renderer() ==
-                         SELECTED_RENDERER_HOST);
-                if (!isMac && hwGpuRequested) {
-                    char* vkVendor = nullptr;
-                    int vkMajor, vkMinor, vkPatch;
-                    emuglConfig_get_vulkan_hardware_gpu(
-                            &vkVendor, &vkMajor, &vkMinor, &vkPatch, nullptr, nullptr);
-                    bool isNVIDIA =
-                            (vkVendor && strncmp("NVIDIA", vkVendor, 6) == 0);
-                    if (isNVIDIA) {
-                        // enablePrecisionQualifiers
-                        angle_overrides_disabled = "enablePrec*";
+                if (isNVIDIA) {
+                    // enablePrecisionQualifiers
+                    angle_overrides_disabled = "enablePrec*";
 
-                        // TODO(b/378737781): Usage of external fence/semaphore
-                        // fd objects causes device lost crashes and hangs.
-                        angle_overrides_disabled +=
-                                ":supportsExternalFenceFd"
-                                ":supportsExternalSemaphoreFd";
-
-                        // NVIDIA cards can satisfy 2-graphics-queue requirement
-                        // for SkiaVK, and it works better with GuestAngle.
-                        qemuUirendererPropValue = "skiavk";
-                        params.push_back(
-                                {"androidboot.debug.renderengine.backend",
-                                 "skiavk"});
-                    }
+                    // TODO(b/378737781): Usage of external fence/semaphore
+                    // fd objects causes device lost crashes and hangs.
+                    angle_overrides_disabled +=
+                            ":supportsExternalFenceFd"
+                            ":supportsExternalSemaphoreFd";
                 }
 
                 // Without turning off exposeNonConformantExtensionsAndVersions,
