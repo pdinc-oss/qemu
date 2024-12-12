@@ -932,8 +932,9 @@ void VirtualSensorsPage::updateSensorValuesInUI() {
 
             // Update the "rotation" label according to the current
             // acceleraiton.
-            static const std::array<std::pair<glm::vec3, SkinRotation>, 4>
-                    directions{std::make_pair(glm::vec3(0.0f, 1.0f, 0.0f),
+            static std::array<std::pair<glm::vec3, SkinRotation>, 4> directions;
+            if (!android_is_automotive()) {
+                directions = {std::make_pair(glm::vec3(0.0f, 1.0f, 0.0f),
                                               SKIN_ROTATION_0),
                                std::make_pair(glm::vec3(-1.0f, 0.0f, 0.0f),
                                               SKIN_ROTATION_90),
@@ -941,6 +942,18 @@ void VirtualSensorsPage::updateSensorValuesInUI() {
                                               SKIN_ROTATION_180),
                                std::make_pair(glm::vec3(1.0f, 0.0f, 0.0f),
                                               SKIN_ROTATION_270)};
+            } else {
+                // Automotive axies are different from mobile axes.
+                // Ref: https://source.android.com/docs/core/interaction/sensors/sensor-types#auto_axes
+                directions = {std::make_pair(glm::vec3(0.0f, 0.0f, 1.0f),
+                                              SKIN_ROTATION_0),
+                               std::make_pair(glm::vec3(-1.0f, 0.0f, 0.0f),
+                                              SKIN_ROTATION_90),
+                               std::make_pair(glm::vec3(0.0f, 0.0f, -1.0f),
+                                              SKIN_ROTATION_180),
+                               std::make_pair(glm::vec3(1.0f, 0.0f, 0.0f),
+                                              SKIN_ROTATION_270)};
+            }
             QString rotation_label;
             SkinRotation coarse_orientation = mCoarseOrientation;
             for (const auto& v : directions) {
