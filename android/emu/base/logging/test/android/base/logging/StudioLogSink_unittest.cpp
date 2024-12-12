@@ -63,9 +63,11 @@ TEST_F(LogSinkTest, LogsError) {
 }
 
 TEST_F(LogSinkTest, LogsFatal) {
-    // We are going to crash, so we will not get to see any data written
+    // We are going to exit, so we will not get to see any data written
     // to our stream... We can however observe std::err
     studio_sink()->SetOutputStream(&std::cerr);
-    EXPECT_DEATH(LOG(FATAL) << "Hello world!", "Hello world!\n");
+
+    // Note: EXPECT_DEATH on windows captures additional data, as long as we see FATAL and Goodbye
+    EXPECT_DEATH(EXIT_WITH_FATAL_MESSAGE("%s", "Goodbye!"), ".*FATAL.*Goodbye!.*");
 }
 }  // namespace android::base
