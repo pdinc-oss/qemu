@@ -1685,11 +1685,6 @@ function(android_install_exe TGT DST)
   endif()
 endfunction()
 
-# Deprecated, use android_install_shared_library instead as it can handle windows corner cases.
-function(android_install_shared TGT)
-  android_install_shared_library(TARGET ${TGT})
-endfunction()
-
 # Installs the given shared library. The shared library will end up in ../lib64
 # Symbols will be extracted during build, and uploaded during install.
 function(android_install_shared_library)
