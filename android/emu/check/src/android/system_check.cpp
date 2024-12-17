@@ -56,7 +56,7 @@ AvdCompatibilityCheckResult hasSufficientSystem(AvdInfo* avd) {
     const int minNumCores = 2;
     const int idealMinNumCores = 4;
     if (numCores < minNumCores) {
-        // < 0.1% of our users as of 11/24
+        // < 0.1% of our users as of November 2024
         return {
                 .description =
                         absl::StrFormat("AVD '%s' requires %d CPU cores to "
@@ -65,7 +65,7 @@ AvdCompatibilityCheckResult hasSufficientSystem(AvdInfo* avd) {
                 .status = AvdCompatibility::Error,
         };
     } else if (numCores < idealMinNumCores) {
-        // < 2% of our users as of 11/24
+        // < 2% of our users as of November 2024
         return {
                 .description =
                         absl::StrFormat("AVD '%s' will run more smoothly with "
@@ -86,7 +86,8 @@ AvdCompatibilityCheckResult hasSufficientSystem(AvdInfo* avd) {
     }
     const uint64_t ramMB = (memUsage.total_phys_memory / (1024 * 1024));
     const uint64_t minRamMB = 2048;
-    const uint64_t idealMinRamMB = 4096; // < 5% of our users as of
+    const uint64_t idealMinRamMB =
+            4096;  // < 5% of our users as of November 2024
     // TODO(b/376873919): Improve the reporting to account for avd requirements.
     if (ramMB < minRamMB) {
         return {
