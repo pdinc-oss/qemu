@@ -25,6 +25,7 @@ if(WINDOWS_MSVC_X86_64)
            snapshot_deps.proto
            VehicleHalProto.proto
            verified_boot_config.proto
+           xr_emulator_conn.proto
     OUT_VAR AEMU_PROTOS_SRC
     EXPORT_MACRO "AEMU_PROTOS")
   set_source_files_properties(
@@ -50,7 +51,8 @@ else()
            snapshot.proto
            snapshot_deps.proto
            VehicleHalProto.proto
-           verified_boot_config.proto)
+           verified_boot_config.proto
+           xr_emulator_conn.proto)
 endif()
 target_link_libraries(android-emu-protos PRIVATE protobuf::libprotobuf)
 target_include_directories(android-emu-protos PUBLIC ${CMAKE_CURRENT_BINARY_DIR})

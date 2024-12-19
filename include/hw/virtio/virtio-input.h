@@ -26,10 +26,11 @@ typedef struct virtio_input_event virtio_input_event;
 #define VIRTIO_INPUT_CLASS(klass) \
         OBJECT_CLASS_CHECK(VirtIOInputClass, klass, TYPE_VIRTIO_INPUT)
 
-#define TYPE_VIRTIO_INPUT_HID "virtio-input-hid-device"
-#define TYPE_VIRTIO_KEYBOARD  "virtio-keyboard-device"
-#define TYPE_VIRTIO_MOUSE     "virtio-mouse-device"
-#define TYPE_VIRTIO_TABLET    "virtio-tablet-device"
+#define TYPE_VIRTIO_INPUT_HID           "virtio-input-hid-device"
+#define TYPE_VIRTIO_KEYBOARD            "virtio-keyboard-device"
+#define TYPE_VIRTIO_MOUSE               "virtio-mouse-device"
+#define TYPE_VIRTIO_TABLET              "virtio-tablet-device"
+#define TYPE_VIRTIO_DUAL_MODE_MOUSE     "virtio-dual-mode-mouse-device"
 
 #define VIRTIO_INPUT_HID(obj) \
         OBJECT_CHECK(VirtIOInputHID, (obj), TYPE_VIRTIO_INPUT_HID)

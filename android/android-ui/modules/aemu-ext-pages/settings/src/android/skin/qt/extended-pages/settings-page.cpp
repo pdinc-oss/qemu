@@ -203,7 +203,17 @@ SettingsPage::SettingsPage(QWidget* parent)
             settings.value(Ui::Settings::FORWARD_SHORTCUTS_TO_DEVICE, false)
                     .toBool();
 
-    mUi->set_forwardShortcutsToDevice->setCurrentIndex(shortcutBool ? 1 : 0);
+    if (android::featurecontrol::isEnabled(
+                android::featurecontrol::QtRawKeyboardInput)) {
+        // If RawKeyboardInput feature is enabled, disable the forward shortcuts to
+        // device dropdown. RawKeyboardInput feature always forwards the keyboard
+        // shortcuts to the Device, which are not used by the emulator host itself.
+        mUi->set_forwardShortcutsToDevice->setCurrentIndex(0);
+        mUi->kbdShortcutsTitle->setEnabled(false);
+        mUi->set_forwardShortcutsToDevice->setEnabled(false);
+    } else {
+        mUi->set_forwardShortcutsToDevice->setCurrentIndex(shortcutBool ? 1 : 0);
+    }
 
     // Show a frame around the device?
     mUi->set_frameAlways->setChecked(

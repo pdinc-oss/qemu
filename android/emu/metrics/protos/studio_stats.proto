@@ -1386,7 +1386,8 @@ message EmulatorAvdInfo {
         LAPTOP_AVD = 8;
         DESKTOP_AVD = 9;
         CHROMEOS = 10;
-        // Next tag: 11
+        DEV_2024_AVD = 11;
+        // Next tag: 12
     }
     enum EmulatorDeviceName {
         UNKNOWN_EMULATOR_DEVICE_NAME = 0;
@@ -1591,7 +1592,10 @@ message EmulatorFeatureFlagState {
         VULKAN_DEBUG_UTILS = 114;
         VULKAN_COMMAND_BUFFER_CHECKPOINTS = 115;
         VULKAN_VIRTUAL_QUEUE = 116;
-        // Next tag: 117
+        // Intentional gap to avoid merge conflicts.
+        VIRTIO_DUAL_MODE_MOUSE = 131;
+        DUAL_MODE_MOUSE_DISPLAY_HOST_CURSOR = 132;
+        // Next tag: 133
     }
     // Which features were enabled by default or through the server-side config.
     repeated EmulatorFeatureFlag attempted_enabled_feature_flags = 1;

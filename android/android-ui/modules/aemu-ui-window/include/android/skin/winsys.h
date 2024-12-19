@@ -32,6 +32,12 @@ void* skin_winsys_get_window_handle();
 // Return rectangle of current monitor in pixels.
 void skin_winsys_get_monitor_rect(SkinRect* rect);
 
+// Return logical resolution of the current monitor in logical pixels. On Mac OS
+// with retina display, the device pixel ratio is 2 and logical pixel resolution
+// is different from physical pixel resolution. On other OS, the behavior is
+// same as `skin_winsys_get_monitor_rect`.
+void skin_winsys_get_monitor_logical_rect(SkinRect* rect);
+
 // Returns the ratio between physical pixels and device-independent pixels for
 // the window. Return 0 in case of success, -1 in case of failure.
 int skin_winsys_get_device_pixel_ratio(double* dpr);

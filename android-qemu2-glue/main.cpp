@@ -824,8 +824,13 @@ static void initialize_virtio_input_devs(android::ParameterList& args,
                                          AndroidHwConfig* hw) {
     if (fc::isEnabled(fc::VirtioInput)) {
         if (fc::isEnabled(fc::VirtioMouse)) {
-            args.add("-device");
-            args.add("virtio-mouse-pci");
+            if (fc::isEnabled(fc::VirtioDualModeMouse)) {
+                args.add("-device");
+                args.add("virtio-dual-mode-mouse-pci");
+            } else {
+                args.add("-device");
+                args.add("virtio-mouse-pci");
+            }
         } else if (fc::isEnabled(fc::VirtioTablet)) {
             args.add("-device");
             args.add("virtio-tablet-pci");

@@ -65,7 +65,7 @@ void MouseEventSender::doSend(const MouseEvent request) {
         displayId = android_foldable_pixel_fold_second_display_id();
     }
     mAgents->user_event->sendMouseEvent(request.x(), request.y(), 0,
-                                        buttonsState, displayId);
+        buttonsState, displayId, MOUSE_EVENT_MODE_DEFAULT);
 }
 }  // namespace control
 }  // namespace emulation
