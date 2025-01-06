@@ -96,6 +96,7 @@ typedef struct {
     int y_global;
     int button;
     bool skip_sync;
+    bool send_relative_coordinates;
 } SkinEventMouseData;
 
 typedef struct {

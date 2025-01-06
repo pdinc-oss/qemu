@@ -91,7 +91,8 @@ static void emulator_window_light_brightness(void* opaque,
 }
 
 static void emulator_window_trackball_event(int dx, int dy) {
-    user_event_agent->sendMouseEvent(dx, dy, 1, 0, 0);
+    user_event_agent->sendMouseEvent(
+        dx, dy, 1, 0, 0, MOUSE_EVENT_MODE_DEFAULT);
 }
 
 static void emulator_window_window_key_event(unsigned keycode, int down) {
@@ -117,11 +118,20 @@ static void emulator_window_touch_events(const SkinEvent* const data,
 static void emulator_window_window_mouse_event(unsigned x,
                                                unsigned y,
                                                unsigned state,
-                                               int displayId) {
+                                               int displayId,
+                                               bool absoluteCoordinates) {
     /* NOTE: the 0 is used in hw/android/goldfish/events_device.c to
-     * differentiate between a touch-screen and a trackball event
+     * differentiate between a touch-screen and a trackball event.
+     * The last parameter event mode of type MOUSE_EVENT_MODE_ABS and
+     * MOUSE_EVENT_MODE_REL are relevant only for dual mode mouse drivers,
+     * which is configured for both EV_ABS and EV_REL events. For any other
+     * devices using this path, the event type will be decided based on device
+     * configuration and the behavior will be same as MOUSE_EVENT_MODE_DEFAULT.
      */
-    user_event_agent->sendMouseEvent(x, y, 0, state, displayId);
+    enum MouseEventMode mouse_event_mode =
+            absoluteCoordinates ? MOUSE_EVENT_MODE_ABS : MOUSE_EVENT_MODE_REL;
+    user_event_agent->sendMouseEvent(x, y, 0, state, displayId,
+                                     mouse_event_mode);
 }
 
 static void emulator_window_window_pen_event(unsigned x,

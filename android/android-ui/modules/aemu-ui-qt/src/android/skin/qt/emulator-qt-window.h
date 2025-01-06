@@ -133,6 +133,7 @@ public:
     void dropEvent(QDropEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
     void keyReleaseEvent(QKeyEvent* event) override;
+    void enterEvent(QEnterEvent* event) override;
     void leaveEvent(QEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
@@ -140,6 +141,7 @@ public:
     void tabletEvent(QTabletEvent* event) override;
     void paintEvent(QPaintEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
+    void focusInEvent(QFocusEvent *event) override;
     void startThread(StartFunction f, int argc, char** argv);
     void stopThread();
 
@@ -250,7 +252,8 @@ public:
                           SkinMouseButtonType button,
                           const QPointF& pos,
                           const QPointF& gPos,
-                          bool skipSync = false);
+                          bool skipSync = false,
+                          bool sendRelativeMouseCoordinates = true);
     void handlePenEvent(SkinEventType type,
                         const QTabletEvent* event,
                         bool skipSync = false);
@@ -325,6 +328,7 @@ public:
                             bool ignoreOrientation = false);
     bool addMultiDisplayWindow(uint32_t id, bool add, uint32_t w, uint32_t h);
     bool paintMultiDisplayWindow(uint32_t id, uint32_t texture);
+    void setRelativeMouseCoordMode(bool state);
 
     static bool sClosed;
 
@@ -467,6 +471,7 @@ private:
 
     void runAdbShellPowerDownAndQuit();
     void setVisibleExtent(QBitmap bitMap);
+    Qt::CursorShape getCursorShape(bool mouseGrabbed);
 
     android::base::Looper* mLooper;
     QTimer mStartupTimer;
@@ -496,6 +501,24 @@ private:
     bool mMouseRepositionFinished = false;
     bool mPromptMouseRestoreMessageBox = true;
 
+    // Display blank cursor when mouse is grabbed.
+    static constexpr Qt::CursorShape DEFAULT_MOUSE_GRABBED_MODE_CURSOR =
+            Qt::BlankCursor;
+    // Display default arrow cursor when mouse is not grabbed.
+    static constexpr Qt::CursorShape DEFAULT_MOUSE_NORMAL_MODE_CURSOR =
+            Qt::ArrowCursor;
+    // If dual-mode driver is enabled in default mode, display the guest cursor
+    // by default.
+    static constexpr Qt::CursorShape DUAL_MODE_MOUSE_DEFAULT_CURSOR_DISPLAY_GUEST_MODE =
+            Qt::BlankCursor;
+    // If dual-mode driver is enabled in default mode, display the host cursor
+    // if DualModeMouseDisplayHostCursor feature is enabled.
+    static constexpr Qt::CursorShape DUAL_MODE_MOUSE_DEFAULT_CURSOR_DISPLAY_HOST_MODE =
+            Qt::ArrowCursor;
+    // If dual-mode driver is enabled in relative coordinates mode, display the
+    // alternate cursor which shows head movement.
+    static constexpr Qt::CursorShape DUAL_MODE_MOUSE_RELATIVE_MODE_CURSOR =
+            Qt::CrossCursor;
     // Window flags to use for frameless and framed appearance
 
     static constexpr Qt::WindowFlags FRAMELESS_WINDOW_FLAGS =
@@ -592,6 +615,7 @@ private:
     unsigned int mHardRefreshCountDown = 0;
     SkinRotation mOrientation;  // Rotation of the main window
     bool mWindowIsMinimized = false;
+    bool mRelativeMouseCoordMode = true;
 
     QScreen* mCurrentScreen = nullptr;
     SkinEvent createSkinEventScreenChanged();

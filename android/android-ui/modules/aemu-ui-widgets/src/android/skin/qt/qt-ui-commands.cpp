@@ -92,6 +92,12 @@ constexpr CommandInfo kCommands[] = {
         INIT_COMMAND(WEAR_2, "Wear OS Button 2"),
         INIT_COMMAND(PALM, "Palm gesture"),
         INIT_COMMAND(TILT, "Tilt gesture"),
+        INIT_COMMAND(CHANGE_XR_INPUT_MODE, "Input Mode"),
+        INIT_COMMAND(CHANGE_XR_ENVIRONMENT_MODE, "Environment selector"),
+        INIT_COMMAND(XR_SCREEN_RECENTER, "Reset Position"),
+        INIT_COMMAND(XR_VIEWPORT_CONTROL_MODE_PAN, "Drag mouse to pan"),
+        INIT_COMMAND(XR_VIEWPORT_CONTROL_MODE_DOLLY, "Drag mouse to dolly backwards/forwards"),
+        INIT_COMMAND(XR_VIEWPORT_CONTROL_MODE_ROTATE, "Drag mouse to rotate"),
 };
 
 bool parseQtUICommand(const QString& string, QtUICommand* command) {

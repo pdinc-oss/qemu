@@ -41,6 +41,36 @@ AvdCompatibilityCheckResult hasSufficientHwGpu(AvdInfo* avd) {
         };
     }
 
+    const char* name = avdInfo_getName(avd);
+
+    // Check XR specific compatibility issues
+    // TODO(b/373601997): Improve supported platforms and configurations
+    const bool isXrAvd = (avdInfo_getAvdFlavor(avd) == AVD_DEV_2024);
+    if (isXrAvd) {
+        // Not supported on Mac Intel due to missing GPU features
+#if defined(__APPLE__) && !defined(__arm64__)
+        return {
+                .description =
+                        absl::StrFormat("`%s` is not supported to run on "
+                                        "Mac with Intel processors",
+                                        name),
+                .status = AvdCompatibility::Error,
+        };
+#endif
+
+        // Linux platform is not very well tested on XR scenarios, independently of the GPU
+// TODO(b/373601997) Change this warning when we will have more tests
+#ifdef __linux__
+        return {
+                .description =
+                        absl::StrFormat("`%s` is not yet "
+                                        "fully supported on Linux",
+                                        name),
+                .status = AvdCompatibility::Warning,
+        };
+#endif
+    }
+
 #ifdef _WIN32
     constexpr const bool isWindows = true;
 #else
@@ -54,7 +84,6 @@ AvdCompatibilityCheckResult hasSufficientHwGpu(AvdInfo* avd) {
         requiresHwGpuCheck = false;
     }
 
-    const char* name = avdInfo_getName(avd);
     if (!requiresHwGpuCheck) {
         return {
                 .description = absl::StrFormat(
@@ -151,14 +180,24 @@ AvdCompatibilityCheckResult hasSufficientHwGpu(AvdInfo* avd) {
 
     // Check available GPU memory
     const uint64_t deviceMemMiB = vkDeviceMemBytes / (1024 * 1024);
-    const uint64_t avdMinGpuMemMiB = 0;  // TODO: set from the AVD
+    const uint64_t avdMinGpuMemMiB = isXrAvd ? 2048 : 0;
     if (deviceMemMiB < avdMinGpuMemMiB) {
         return {
                 .description = absl::StrFormat(
                         "Not enough GPU memory available to run avd: `%s`. "
-                        "Available: %llu, minimum required: %llu MB",
+                        "Available: %llu MB, minimum required: %llu MB",
                         name, deviceMemMiB, avdMinGpuMemMiB),
                 .status = AvdCompatibility::Error,
+        };
+    }
+    const uint64_t avdSuggestedGpuMemMiB = isXrAvd ? 4096 : 0;
+    if (deviceMemMiB < avdSuggestedGpuMemMiB) {
+        return {
+                .description = absl::StrFormat(
+                        "GPU memory available (%llu MB) to run avd: `%s` is below "
+                        "the suggested level (%llu MB)",
+                        deviceMemMiB, name, avdMinGpuMemMiB),
+                .status = AvdCompatibility::Warning,
         };
     }
 

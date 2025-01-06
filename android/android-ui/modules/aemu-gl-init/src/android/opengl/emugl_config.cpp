@@ -23,6 +23,7 @@
 
 #include "aemu/base/StringFormat.h"
 #include "aemu/base/logging/Log.h"
+#include "android/avd/info.h"
 #include "android/base/system/System.h"
 #include "android/console.h"
 #include "android/opengl/EmuglBackendList.h"
@@ -53,28 +54,9 @@ static const uint32_t VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR =
 #include <dlfcn.h>
 #endif
 
-typedef char      hw_bool_t;
-typedef int       hw_int_t;
-typedef int64_t   hw_disksize_t;
-typedef char*     hw_string_t;
-typedef double    hw_double_t;
+#define DEBUG_EMUGL 0
 
-/* these macros are used to define the fields of AndroidHwConfig
- * declared below
- */
-#define   HWCFG_BOOL(n,s,d,a,t)       hw_bool_t      n;
-#define   HWCFG_INT(n,s,d,a,t)        hw_int_t       n;
-#define   HWCFG_STRING(n,s,d,a,t)     hw_string_t    n;
-#define   HWCFG_DOUBLE(n,s,d,a,t)     hw_double_t    n;
-#define   HWCFG_DISKSIZE(n,s,d,a,t)   hw_disksize_t  n;
-
-typedef struct AndroidHwConfig {
-#include "android/avd/hw-config-defs.h"
-} AndroidHwConfig;
-
-#define DEBUG 0
-
-#if DEBUG
+#if DEBUG_EMUGL
 #define D(...)  dprint(__VA_ARGS__)
 #else
 #define D(...)  crashhandler_append_message_format(__VA_ARGS__)
@@ -855,6 +837,20 @@ bool emuglConfig_init(EmuglConfig* config,
               __func__, gpu_mode, uiPreferredBackend);
         }
     }
+
+#if defined(__APPLE__) && defined(__arm64__)
+    // Also force MoltenVK with 'auto' modes on XR
+    // TODO(b/367273570): fix the test runner to remove agentsAvailable() call
+    const bool is_xr_mode =
+            agentsAvailable() && getConsoleAgents() &&
+            getConsoleAgents()->settings &&
+            getConsoleAgents()->settings->avdInfo() &&
+            (avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) ==
+             AVD_DEV_2024);
+    if (is_xr_mode && !strcmp("host", gpu_mode)) {
+        use_host_vulkan = true;
+    }
+#endif
 
     config->use_host_vulkan = use_host_vulkan;
 
