@@ -109,7 +109,8 @@ static void user_event_mouse(int dx,
                              int dy,
                              int dz,
                              int buttonsState,
-                             int displayId) {
+                             int displayId,
+                             enum MouseEventMode event_mode) {
     if (VERBOSE_CHECK(keys))
         dprint(">> MOUSE [%d %d %d : 0x%04x]", dx, dy, dz, buttonsState);
     if (feature_is_enabled(kFeature_VirtioInput) &&
@@ -120,7 +121,17 @@ static void user_event_mouse(int dx,
         if (feature_is_enabled(kFeature_VirtioTablet)) {
             kbd_put_tablet_button_state(buttonsState);
         }
-        if (qemu_input_is_absolute()) {
+        if (feature_is_enabled(kFeature_VirtioDualModeMouse)) {
+            if (event_mode == MOUSE_EVENT_MODE_REL) {
+                kbd_mouse_event(dx, dy, dz, buttonsState);
+            } else {
+                DisplaySurface* console_surface =
+                    qemu_console_surface(qemu_active_console());
+                int w = surface_width(console_surface);
+                int h = surface_height(console_surface);
+                kbd_mouse_event_absolute(dx, dy, dz, buttonsState, w, h);
+            }
+        } else if (qemu_input_is_absolute()) {
             int w = surface_width(qemu_console_surface(qemu_active_console()));
             int h = surface_height(qemu_console_surface(qemu_active_console()));
             bool isUdcOrHigher =

@@ -10,6 +10,9 @@
 // GNU General Public License for more details.
 
 #include "record-settings-page.h"
+#include "android/avd/info.h"                         // for avdInfo_getAvdF...
+#include "android/avd/util.h"                         // for AVD_ANDROID_AUTO
+#include "android/console.h"                          // for getConsoleAgents
 
 class QWidget;
 
@@ -17,4 +20,11 @@ RecordSettingsPage::RecordSettingsPage(QWidget *parent) :
     QWidget(parent),
     mUi(new Ui::RecordSettingsPage()) {
     mUi->setupUi(this);
+
+    AvdFlavor flavor =
+            avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo());
+    if (flavor == AVD_ANDROID_AUTO) {
+        mUi->label->hide();
+        mUi->toggleMacros->hide();
+    }
 }

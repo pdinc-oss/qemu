@@ -2327,6 +2327,10 @@ static void help_android_serialno(stralloc_t* out) {
            "\"^[a-zA-Z0-9._-,]+$\". \n\n");
 }
 
+static void help_support_multiple_input_modalites(stralloc_t* out) {
+    PRINTF("  Deprecated: Support different kind of input modalities.\n");
+}
+
 #define  help_no_skin   NULL
 #define  help_netspeed  help_shaper
 #define  help_netdelay  help_shaper

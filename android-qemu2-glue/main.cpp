@@ -824,8 +824,13 @@ static void initialize_virtio_input_devs(android::ParameterList& args,
                                          AndroidHwConfig* hw) {
     if (fc::isEnabled(fc::VirtioInput)) {
         if (fc::isEnabled(fc::VirtioMouse)) {
-            args.add("-device");
-            args.add("virtio-mouse-pci");
+            if (fc::isEnabled(fc::VirtioDualModeMouse)) {
+                args.add("-device");
+                args.add("virtio-dual-mode-mouse-pci");
+            } else {
+                args.add("-device");
+                args.add("virtio-mouse-pci");
+            }
         } else if (fc::isEnabled(fc::VirtioTablet)) {
             args.add("-device");
             args.add("virtio-tablet-pci");
@@ -1226,6 +1231,12 @@ static int startEmulatorWithMinConfig(int argc,
                 WINSYS_GLESBACKEND_PREFERENCE_ANGLE);
     }
 
+    WinsysGuestGlesDriverPreference uiPreferredGuestRenderer =
+            skin_winsys_get_preferred_gles_driver();
+
+    skin_winsys_set_preferred_gles_driver(uiPreferredGuestRenderer);
+
+
     char* accel_status = NULL;
     CpuAccelMode accel_mode = ACCEL_AUTO;
 
@@ -1252,6 +1263,29 @@ static int startEmulatorWithMinConfig(int argc,
             }
             // API 31 needs GLES 3.0+ to boot
             fc::setIfNotOverridenOrGuestDisabled(fc::GLESDynamicVersion, true);
+        }
+
+        if (!fc::isOverridden(fc::GuestAngle)) {
+            switch (skin_winsys_get_preferred_gles_driver()) {
+                case WINSYS_GUEST_GLES_DRIVER_PREFERENCE_NATIVE:
+                    fc::setEnabledOverride(fc::GuestAngle, false);
+                    dinfo("Guest Driver: Native (ext controls)");
+                    break;
+                case WINSYS_GUEST_GLES_DRIVER_PREFERENCE_GUESTANGLE:
+                    fc::setEnabledOverride(fc::GuestAngle, true);
+                    dinfo("Guest Driver: Angle (ext controls)");
+                    break;
+                default:
+                    dinfo("Guest Driver: Auto (ext controls)");
+            }
+        } else {
+            if (fc::isEnabled(fc::GuestAngle)) {
+                dinfo("Guest Driver: Angle (enabled from -feature GuestAngle)");
+                skin_winsys_set_preferred_gles_driver(WINSYS_GUEST_GLES_DRIVER_PREFERENCE_GUESTANGLE);
+            } else {
+                dinfo("Guest Driver: Native (disabled from -feature -GuestAngle)");
+                skin_winsys_set_preferred_gles_driver(WINSYS_GUEST_GLES_DRIVER_PREFERENCE_NATIVE);
+            }
         }
 
         if (fc::isEnabled(fc::ForceANGLE)) {
@@ -2697,6 +2731,11 @@ extern "C" int main(int argc, char** argv) {
         fc::setIfNotOverriden(fc::VsockSnapshotLoadFixed_b231345789, true);
     }
 
+    // XR image needs this feature to pass modifier keys to the guest.
+    if (avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) == AVD_DEV_2024) {
+        fc::setIfNotOverriden(fc::QtRawKeyboardInput, true);
+    }
+
     // Support for changing default lcd-density
     if (hw->hw_lcd_density) {
         args.add("-lcd-density");
@@ -3220,6 +3259,30 @@ extern "C" int main(int argc, char** argv) {
                 fc::setIfNotOverridenOrGuestDisabled(fc::GLESDynamicVersion,
                                                      true);
             }
+
+            if (!fc::isOverridden(fc::GuestAngle)) {
+                switch (skin_winsys_get_preferred_gles_driver()) {
+                    case WINSYS_GUEST_GLES_DRIVER_PREFERENCE_NATIVE:
+                        fc::setEnabledOverride(fc::GuestAngle, false);
+                        dinfo("Guest Driver: Native (ext controls)");
+                        break;
+                    case WINSYS_GUEST_GLES_DRIVER_PREFERENCE_GUESTANGLE:
+                        fc::setEnabledOverride(fc::GuestAngle, true);
+                        dinfo("Guest Driver: Angle (ext controls)");
+                        break;
+                    default:
+                        dinfo("Guest Driver: Auto (ext controls)");
+                }
+            } else {
+                if (fc::isEnabled(fc::GuestAngle)) {
+                    dinfo("Guest Driver: Angle (enabled from -feature GuestAngle)");
+                    skin_winsys_set_preferred_gles_driver(WINSYS_GUEST_GLES_DRIVER_PREFERENCE_GUESTANGLE);
+                } else {
+                    dinfo("Guest Driver: Native (disabled from -feature -GuestAngle)");
+                    skin_winsys_set_preferred_gles_driver(WINSYS_GUEST_GLES_DRIVER_PREFERENCE_NATIVE);
+                }
+            }
+
             if (skin_winsys_get_preferred_gles_apilevel() ==
                         WINSYS_GLESAPILEVEL_PREFERENCE_COMPAT ||
                 System::get()->getProgramBitness() == 32) {

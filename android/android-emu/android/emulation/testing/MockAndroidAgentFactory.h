@@ -30,16 +30,16 @@ namespace emulation {
 // at the start of the unit tests.
 class MockAndroidConsoleFactory : public AndroidConsoleFactory {
 public:
-    const QAndroidVmOperations* const android_get_QAndroidVmOperations()
+    const QAndroidVmOperations* android_get_QAndroidVmOperations()
             const override;
 
-    const QAndroidMultiDisplayAgent* const
+    const QAndroidMultiDisplayAgent*
     android_get_QAndroidMultiDisplayAgent() const override;
 
-    const QAndroidEmulatorWindowAgent* const
+    const QAndroidEmulatorWindowAgent*
     android_get_QAndroidEmulatorWindowAgent() const override;
 
-    const QAndroidGlobalVarsAgent* const android_get_QAndroidGlobalVarsAgent()
+    const QAndroidGlobalVarsAgent* android_get_QAndroidGlobalVarsAgent()
             const override;
 };
 

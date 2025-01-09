@@ -13,8 +13,10 @@
       "cwd": "${workspaceFolder}/objs",
       "args": [
         "-verbose",
-        "-avd", "${env:ANDROID_EMULATOR_DEFAULT_AVD}",
-        "-feature", "VulkanDebugUtils",
+        "-avd",
+        "${env:ANDROID_EMULATOR_DEFAULT_AVD}",
+        "-feature",
+        "VulkanDebugUtils",
       ],
       "env": {
         "ASAN_OPTIONS": "detect_leaks=0:detect_container_overflow=0:detect_odr_violation=0:symbolize=1",
@@ -39,6 +41,21 @@
           "pro hand -n false -p true -s false SIGUSR2"
         ],
       }
+    },
+    {
+      "name": "Launch cmake binary",
+      "type": "lldb",
+      "request": "launch",
+      "console": "integratedTerminal",
+      "program": "${command:cmake.launchTargetPath}",
+      "args": [
+        // "--gtest_repeat=-1",
+        //"--gtest_filter=JwkTokenAuthTest.message",
+      ],
+      "env": {
+        "ASAN_OPTIONS": "detect_leaks=0:detect_container_overflow=0:detect_odr_violation=0:symbolize=1",
+      },
+      "cwd": "${workspaceFolder}/build",
     },
     {
       // You need root access to attach debugger

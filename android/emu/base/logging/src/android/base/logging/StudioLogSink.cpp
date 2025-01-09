@@ -9,7 +9,9 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 #include "android/base/logging/StudioLogSink.h"
+#include "android/base/logging//StudioMessage.h"
 #include <iostream>
+#include "absl/log/absl_log.h"
 
 namespace android {
 namespace base {
@@ -29,9 +31,20 @@ std::string_view StudioLogSink::TranslateSeverity(
 }
 
 
+void StudioLogSink::Send(const absl::LogEntry& entry) {
+    ColorLogSink::Send(entry);
+    if (entry.log_severity() == absl::LogSeverity::kFatal) {
+        exit(EXIT_FAILURE);
+    }
+}
+
 StudioLogSink* studio_sink() {
     static StudioLogSink studioLog(&std::cout);
     return &studioLog;
+}
+
+[[noreturn]] void EXIT_WITH_FATAL_MESSAGE(const std::string& message) {
+    ABSL_LOG(FATAL).ToSinkOnly(android::base::studio_sink()) << message;
 }
 
 

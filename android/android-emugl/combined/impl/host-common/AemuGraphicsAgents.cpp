@@ -169,8 +169,8 @@ const GraphicsAgents* getGraphicsAgents() {
 namespace android {
 namespace emulation {
 
-#define DEFINE_AEMU_MOCK_CONSOLE_GETTER(typ, name)         \
-    const typ* const android_get_##typ() const {           \
+#define DEFINE_AEMU_MOCK_CONSOLE_GETTER(typ, name)          \
+    const typ* android_get_##typ() const {                  \
         return mGraphicsAgentFactory->android_get_##typ();  \
     };
 class AemuMockConsoleFactory : public android::emulation::AndroidConsoleFactory {
@@ -178,7 +178,7 @@ public:
     AemuMockConsoleFactory(const GraphicsAgentFactory* f) : mGraphicsAgentFactory(f) { }
 
     GRAPHICS_AGENTS_LIST(DEFINE_AEMU_MOCK_CONSOLE_GETTER)
-    const QAndroidGlobalVarsAgent* const android_get_QAndroidGlobalVarsAgent()
+    const QAndroidGlobalVarsAgent* android_get_QAndroidGlobalVarsAgent()
             const {
         return &gMockAndroidGlobalVarsAgent;
     }
@@ -187,7 +187,7 @@ private:
 };
 
 #define DEFINE_GRAPHICS_AGENT_GETTER_IMPL(typ, name)                   \
-    const typ* const GraphicsAgentFactory::android_get_##typ() const { \
+    const typ* GraphicsAgentFactory::android_get_##typ() const {       \
         return sGraphicsAgents.name;                                   \
     };
 
@@ -207,28 +207,28 @@ void injectGraphicsAgents(const GraphicsAgentFactory& factory) {
     injectConsoleAgents(f);
 }
 
-const QAndroidEmulatorWindowAgent* const
+const QAndroidEmulatorWindowAgent*
 AemuGraphicsAgentFactory::android_get_QAndroidEmulatorWindowAgent()
         const {
     return getConsoleAgents()->emu;
 }
 
-const QAndroidDisplayAgent* const
+const QAndroidDisplayAgent*
 AemuGraphicsAgentFactory::android_get_QAndroidDisplayAgent() const {
     return getConsoleAgents()->display;
 }
 
-const QAndroidRecordScreenAgent* const
+const QAndroidRecordScreenAgent*
 AemuGraphicsAgentFactory::android_get_QAndroidRecordScreenAgent() const {
     return getConsoleAgents()->record;
 }
 
-const QAndroidMultiDisplayAgent* const
+const QAndroidMultiDisplayAgent*
 AemuGraphicsAgentFactory::android_get_QAndroidMultiDisplayAgent() const {
     return getConsoleAgents()->multi_display;
 }
 
-const QAndroidVmOperations* const
+const QAndroidVmOperations*
 AemuGraphicsAgentFactory::android_get_QAndroidVmOperations() const {
     return getConsoleAgents()->vm;
 }
