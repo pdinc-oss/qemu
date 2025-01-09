@@ -50,13 +50,14 @@ AvdCompatibilityCheckResult hasSufficientSystem(AvdInfo* avd) {
     }
 
     const char* avdName = avdInfo_getName(avd);
+    const bool isXrAvd = (avdInfo_getAvdFlavor(avd) == AVD_DEV_2024);
 
     // Check number of cores
     const int numCores = System::get()->getCpuCoreCount();
-    const int minNumCores = 2;
-    const int idealMinNumCores = 4;
+    const int minNumCores = isXrAvd ? 4 : 2;
+    const int idealMinNumCores = isXrAvd ? 8 : 4;
     if (numCores < minNumCores) {
-        // < 0.1% of our users as of 11/24
+        // < 0.1% of our users as of November 2024
         return {
                 .description =
                         absl::StrFormat("AVD '%s' requires %d CPU cores to "
@@ -65,11 +66,11 @@ AvdCompatibilityCheckResult hasSufficientSystem(AvdInfo* avd) {
                 .status = AvdCompatibility::Error,
         };
     } else if (numCores < idealMinNumCores) {
-        // < 2% of our users as of 11/24
+        // < 2% of our users as of November 2024
         return {
                 .description =
                         absl::StrFormat("AVD '%s' will run more smoothly with "
-                                        "%d CPU cores (currently using %d).",
+                                        "%d CPU cores (currently using %d)",
                                         avdName, idealMinNumCores, numCores),
                 .status = AvdCompatibility::Warning,
         };
@@ -86,23 +87,24 @@ AvdCompatibilityCheckResult hasSufficientSystem(AvdInfo* avd) {
     }
     const uint64_t ramMB = (memUsage.total_phys_memory / (1024 * 1024));
     const uint64_t minRamMB = 2048;
-    const uint64_t idealMinRamMB = 4096; // < 5% of our users as of
+    const uint64_t idealMinRamMB = isXrAvd ? 16384 : 4096;
+    // < 5% of our users as of November 2024
     // TODO(b/376873919): Improve the reporting to account for avd requirements.
     if (ramMB < minRamMB) {
         return {
                 .description = absl::StrFormat(
                         "Available system RAM is not enough to run "
-                        "avd: '%s'. Available: %d, minimum "
-                        "required: %d",
+                        "avd: '%s'. Available: %d MiB, minimum "
+                        "required: %d MiB",
                         avdName, ramMB, minRamMB),
                 .status = AvdCompatibility::Error,
         };
     } else if (ramMB < idealMinRamMB) {
         return {
-                .description =
-                        absl::StrFormat("Suggested minimum system RAM to run "
-                                        "avd '%s' is %d MB (available: %d MB)",
-                                        avdName, idealMinRamMB, ramMB),
+                .description = absl::StrFormat(
+                        "Suggested minimum system RAM to run "
+                        "avd '%s' is %d MiB (available: %d MiB)",
+                        avdName, idealMinRamMB, ramMB),
                 .status = AvdCompatibility::Warning,
         };
     }

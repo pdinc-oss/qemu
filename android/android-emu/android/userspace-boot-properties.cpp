@@ -147,10 +147,10 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
     const bool isX86ish =
             !strcmp(targetArch, "x86") || !strcmp(targetArch, "x86_64");
     const bool hasShellConsole = opts->logcat || opts->shell;
-#ifdef _WIN32
-    constexpr const bool isWindows = true;
+#ifdef __APPLE__
+    constexpr const bool isMac = true;
 #else
-    constexpr const bool isWindows = false;
+    constexpr const bool isMac = false;
 #endif
 
     const char* androidbootVerityMode;
@@ -186,6 +186,8 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
     const char* emulatorCircularProp;
     const char* autoRotateProp;
     const char* qemuExternalDisplays;
+    const char* qemuDualModeMouseDriverProp;
+    const char* qemuDualModeMouseHideGuestCursorProp;
 
     namespace fc = android::featurecontrol;
     if (fc::isEnabled(fc::AndroidbootProps) ||
@@ -225,6 +227,8 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
         emulatorCircularProp = "androidboot.emulator.circular";
         autoRotateProp = "androidboot.qemu.autorotate";
         qemuExternalDisplays = "androidboot.qemu.external.displays";
+        qemuDualModeMouseDriverProp = "androidboot.qemu.dual_mode_mouse_driver";
+        qemuDualModeMouseHideGuestCursorProp = "androidboot.qemu.dual_mode_mouse_hide_guest_cursor";
     } else {
         androidbootVerityMode = nullptr;
         checkjniProp = "android.checkjni";
@@ -259,6 +263,8 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
         emulatorCircularProp = "ro.emulator.circular";
         autoRotateProp = "qemu.autorotate";
         qemuExternalDisplays = "qemu.external.displays";
+        qemuDualModeMouseDriverProp = "qemu.dual_mode_mouse_driver";
+        qemuDualModeMouseHideGuestCursorProp = "qemu.dual_mode_mouse_hide_guest_cursor";
     }
 
     std::vector<std::pair<std::string, std::string>> params;
@@ -271,6 +277,7 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
     }
 
     params.push_back({"androidboot.hardware", "ranchu"});
+    const char* qemuUirendererPropValue = nullptr;
 
     if (opts->guest_angle) {
         dwarning(
@@ -301,32 +308,67 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
         // GuestAngle boot parameters are only valid for some system images with
         // API level 34 and above.
         if (apiLevel >= 34) {
-            if (angle_overrides_disabled.empty()) {
-                // Without turning off exposeNonConformantExtensionsAndVersions,
-                // ANGLE will bypass the supported extensions check when guest
-                // creates a GL context, which means a ES 3.2 context can be
-                // created even without the above extensions.
-                angle_overrides_disabled =
-                        "exposeNonConformantExtensionsAndVersions";
 
+            bool isNVIDIA = false;
+            const bool hwGpuRequested =
+                    (emuglConfig_get_current_renderer() ==
+                        SELECTED_RENDERER_HOST);
+            if (!isMac && hwGpuRequested) {
+                char* vkVendor = nullptr;
+                int vkMajor, vkMinor, vkPatch;
+                emuglConfig_get_vulkan_hardware_gpu(
+                        &vkVendor, &vkMajor, &vkMinor, &vkPatch, nullptr, nullptr);
+                isNVIDIA = (vkVendor && strncmp("NVIDIA", vkVendor, 6) == 0);
+            }
+
+            if (isNVIDIA) {
+                // NVIDIA cards can satisfy 2-graphics-queue requirement
+                // for SkiaVK, and it works better with GuestAngle.
+                qemuUirendererPropValue = "skiavk";
+                params.push_back(
+                        {"androidboot.debug.renderengine.backend",
+                            "skiavk"});
+            }
+
+            if (angle_overrides_disabled.empty()) {
                 // b/264575911: Nvidia seems to have issues with YUV samplers
                 // with 'lowp' and 'mediump' precision qualifiers.
                 // This should ideally use graphicsdetecto rresults at
                 // GraphicsDetectorVkPrecisionQualifiersOnYuvSamplers.cpp
-                const bool hwGpuRequested =
-                        (emuglConfig_get_current_renderer() ==
-                         SELECTED_RENDERER_HOST);
-                if (isWindows && hwGpuRequested) {
-                    char* vkVendor = nullptr;
-                    int vkMajor, vkMinor, vkPatch;
-                    emuglConfig_get_vulkan_hardware_gpu(
-                            &vkVendor, &vkMajor, &vkMinor, &vkPatch, nullptr);
-                    bool isNVIDIA =
-                            (vkVendor && strncmp("NVIDIA", vkVendor, 6) == 0);
-                    if (isNVIDIA) {
-                        angle_overrides_disabled +=
-                                ":enablePrecisionQualifiers";
+                if (isNVIDIA) {
+                    // enablePrecisionQualifiers
+                    angle_overrides_disabled = "enablePrec*";
+
+                    // TODO(b/378737781): Usage of external fence/semaphore
+                    // fd objects causes device lost crashes and hangs.
+                    angle_overrides_disabled +=
+                            ":supportsExternalFenceFd"
+                            ":supportsExternalSemaphoreFd";
+                }
+
+                // Without turning off exposeNonConformantExtensionsAndVersions,
+                // ANGLE will bypass the supported extensions check when guest
+                // creates a GL context, which means a ES 3.2 context can be
+                // created even without the above extensions.
+                // TODO(b/238024366): this may not fit into character
+                // limitations
+                const char* extensionLimitStr =
+                        "exposeN*";
+                const int MAX_PARAM_LENGTH = 92;
+                const bool safeToAdd =
+                        (angle_overrides_disabled.size() +
+                         strlen(extensionLimitStr)) < MAX_PARAM_LENGTH;
+                if (safeToAdd) {
+                    if (angle_overrides_disabled.size()) {
+                        angle_overrides_disabled += ":";
                     }
+                    angle_overrides_disabled += extensionLimitStr;
+                } else {
+                    WARN("Cannot add angle boot parameter '%s', character "
+                         "limit exceeded (len=%u max=%u).",
+                         extensionLimitStr,
+                         angle_overrides_disabled.size() + strlen(extensionLimitStr),
+                         MAX_PARAM_LENGTH);
                 }
             }
         }
@@ -479,8 +521,12 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
     params.push_back({qemuOpenglesVersionProp,
                       StringFormat("%d", bootPropOpenglesVersion)});
 
-    if (fc::isEnabled(fc::GLESDynamicVersion)) {
-        params.push_back({qemuUirendererProp, "skiagl"});
+    if (fc::isEnabled(fc::GLESDynamicVersion) && !qemuUirendererPropValue) {
+        qemuUirendererPropValue = "skiagl";
+    }
+
+    if (qemuUirendererPropValue) {
+        params.push_back({qemuUirendererProp, qemuUirendererPropValue});
     }
 
     if (androidbootLogcatProp) {
@@ -644,6 +690,13 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
       params.push_back({emulatorCircularProp, "1"});
     }
 
+    if (fc::isEnabled(fc::VirtioDualModeMouse)) {
+        params.push_back({qemuDualModeMouseDriverProp, "1"});
+        if (fc::isEnabled(fc::DualModeMouseDisplayHostCursor)) {
+            params.push_back({qemuDualModeMouseHideGuestCursorProp, "1"});
+        }
+    }
+
     std::map<std::string, std::string> key_to_val_map;
     for (int i = 0; i < params.size(); ++i) {
         const std::string& key = params[i].first;
@@ -657,9 +710,11 @@ std::vector<std::pair<std::string, std::string>> getUserspaceBootProperties(
         key_to_val_map[key] = params[i].second;
     }
 
+    INFO("Userspace boot properties:");
     std::vector<std::pair<std::string, std::string>> unique_params;
     for (const auto& it : key_to_val_map) {
         unique_params.push_back({it.first, it.second});
+        INFO("  %s=%s", it.first.c_str(), it.second.c_str());
     }
 
     return unique_params;

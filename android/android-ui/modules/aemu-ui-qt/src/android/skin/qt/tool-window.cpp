@@ -52,7 +52,6 @@
 #include <QtCore>
 
 #include "aemu/base/logging/Log.h"
-#include "aemu/base/logging/Log.h"
 #include "aemu/base/logging/LogSeverity.h"
 #include "aemu/base/memory/OnDemand.h"
 #include "android/avd/info.h"
@@ -81,19 +80,21 @@
 #include "android/skin/qt/qt-ui-commands.h"
 #include "android/skin/qt/stylesheet.h"
 #include "android/skin/qt/virtualscene-control-window.h"
+#include "android/skin/qt/xr-environment-mode-dialog.h"
+#include "android/skin/qt/xr-input-mode-dialog.h"
 #include "android/ui-emu-agent.h"
 #include "android/utils/debug.h"
 #include "android/utils/system.h"
 #include "host-common/FeatureControl.h"
 #include "host-common/Features.h"
-#include "host-common/misc.h"
 #include "host-common/hw-config-helper.h"
+#include "host-common/misc.h"
+#include "host-common/opengles.h"
 #include "host-common/screen-recorder.h"
 #include "host-common/window_agent.h"
 #include "snapshot/common.h"
 #include "snapshot/interface.h"
 #include "studio_stats.pb.h"
-#include "host-common/opengles.h"
 #include "ui_tools.h"
 
 namespace {
@@ -160,6 +161,8 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
       mUserActionsCounter(user_actions_counter),
       mPostureSelectionDialog(new PostureSelectionDialog(this)),
       mResizableDialog(new ResizableDialog(this)),
+      mXrEnvironmentModeDialog(new XrEnvironmentModeDialog(this)),
+      mXrInputModeDialog(new XrInputModeDialog(this)),
       mFoldableSyncToAndroidSuccess(false),
       mFoldableSyncToAndroidTimeout(false),
       mFoldableSyncToAndroid([this](FoldableSyncToAndroidItem&& item) {
@@ -177,11 +180,15 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
     setWindowFlags(flag | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint);
     mToolsUi->setupUi(this);
 
+    const AvdInfo* avdInfo = getConsoleAgents()->settings->avdInfo();
+    const AvdFlavor avdFlavor = avdInfo ? avdInfo_getAvdFlavor(avdInfo) : AVD_OTHER;
+
     mToolsUi->mainLayout->setAlignment(Qt::AlignCenter);
     mToolsUi->winButtonsLayout->setAlignment(Qt::AlignCenter);
     mToolsUi->controlsLayout->setAlignment(Qt::AlignCenter);
     if (android_foldable_any_folded_area_configured() ||
-        android_foldable_hinge_configured() || resizableEnabled()) {
+        android_foldable_hinge_configured() || resizableEnabled() ||
+        avdFlavor == AVD_DEV_2024) {
         mToolsUi->zoom_button->hide();
         mToolsUi->zoom_button->setEnabled(false);
     }
@@ -191,7 +198,6 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
     updateTheme(Ui::stylesheetForTheme(theme));
 
     QString default_shortcuts =
-            "Ctrl+Shift+A SHOW_PANE_CAMERA\n"
             "Ctrl+Shift+U SHOW_PANE_BUGREPORT\n"
             "Ctrl+Shift+M SHOW_PANE_MICROPHONE\n"
             "Ctrl+Shift+N SHOW_PANE_SNAPSHOT\n"
@@ -202,13 +208,7 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
             "F1         SHOW_PANE_HELP\n"
 #endif
             "Ctrl+S     TAKE_SCREENSHOT\n"
-            "Ctrl+Shift+Up    PAN_UP\n"
-            "Ctrl+Shift+Down  PAN_DOWN\n"
-            "Ctrl+Shift+Left  PAN_LEFT\n"
-            "Ctrl+Shift+Right PAN_RIGHT\n"
             "Ctrl+P     POWER\n"
-            "Ctrl+M     MENU\n"
-            "Ctrl+T     TOGGLE_TRACKBALL\n"
 #ifndef __APPLE__
             "Ctrl+H     HOME\n"
 #else
@@ -217,18 +217,30 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
             "Ctrl+O     OVERVIEW\n"
             "Ctrl+Backspace BACK\n";
 
-    if (!getConsoleAgents()->settings->avdInfo() ||
-        avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) !=
-                AVD_WEAR) {
+    if (avdFlavor != AVD_DEV_2024) {
+        default_shortcuts +=
+            "Ctrl+Shift+A       SHOW_PANE_CAMERA\n"
+            "Ctrl+M             MENU\n"
+            "Ctrl+Shift+Up      PAN_UP\n"
+            "Ctrl+Shift+Down    PAN_DOWN\n"
+            "Ctrl+Shift+Left    PAN_LEFT\n"
+            "Ctrl+Shift+Right   PAN_RIGHT\n"
+            "Ctrl+T             TOGGLE_TRACKBALL\n";
+    }
+
+    if (avdFlavor != AVD_WEAR) {
         default_shortcuts += "Ctrl+=     VOLUME_UP\n";
         default_shortcuts += "Ctrl+-     VOLUME_DOWN\n";
-        default_shortcuts += "Ctrl+Left ROTATE_LEFT\n";
-        default_shortcuts += "Ctrl+Right ROTATE_RIGHT\n";
+        if (avdFlavor != AVD_DEV_2024) {
+            default_shortcuts += "Ctrl+Left  ROTATE_LEFT\n";
+            default_shortcuts += "Ctrl+Right ROTATE_RIGHT\n";
+        }
     }
 
     if (!android_foldable_any_folded_area_configured() &&
         !android_foldable_hinge_configured() &&
-        !android_foldable_rollable_configured() && !resizableEnabled()) {
+        !android_foldable_rollable_configured() && !resizableEnabled() &&
+        avdFlavor != AVD_DEV_2024) {
         // Zoom is not available for foldable and resizable AVDs
         default_shortcuts += "Ctrl+Z    ENTER_ZOOM\n";
         default_shortcuts += "Ctrl+Up   ZOOM_IN\n";
@@ -242,25 +254,23 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
         default_shortcuts += "Ctrl+Shift+R SHOW_PANE_RECORD\n";
     }
 
-    if (getConsoleAgents()->settings->avdInfo()) {
-        if (avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) ==
-            AVD_WEAR) {
-            if (avdInfo_getApiLevel(getConsoleAgents()->settings->avdInfo()) >=
-                28) {
+    if (avdInfo) {
+        if (avdFlavor == AVD_WEAR) {
+            if (avdInfo_getApiLevel(avdInfo) >= 28) {
                 default_shortcuts += "Ctrl+Shift+O WEAR_1\n";
                 default_shortcuts += "Ctrl+Shift+T TILT\n";
                 default_shortcuts += "Ctrl+Shift+E PALM\n";
             }
-            if (avdInfo_getApiLevel(getConsoleAgents()->settings->avdInfo()) >
-                28) {
+            if (avdInfo_getApiLevel(avdInfo) > 28) {
                 default_shortcuts += "Ctrl+Shift+I WEAR_2\n";
             }
-        } else if (avdInfo_getAvdFlavor(
-                           getConsoleAgents()->settings->avdInfo()) ==
-                   AVD_ANDROID_AUTO) {
+        } else if (avdFlavor == AVD_ANDROID_AUTO) {
             default_shortcuts += "Ctrl+Shift+T SHOW_PANE_CAR\n";
             default_shortcuts += "Ctrl+Shift+O SHOW_PANE_CAR_ROTARY\n";
             default_shortcuts += "Ctrl+Shift+I SHOW_PANE_SENSOR_REPLAY\n";
+        } else if (avdFlavor == AVD_DEV_2024) {
+            default_shortcuts +=
+                "Ctrl+Shift+/   XR_SCREEN_RECENTER\n";
         } else if (android::featurecontrol::isEnabled(
                            android::featurecontrol::MultiDisplay) &&
                    !android_foldable_any_folded_area_configured() &&
@@ -274,35 +284,39 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
         }
     }
 
-    if (fc::isEnabled(fc::TvRemote) &&
-        getConsoleAgents()->settings->avdInfo() &&
-        avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) ==
-                AVD_TV) {
+    if (fc::isEnabled(fc::TvRemote) && avdFlavor == AVD_TV) {
         default_shortcuts += "Ctrl+Shift+D SHOW_PANE_TV_REMOTE\n";
-    } else {
+    } else if (avdFlavor != AVD_DEV_2024) {
         default_shortcuts += "Ctrl+Shift+D SHOW_PANE_DPAD\n";
     }
 
-    if (!getConsoleAgents()->settings->avdInfo() ||
-        avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) !=
-                AVD_TV) {
+    if (avdFlavor != AVD_TV) {
+        if (avdFlavor != AVD_DEV_2024) {
+            default_shortcuts +=
+                    "Ctrl+Shift+L SHOW_PANE_LOCATION\n"
+                    "Ctrl+Shift+C SHOW_PANE_CELLULAR\n"
+                    "Ctrl+Shift+P SHOW_PANE_PHONE\n"
+                    "Ctrl+Shift+V SHOW_PANE_VIRTSENSORS\n"
+                    "Ctrl+Shift+F SHOW_PANE_FINGER\n";
+        }
         default_shortcuts +=
-                "Ctrl+Shift+L SHOW_PANE_LOCATION\n"
-                "Ctrl+Shift+C SHOW_PANE_CELLULAR\n"
-                "Ctrl+Shift+B SHOW_PANE_BATTERY\n"
-                "Ctrl+Shift+P SHOW_PANE_PHONE\n"
-                "Ctrl+Shift+V SHOW_PANE_VIRTSENSORS\n"
-                "Ctrl+Shift+F SHOW_PANE_FINGER\n";
+            "Ctrl+Shift+B   SHOW_PANE_BATTERY\n";
     }
 
     QTextStream stream(&default_shortcuts);
     mShortcutKeyStore.populateFromTextStream(stream, parseQtUICommand);
-    // Need to add this one separately because QKeySequence cannot parse
-    // the string "Ctrl".
-    mShortcutKeyStore.add(QKeySequence(Qt::Key_Control | Qt::ControlModifier),
+
+    if (avdFlavor != AVD_DEV_2024) {
+        // Multitouch is disabled on XR images.
+        // Need to add this one separately because QKeySequence cannot parse
+        // the string "Ctrl".
+        mShortcutKeyStore.add(QKeySequence(Qt::Key_Control | Qt::ControlModifier),
                           QtUICommand::SHOW_MULTITOUCH);
 
-    VirtualSceneControlWindow::addShortcutKeysToKeyStore(mShortcutKeyStore);
+        // Virtual Scene control shortcuts are disabled on XR images since they
+        // conflict with the navigation shortcuts.
+        VirtualSceneControlWindow::addShortcutKeysToKeyStore(mShortcutKeyStore);
+    }
 
     // Update tool tips on all push buttons.
     const QList<QPushButton*> childButtons =
@@ -329,6 +343,20 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
             // Unfortunately, we have no way of enforcing it at compile time.
             assert(0);
         }
+
+        // All XR buttons are expected to define the `xrButtonType` property.
+        QVariant xrButtonTypeVariant = button->property("xrButtonType");
+        if (xrButtonTypeVariant.isValid()) {
+            std::string xrButtonType = xrButtonTypeVariant.toString().toStdString();
+            if (mXrButtonTypeToPushButtonsMap.find(xrButtonType) ==
+                        mXrButtonTypeToPushButtonsMap.end()) {
+                mXrButtonTypeToPushButtonsMap[xrButtonType] =
+                        {std::ref(*button)};
+            } else {
+                mXrButtonTypeToPushButtonsMap[xrButtonType].push_back(
+                        std::ref(*button));
+            }
+        }
     }
 
     if (getConsoleAgents()->settings->hw()->hw_arc) {
@@ -340,8 +368,7 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
         mToolsUi->tablet_mode_button->setHidden(true);
     }
 
-    if (avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) ==
-        AVD_TV) {
+    if (avdFlavor == AVD_TV) {
         // Android TV should not rotate
         // TODO: emulate VESA mounts for use with
         // vertically scrolling arcade games
@@ -349,8 +376,7 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
         mToolsUi->next_layout_button->setHidden(true);
     }
 
-    if (avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) ==
-        AVD_WEAR) {
+    if (avdFlavor == AVD_WEAR) {
         // Wear OS shouldn't get rotate nor volume up/down buttons.
         mToolsUi->prev_layout_button->setHidden(true);
         mToolsUi->next_layout_button->setHidden(true);
@@ -358,9 +384,7 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
         mToolsUi->volume_down_button->setHidden(true);
     }
 
-    if (avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) ==
-                AVD_WEAR &&
-        avdInfo_getApiLevel(getConsoleAgents()->settings->avdInfo()) >= 28) {
+    if (avdFlavor == AVD_WEAR && avdInfo_getApiLevel(avdInfo) >= 28) {
         // Use new button layout for >= API 28 wear emulators
         mToolsUi->overview_button->setHidden(true);
         mToolsUi->power_button->setHidden(true);
@@ -369,8 +393,7 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
         mToolsUi->controlsLayout->removeWidget(mToolsUi->back_button);
         mToolsUi->controlsLayout->insertWidget(0, mToolsUi->back_button);
 
-        if (avdInfo_getApiLevel(getConsoleAgents()->settings->avdInfo()) ==
-            28) {
+        if (avdInfo_getApiLevel(avdInfo) == 28) {
             mToolsUi->wear_button_2->setHidden(true);
         }
     } else {
@@ -380,8 +403,7 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
         mToolsUi->tilt_button->setHidden(true);
     }
 
-    if (avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) ==
-        AVD_ANDROID_AUTO) {
+    if (avdFlavor == AVD_ANDROID_AUTO) {
         // Android Auto doesn't support rotate, home, back, recent
         mToolsUi->prev_layout_button->setHidden(true);
         mToolsUi->next_layout_button->setHidden(true);
@@ -389,8 +411,7 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
         mToolsUi->overview_button->setHidden(true);
     }
 
-    if (avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo()) ==
-        AVD_DESKTOP) {
+    if (avdFlavor == AVD_DESKTOP) {
         // Desktop device does not rotate
         mToolsUi->prev_layout_button->setHidden(true);
         mToolsUi->next_layout_button->setHidden(true);
@@ -403,6 +424,11 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
         mToolsUi->back_button->setHidden(true);
         mToolsUi->home_button->setHidden(true);
         mToolsUi->overview_button->setHidden(true);
+    }
+
+    if (avdFlavor == AVD_DEV_2024) {
+        mToolsUi->prev_layout_button->setHidden(true);
+        mToolsUi->next_layout_button->setHidden(true);
     }
 
 #ifndef Q_OS_MAC
@@ -422,6 +448,7 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
         mToolsUi->change_posture_button->setHidden(true);
     }
     updateFoldableButtonVisibility();
+    updateXrButtonsVisibility();
 
     connect(mPostureSelectionDialog, SIGNAL(newPostureRequested(int)), this,
             SLOT(on_new_posture_requested(int)));
@@ -432,6 +459,16 @@ ToolWindow::ToolWindow(EmulatorQtWindow* window,
             SLOT(on_new_resizable_requested(PresetEmulatorSizeType)));
     connect(mResizableDialog, SIGNAL(finished(int)), this,
             SLOT(on_dismiss_resizable_dialog()));
+    if (android_is_xr_mode()) {
+        connect(mXrEnvironmentModeDialog, SIGNAL(onXrEnvironmentModeRequested(int)),
+                this, SLOT(on_xr_environment_mode_changed(int)));
+        connect(mXrEnvironmentModeDialog, SIGNAL(finished(int)),
+                this, SLOT(on_dismiss_xr_environment_mode_dialog()));
+        connect(mXrInputModeDialog, SIGNAL(onXrInputModeRequested(int)), this,
+                SLOT(on_xr_input_mode_changed(int)));
+        connect(mXrInputModeDialog, SIGNAL(finished(int)), this,
+                SLOT(on_dismiss_xr_input_mode_dialog()));
+    }
 
     if (!resizableEnabled()) {
         mToolsUi->resizable_button->setHidden(true);
@@ -492,6 +529,21 @@ void ToolWindow::updateFoldableButtonVisibility() {
             android_foldable_hinge_enabled());
     mExtendedWindow.ifExists([&] {
         mExtendedWindow.get()->getVirtualSensorsPage()->updateHingeSensorUI(); });
+}
+
+void ToolWindow::updateXrButtonsVisibility() {
+    auto is_xr_mode = android_is_xr_mode();
+    for (const auto &[xrButtonType, xrButtonList] :
+            mXrButtonTypeToPushButtonsMap) {
+        for (const auto& xrButtonRef : xrButtonList) {
+            QPushButton& xrButton = xrButtonRef.get();
+            if (!is_xr_mode) {
+                xrButton.setHidden(true);
+            }
+            xrButton.setEnabled(is_xr_mode);
+        }
+    }
+    updateXrNavigationButtonsChecked(mXrLastMouseKeyboardModeCommand);
 }
 
 void ToolWindow::updateButtonUiCommand(QPushButton* button,
@@ -981,6 +1033,104 @@ void ToolWindow::handleUICommand(QtUICommand cmd,
             }
 
             break;
+        case QtUICommand::CHANGE_XR_INPUT_MODE:
+            if (android_is_xr_mode()) {
+                if (down) {
+                    float mode = static_cast<float>(mLastInputModeRequested);
+                    LOG(DEBUG) << "Sending XR Input Mode: " << mode;
+                    sUiEmuAgent->sensors->setPhysicalParameterTarget(
+                            PHYSICAL_PARAMETER_XR_INPUT_MODE, &mode, 1,
+                            PHYSICAL_INTERPOLATION_SMOOTH);
+                    updateXrNavigationButtonsChecked(cmd);
+                }
+                const auto emulatorWindow = EmulatorQtWindow::getInstance();
+                if (emulatorWindow) {
+                    emulatorWindow->setRelativeMouseCoordMode(false);
+                } else {
+                    LOG(WARNING)
+                            << "No window found to set mouse coordinates mode";
+                }
+            }
+            break;
+        case QtUICommand::CHANGE_XR_ENVIRONMENT_MODE:
+            if (android_is_xr_mode()) {
+                if (down) {
+                    float mode = static_cast<float>(mLastEnvironmentModeRequested);
+                    LOG(DEBUG) << "Sending XR Environment Mode " << mode;
+                    sUiEmuAgent->sensors->setPhysicalParameterTarget(
+                            PHYSICAL_PARAMETER_XR_ENVIRONMENT_MODE, &mode, 1,
+                            PHYSICAL_INTERPOLATION_SMOOTH);
+                }
+            }
+            break;
+        case QtUICommand::XR_SCREEN_RECENTER:
+            if (android_is_xr_mode()) {
+                if (down) {
+                    float mode = 1;
+                    LOG(DEBUG) << "Sending XR Screen Recenter";
+                    sUiEmuAgent->sensors->setPhysicalParameterTarget(
+                            PHYSICAL_PARAMETER_XR_SCREEN_RECENTER, &mode, 1,
+                            PHYSICAL_INTERPOLATION_SMOOTH);
+                }
+            }
+            break;
+        case QtUICommand::XR_VIEWPORT_CONTROL_MODE_PAN:
+            if (android_is_xr_mode()) {
+                if (down) {
+                    float control = VIEWPORT_CONTROL_MODE_PAN;
+                    LOG(DEBUG) << "Sending XR Viewport Mode: " << control;
+                    sUiEmuAgent->sensors->setPhysicalParameterTarget(
+                            PHYSICAL_PARAMETER_XR_VIEWPORT_CONTROL_MODE, &control,
+                            1, PHYSICAL_INTERPOLATION_SMOOTH);
+                    updateXrNavigationButtonsChecked(cmd);
+                }
+                const auto emulatorWindow = EmulatorQtWindow::getInstance();
+                if (emulatorWindow) {
+                    emulatorWindow->setRelativeMouseCoordMode(true);
+                } else {
+                    LOG(WARNING)
+                            << "No window found to set mouse coordinates mode";
+                }
+            }
+            break;
+        case QtUICommand::XR_VIEWPORT_CONTROL_MODE_DOLLY:
+            if (android_is_xr_mode()) {
+                if (down) {
+                    float control = VIEWPORT_CONTROL_MODE_ZOOM;
+                    LOG(DEBUG) << "Sending XR Viewport Mode: " << control;
+                    sUiEmuAgent->sensors->setPhysicalParameterTarget(
+                            PHYSICAL_PARAMETER_XR_VIEWPORT_CONTROL_MODE, &control,
+                            1, PHYSICAL_INTERPOLATION_SMOOTH);
+                    updateXrNavigationButtonsChecked(cmd);
+                }
+                const auto emulatorWindow = EmulatorQtWindow::getInstance();
+                if (emulatorWindow) {
+                    emulatorWindow->setRelativeMouseCoordMode(true);
+                } else {
+                    LOG(WARNING)
+                            << "No window found to set mouse coordinates mode";
+                }
+            }
+            break;
+        case QtUICommand::XR_VIEWPORT_CONTROL_MODE_ROTATE:
+            if (android_is_xr_mode()) {
+                if (down) {
+                    float control = VIEWPORT_CONTROL_MODE_ROTATE;
+                    LOG(DEBUG) << "Sending XR Viewport Mode: " << control;
+                    sUiEmuAgent->sensors->setPhysicalParameterTarget(
+                            PHYSICAL_PARAMETER_XR_VIEWPORT_CONTROL_MODE, &control,
+                            1, PHYSICAL_INTERPOLATION_SMOOTH);
+                    updateXrNavigationButtonsChecked(cmd);
+                }
+                const auto emulatorWindow = EmulatorQtWindow::getInstance();
+                if (emulatorWindow) {
+                    emulatorWindow->setRelativeMouseCoordMode(true);
+                } else {
+                    LOG(WARNING)
+                            << "No window found to set mouse coordinates mode";
+                }
+            }
+            break;
         case QtUICommand::SHOW_MULTITOUCH:
         // Multitouch is handled in EmulatorQtWindow, and doesn't
         // really need an element in the QtUICommand enum. This
@@ -1034,9 +1184,6 @@ void ToolWindow::presetSizeAdvance(PresetEmulatorSizeType newSize) {
         case PRESET_SIZE_TABLET:
             updateMsg += "Tablet\n";
             break;
-        case PRESET_SIZE_DESKTOP:
-            updateMsg += "Desktop\n";
-            break;
         default:;
     }
     updateMsg += std::to_string(info.width) + " x " +
@@ -1081,10 +1228,6 @@ void ToolWindow::resizableChangeIcon(PresetEmulatorSizeType type) {
         case PRESET_SIZE_TABLET:
             ChangeIcon(mToolsUi->resizable_button, "display_mode_tablet_expand",
                        "Display mode: Tablet");
-            break;
-        case PRESET_SIZE_DESKTOP:
-            ChangeIcon(mToolsUi->resizable_button,
-                       "display_mode_desktop_expand", "Display mode: Desktop");
             break;
         default:
             LOG(ERROR) << "Invalid display mode " << type;
@@ -1494,7 +1637,7 @@ void ToolWindow::on_tablet_mode_button_clicked() {
 
 void ToolWindow::on_change_posture_button_clicked() {
     mPostureSelectionDialog->show();
-    // Align pop-up posture selction dialog to the right of posture button
+    // Align pop-up posture selection dialog to the right of posture button.
     QRect geoTool = this->geometry();
     mPostureSelectionDialog->move(
             geoTool.right(),
@@ -1507,6 +1650,114 @@ void ToolWindow::on_dismiss_posture_selection_dialog() {
 
 void ToolWindow::on_dismiss_resizable_dialog() {
     mToolsUi->resizable_button->setChecked(false);
+}
+
+void ToolWindow::on_xr_environment_mode_button_clicked() {
+    mXrEnvironmentModeDialog->show();
+    // Align pop-up posture selction dialog to the right of posture button
+    QRect geoTool = this->geometry();
+    mXrEnvironmentModeDialog->move(
+            geoTool.right(),
+            geoTool.top() +
+                    mToolsUi->xr_environment_mode_button->geometry().top());
+}
+
+void ToolWindow::on_xr_input_mode_button_clicked() {
+    if (getConsoleAgents()
+                ->settings->android_cmdLineOptions()
+                ->support_multiple_input_modalites) {
+        mXrInputModeDialog->show();
+        // Align pop-up input selection dialog to the right of input button.
+        QRect geoTool = this->geometry();
+        mXrInputModeDialog->move(
+                geoTool.right(),
+                geoTool.top() + mToolsUi->xr_input_mode_button->geometry().top());
+    } else {
+        mEmulatorWindow->activateWindow();
+        mLastInputModeRequested = XR_INPUT_MODE_MOUSE_KEYBOARD;
+        handleUICommand(QtUICommand::CHANGE_XR_INPUT_MODE, true);
+    }
+}
+
+void ToolWindow::on_xr_screen_recenter_button_clicked() {
+    mEmulatorWindow->activateWindow();
+    handleUICommand(QtUICommand::XR_SCREEN_RECENTER, true);
+}
+
+void ToolWindow::on_dismiss_xr_environment_mode_dialog() {
+    mToolsUi->xr_environment_mode_button->setChecked(false);
+}
+
+void ToolWindow::on_dismiss_xr_input_mode_dialog() {
+    updateXrNavigationButtonsChecked(mXrLastMouseKeyboardModeCommand);
+}
+
+void ToolWindow::on_xr_viewport_pan_button_clicked() {
+    mEmulatorWindow->activateWindow();
+    if (mXrLastMouseKeyboardModeCommand == QtUICommand::XR_VIEWPORT_CONTROL_MODE_PAN) {
+        on_xr_input_mode_changed(mLastInputModeRequested);
+    } else {
+        handleUICommand(QtUICommand::XR_VIEWPORT_CONTROL_MODE_PAN, true);
+    }
+}
+
+void ToolWindow::on_xr_viewport_dolly_button_clicked() {
+    mEmulatorWindow->activateWindow();
+    if (mXrLastMouseKeyboardModeCommand == QtUICommand::XR_VIEWPORT_CONTROL_MODE_DOLLY) {
+        on_xr_input_mode_changed(mLastInputModeRequested);
+    } else {
+        handleUICommand(QtUICommand::XR_VIEWPORT_CONTROL_MODE_DOLLY, true);
+    }
+}
+
+void ToolWindow::on_xr_viewport_rotate_button_clicked() {
+    mEmulatorWindow->activateWindow();
+    if (mXrLastMouseKeyboardModeCommand == QtUICommand::XR_VIEWPORT_CONTROL_MODE_ROTATE) {
+        on_xr_input_mode_changed(mLastInputModeRequested);
+    } else {
+        handleUICommand(QtUICommand::XR_VIEWPORT_CONTROL_MODE_ROTATE, true);
+    }
+}
+
+// Set the current selected input mode button or viewport control mode button
+// checked (activated). The parameter `currentMode` is the current selected
+// command.
+void ToolWindow::updateXrNavigationButtonsChecked(QtUICommand currentMode) {
+    if (!android_is_xr_mode()) {
+        return;
+    }
+    for (const auto &[buttonType, buttonList] : mXrButtonTypeToPushButtonsMap) {
+        // Iterate through all the buttons of type `input_control` or
+        // `viewport_control` and find the button whose uiCommand property
+        // matches with the parameter `currentMode` command string.
+        if (buttonType == "input_control" || buttonType == "viewport_control") {
+            for (const auto& buttonRef : buttonList) {
+                QPushButton& xrButton = buttonRef.get();
+                const QVariant uiCommand = xrButton.property("uiCommand");
+                if (uiCommand.isValid()) {
+                    QtUICommand buttonCommand;
+                    // Parse the `uiCommand` string to retrive the QtUICommand
+                    // object.
+                    if (parseQtUICommand(uiCommand.toString(), &buttonCommand)) {
+                        if (buttonCommand == currentMode) {
+                            mXrLastMouseKeyboardModeCommand = currentMode;
+                            // Check the QPushButton if uiCommand matches with
+                            // currently selection.
+                            xrButton.setChecked(true);
+                            continue;
+                        }
+                    } else {
+                        LOG(WARNING) << "UiCommand for XrButton not found";
+                    }
+                } else {
+                    LOG(WARNING) << "Expected UiCommand for XR buttons";
+                }
+                // For all the buttons which do not find a match with selected
+                // command, uncheck the QPushButton.
+                xrButton.setChecked(false);
+            }
+        }
+    }
 }
 
 void ToolWindow::on_resizable_button_clicked() {
@@ -1753,6 +2004,45 @@ void ToolWindow::on_new_posture_requested(int newPosture) {
     mEmulatorWindow->activateWindow();
     applyFoldableQuirk(newPosture);
     handleUICommand(QtUICommand::CHANGE_FOLDABLE_POSTURE, true);
+}
+
+void ToolWindow::on_xr_environment_mode_changed(int mode) {
+    if (mode == /*XR_ENVIRONMENT_MODE_UNKNOWN*/ 0) {
+        LOG(WARNING) << "Unknown XR environment mode requested: " << mode;
+        return;
+    }
+
+    mEmulatorWindow->activateWindow();
+    mLastEnvironmentModeRequested = mode;
+    handleUICommand(QtUICommand::CHANGE_XR_ENVIRONMENT_MODE, true);
+}
+
+void ToolWindow::on_xr_input_mode_changed(int mode) {
+    if (mode == /*XR_INPUT_MODE_MOUSE_UNKNOWN*/ 0) {
+        LOG(WARNING) << "Unknown XR input mode requested: " << mode;
+        return;
+    }
+
+    mEmulatorWindow->activateWindow();
+    mLastInputModeRequested = mode;
+    handleUICommand(QtUICommand::CHANGE_XR_INPUT_MODE, true);
+    switch (mLastInputModeRequested) {
+        case /*XR_INPUT_MODE_MOUSE_KEYBOARD*/ 1:
+            ChangeIcon(mToolsUi->xr_input_mode_button,
+                       "xr_input_mouse_keyboard_mode",
+                       "Input: Mouse + Keyboard");
+            break;
+        case /*XR_INPUT_MODE_HAND_RAYCAST*/ 2:
+            ChangeIcon(mToolsUi->xr_input_mode_button, "xr_input_hand_raycast",
+                       "Input: Hand Raycast + Selection");
+            break;
+        case /*XR_INPUT_MODE_EYE_TRACKING*/ 3:
+            ChangeIcon(mToolsUi->xr_input_mode_button, "xr_input_eye_tacking",
+                       "Input: Eye Tracking + Selection");
+            break;
+        default:
+            break;
+    }
 }
 
 WorkerProcessingResult ToolWindow::foldableSyncToAndroidItemFunction(

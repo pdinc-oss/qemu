@@ -1138,11 +1138,30 @@ static void skin_window_map_to_scale(SkinWindow* window, int* x, int* y) {
     getConsoleAgents()->surface->skin_surface_reverse_map(window->surface, x, y);
 }
 
-static void add_mouse_event(SkinWindow* window, const SkinEventMouseData* mouse, int button_pressed) {
+static void add_mouse_event_absolute(SkinWindow* window,
+                                     const SkinEventMouseData* mouse,
+                                     int button_pressed) {
     if (!window->mouse.tracking) {
         return;
     }
     int32_t x, y;
+    // Populates the absolute window coordinates.
+    x = mouse->x;
+    y = mouse->y;
+    window->mouse.button_pressed = button_pressed;
+    skin_window_map_to_scale(window, &x, &y);
+
+    const uint32_t id = 0;
+    window->win_funcs->mouse_event(x, y, window->mouse.button_pressed, id,
+                                   /* absoluteCoordinates */ true);
+}
+
+static void add_mouse_event_relative(SkinWindow* window, const SkinEventMouseData* mouse, int button_pressed) {
+    if (!window->mouse.tracking) {
+        return;
+    }
+    int32_t x, y;
+    // Populates the relative coordinates of the mouse.
     x = mouse->xrel;
     y = mouse->yrel;
     window->mouse.button_pressed = button_pressed;
@@ -1150,7 +1169,8 @@ static void add_mouse_event(SkinWindow* window, const SkinEventMouseData* mouse,
 
     const uint32_t id = 0;
     // TODO(liyl): handle multi-display and display rotation.
-    window->win_funcs->mouse_event(x, y, window->mouse.button_pressed, id);
+    window->win_funcs->mouse_event(x, y, window->mouse.button_pressed, id,
+                                   /* absoluteCoordinates */ false);
 }
 
 static void add_mouse_wheel_event(SkinWindow* window,
@@ -1246,7 +1266,7 @@ static void add_finger_event(SkinWindow* window,
             }
         }
     }
-    window->win_funcs->mouse_event(posX, posY, state, displayId);
+    window->win_funcs->mouse_event(posX, posY, state, displayId, /* absoluteCoordinates */ true);
 }
 
 static void add_pen_event(SkinWindow* window,
@@ -1710,7 +1730,13 @@ SkinWindow* skin_window_create(SkinLayout* slayout,
     }
 
     if (window->monitor.size.w == 0 || window->monitor.size.h == 0) {
-        skin_winsys_get_monitor_rect(&monitor);
+        // On MacOS with retina display, the device pixel ratio is 2.0 and
+        // logical width and height are half of the physical width and height.
+        // The device pixel ratio above is not yet initialized and returns 1.0
+        // by default. The window size must be smaller than the logical
+        // resolution, else QT clamps the width and height according to logical
+        // resolution and creates a window with improper aspect ratio.
+        skin_winsys_get_monitor_logical_rect(&monitor);
     } else {
         monitor.pos.x = window->monitor.pos.x;
         monitor.pos.y = window->monitor.pos.y;
@@ -1925,7 +1951,13 @@ static void skin_window_resize(SkinWindow* window, int resize_container) {
 
     SkinRect monitor;
     if (window->monitor.size.h == 0 || window->monitor.size.w == 0) {
-        skin_winsys_get_monitor_rect(&monitor);
+        // On MacOS with retina display, the device pixel ratio is 2.0 and
+        // logical width and height are half of the physical width and height.
+        // The device pixel ratio above is not yet initialized and returns 1.0
+        // by default. The window size must be smaller than the logical
+        // resolution, else QT clamps the width and height according to logical
+        // resolution and creates a window with improper aspect ratio.
+        skin_winsys_get_monitor_logical_rect(&monitor);
     } else {
         monitor.pos.x = window->monitor.pos.x;
         monitor.pos.y = window->monitor.pos.y;
@@ -2519,7 +2551,7 @@ void skin_window_process_event(SkinWindow* window, SkinEvent* ev) {
                window->finger.pos.y, window->finger.inside);
 #endif
             if (feature_is_enabled(kFeature_VirtioMouse)) {
-                add_mouse_event(window, &ev->u.mouse, mouse->button_pressed | 1 << (ev->u.mouse.button));
+                add_mouse_event_relative(window, &ev->u.mouse, mouse->button_pressed | 1 << (ev->u.mouse.button));
             } else if (finger->inside) {
                 // The click is inside the touch screen
                 finger->tracking = 1;
@@ -2638,7 +2670,7 @@ void skin_window_process_event(SkinWindow* window, SkinEvent* ev) {
                 skin_window_move_mouse(window, finger, mx, my);
             } else if (feature_is_enabled(kFeature_VirtioMouse)) {
                 skin_window_move_mouse(window, finger, mx, my);
-                add_mouse_event(window, &ev->u.mouse, mouse->button_pressed & ~(1 << ev->u.mouse.button));
+                add_mouse_event_relative(window, &ev->u.mouse, mouse->button_pressed & ~(1 << ev->u.mouse.button));
             } else if (finger->tracking) {
                 skin_window_move_mouse(window, finger, mx, my);
                 finger->tracking = 0;
@@ -2687,8 +2719,16 @@ void skin_window_process_event(SkinWindow* window, SkinEvent* ev) {
             skin_window_map_to_scale(window, &mx, &my);
             if (!window->button.pressed) {
                 skin_window_move_mouse(window, finger, mx, my);
-                if (feature_is_enabled(kFeature_VirtioMouse)) {
-                    add_mouse_event(window, &ev->u.mouse, mouse->button_pressed);
+                if (feature_is_enabled(kFeature_VirtioDualModeMouse)) {
+                    if (ev->u.mouse.send_relative_coordinates) {
+                        add_mouse_event_relative(window, &ev->u.mouse,
+                                        mouse->button_pressed);
+                    } else {
+                        add_mouse_event_absolute(window, &ev->u.mouse,
+                                                 mouse->button_pressed);
+                    }
+                } else if (feature_is_enabled(kFeature_VirtioMouse)) {
+                    add_mouse_event_relative(window, &ev->u.mouse, mouse->button_pressed);
                 } else if (feature_is_enabled(kFeature_VirtioTablet)) {
                     add_finger_event(window, finger, finger->pos.x,
                                      finger->pos.y, window->tablet.button_pressed, displayId);

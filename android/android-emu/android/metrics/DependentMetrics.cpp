@@ -210,6 +210,8 @@ toClearcutLogAvdProperty(AvdFlavor flavor) {
             return android_studio::EmulatorAvdInfo::WEAR_AVD;
         case AVD_ANDROID_AUTO:
             return android_studio::EmulatorAvdInfo::ANDROIDAUTO_AVD;
+        case AVD_DEV_2024:
+            return android_studio::EmulatorAvdInfo::DEV_2024_AVD;
         case AVD_OTHER:
             return android_studio::EmulatorAvdInfo::UNKNOWN_EMULATOR_AVD_FLAG;
     }
@@ -445,7 +447,6 @@ static void fillAvdMetrics(android_studio::AndroidStudioEvent* event) {
             getConsoleAgents()->settings->hw()->disk_ramdisk_path,
             getConsoleAgents()->settings->android_cmdLineOptions()->ramdisk !=
                     nullptr);
-
     eventAvdInfo->add_properties(toClearcutLogAvdProperty(
             avdInfo_getAvdFlavor(getConsoleAgents()->settings->avdInfo())));
 }
@@ -700,10 +701,22 @@ toClearcutFeatureFlag(android::featurecontrol::Feature feature) {
             return android_studio::EmulatorFeatureFlagState::UWB;
         case android::featurecontrol::GuestAngle:
             return android_studio::EmulatorFeatureFlagState::GUEST_ANGLE;
+        case android::featurecontrol::XrModeUI:
+            return android_studio::EmulatorFeatureFlagState::UX_TEST_2024;
+        case android::featurecontrol::VirtioDualModeMouse:
+            return android_studio::EmulatorFeatureFlagState::VIRTIO_DUAL_MODE_MOUSE;
         case android::featurecontrol::AndroidVirtualizationFramework:
             return android_studio::EmulatorFeatureFlagState::ANDROID_VIRTUALIZATION_FRAMEWORK;
+        case android::featurecontrol::DualModeMouseDisplayHostCursor:
+            return android_studio::EmulatorFeatureFlagState::DUAL_MODE_MOUSE_DISPLAY_HOST_CURSOR;
         case android::featurecontrol::BypassVulkanDeviceFeatureOverrides:
             return android_studio::EmulatorFeatureFlagState::BYPASS_VULKAN_DEVICE_FEATURE_OVERRIDES;
+        case android::featurecontrol::VulkanDebugUtils:
+            return android_studio::EmulatorFeatureFlagState::VULKAN_DEBUG_UTILS;
+        case android::featurecontrol::VulkanCommandBufferCheckpoints:
+            return android_studio::EmulatorFeatureFlagState::VULKAN_COMMAND_BUFFER_CHECKPOINTS;
+        case android::featurecontrol::VulkanVirtualQueue:
+            return android_studio::EmulatorFeatureFlagState::VULKAN_VIRTUAL_QUEUE;
     }
     return android_studio::EmulatorFeatureFlagState::
             EMULATOR_FEATURE_FLAG_UNSPECIFIED;

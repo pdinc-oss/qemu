@@ -105,7 +105,7 @@ extern "C" const QAndroidSurfaceAgent* const gQAndroidSurfaceAgent;
 
 
 #define ANDROID_DEFINE_CONSOLE_GETTER_IMPL(typ) \
-    const typ* const android_get_##typ() const override { return g##typ; };
+    const typ* android_get_##typ() const override { return g##typ; };
 
 const QAndroidEmulatorWindowAgent* const getEmulatorWindowAgent();
 
@@ -140,12 +140,12 @@ class QemuAndroidConsoleAgentFactory
 
     // These are exported from shared memory modules, and hence cannot be
     // directly refering to constants..
-    const QAndroidEmulatorWindowAgent* const
+    const QAndroidEmulatorWindowAgent*
     android_get_QAndroidEmulatorWindowAgent() const override {
         return getEmulatorWindowAgent();
     }
 
-    const QAndroidLibuiAgent* const android_get_QAndroidLibuiAgent()
+    const QAndroidLibuiAgent* android_get_QAndroidLibuiAgent()
             const override {
         return getQAndroidLibuiAgent();
     }

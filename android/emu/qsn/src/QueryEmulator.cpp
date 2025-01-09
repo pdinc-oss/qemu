@@ -232,7 +232,7 @@ static const QAndroidGlobalVarsAgent globalVarsAgent = {
 namespace android::emulation {
 class MockAndroidConsoleFactory : public AndroidConsoleFactory {
 public:
-    const QAndroidGlobalVarsAgent* const android_get_QAndroidGlobalVarsAgent()
+    const QAndroidGlobalVarsAgent* android_get_QAndroidGlobalVarsAgent()
             const override {
         return &globalVarsAgent;
     };

@@ -369,6 +369,12 @@ int android_startOpenglesRenderer(
                      &gfxstream::host::FeatureSet::YuvCache},
                     {android::featurecontrol::BypassVulkanDeviceFeatureOverrides,
                      &gfxstream::host::FeatureSet::BypassVulkanDeviceFeatureOverrides},
+                    {android::featurecontrol::VulkanDebugUtils,
+                     &gfxstream::host::FeatureSet::VulkanDebugUtils},
+                    {android::featurecontrol::VulkanCommandBufferCheckpoints,
+                     &gfxstream::host::FeatureSet::VulkanCommandBufferCheckpoints},
+                    {android::featurecontrol::VulkanVirtualQueue,
+                     &gfxstream::host::FeatureSet::VulkanVirtualQueue},
             };
     for (const auto& [aemuFeature, gfxstreamFeaturePtr] :
          kAemuToGfxstreamFeatureMap) {
@@ -377,8 +383,12 @@ int android_startOpenglesRenderer(
     }
 
     gfxstream::host::FeatureDependencyHandler gfxstreamFeaturesDependencyHandler(gfxstreamFeatures);
+    const bool enableFeatureDepsCheck =
+            android::base::getEnvironmentVariable(
+                    "ANDROID_EMU_VK_DISABLE_FEATURE_DEPS_CHECK")
+                    .empty();
     gfxstream::host::FeatureResult res =  gfxstreamFeaturesDependencyHandler.checkAllDependentFeaturesAreEnabled();
-    if (!res.first) {
+    if (enableFeatureDepsCheck && !res.first) {
         E(res.second.c_str());
         return -1;
     }

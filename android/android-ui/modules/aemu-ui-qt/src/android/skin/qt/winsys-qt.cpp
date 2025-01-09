@@ -302,6 +302,36 @@ extern void skin_winsys_get_monitor_rect(SkinRect* rect) {
       rect->size.h);
 }
 
+extern void skin_winsys_get_monitor_logical_rect(SkinRect* rect) {
+#if defined(__APPLE__)
+    // On mac:
+    // normal display, dpr is 1, physical pixel width == logical pixel width
+    // retenal display, dpr is 2, physical pixel width ==  2 * (logical pixel width)
+    // same applies to height.
+    D("skin_winsys_get_monitor_logical_rect: macOS: start\n");
+    {
+        int x = 0, y = 0;
+        skin_winsys_get_window_pos(&x, &y);
+        const CGPoint pt = {x, y};
+        CGDirectDisplayID myids[1] = {};
+        uint32_t count = 0;
+        CGGetDisplaysWithPoint(pt, 1, myids, &count);
+        if (count > 0) {
+            const CGDirectDisplayID displayId = myids[0];
+            const CGDisplayModeRef mode = CGDisplayCopyDisplayMode(displayId);
+            const int logicalPixelWidth = CGDisplayModeGetWidth(mode);
+            const int logicalPixelHeight = CGDisplayModeGetHeight(mode);
+            rect->size.w = logicalPixelWidth;
+            rect->size.h = logicalPixelHeight;
+            D("display id %d physical pixels width %d height %d\n",
+                    (int)(displayId), logicalPixelWidth, logicalPixelHeight);
+        }
+    }
+#else
+    return skin_winsys_get_monitor_rect(rect);
+#endif
+}
+
 extern int skin_winsys_get_device_pixel_ratio(double* dpr) {
     D("skin_winsys_get_device_pixel_ratio");
     EmulatorQtWindow* window = EmulatorQtWindow::getInstance();
@@ -465,6 +495,20 @@ WinsysPreferredGlesBackend skin_winsys_override_glesbackend_if_auto(
         return backend;
     }
     return currentPreferred;
+}
+
+extern WinsysGuestGlesDriverPreference skin_winsys_get_preferred_gles_driver() {
+    D("skin_winsys_get_preferred_gles_driver");
+    QSettings settings;
+    return (WinsysGuestGlesDriverPreference)settings
+            .value(Ui::Settings::GUEST_GLES_DRIVER_PREFERENCE, 0)
+            .toInt();
+}
+
+void skin_winsys_set_preferred_gles_driver(WinsysGuestGlesDriverPreference renderer) {
+    D("skin_winsys_set_preferred_gles_driver");
+    QSettings settings;
+    settings.setValue(Ui::Settings::GUEST_GLES_DRIVER_PREFERENCE, renderer);
 }
 
 extern WinsysPreferredGlesBackend skin_winsys_get_preferred_gles_backend() {

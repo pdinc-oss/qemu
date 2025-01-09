@@ -54,6 +54,10 @@ message PhysicalModelEvent {
         RGBC_LIGHT = 18;
         WRIST_TILT = 19;
         ROTATION_UNCALIBRATED = 20;
+        XR_INPUT_MODE = 21;
+        XR_ENVIRONMENT_MODE = 22;
+        XR_SCREEN_RECENTER = 23;
+        XR_VIEWPORT_CONTROL_MODE = 24;
     }
 
     optional ParameterType type = 1;

@@ -173,22 +173,22 @@ static const QAndroidGlobalVarsAgent gGlobalVarsAgent = {
 namespace android {
 namespace emulation {
 
-const QAndroidVmOperations* const
+const QAndroidVmOperations*
 MockAndroidConsoleFactory::android_get_QAndroidVmOperations() const {
     return gMockQAndroidVmOperations;
 }
 
-const QAndroidMultiDisplayAgent* const
+const QAndroidMultiDisplayAgent*
 MockAndroidConsoleFactory::android_get_QAndroidMultiDisplayAgent() const {
     return gMockQAndroidMultiDisplayAgent;
 }
 
-const QAndroidEmulatorWindowAgent* const
+const QAndroidEmulatorWindowAgent*
 MockAndroidConsoleFactory::android_get_QAndroidEmulatorWindowAgent() const {
     return gMockQAndroidEmulatorWindowAgent;
 }
 
-const QAndroidGlobalVarsAgent* const
+const QAndroidGlobalVarsAgent*
 MockAndroidConsoleFactory::android_get_QAndroidGlobalVarsAgent() const {
     return &gGlobalVarsAgent;
 }

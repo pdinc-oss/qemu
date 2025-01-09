@@ -39,7 +39,7 @@ const AndroidConsoleAgents* getConsoleAgents() {
 }
 
 #define ANDROID_DEFINE_CONSOLE_GETTER_IMPL(typ, name)                   \
-    const typ* const AndroidConsoleFactory::android_get_##typ() const { \
+    const typ* AndroidConsoleFactory::android_get_##typ() const {       \
         return sConsoleAgents.name;                                     \
     };
 
