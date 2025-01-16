@@ -516,7 +516,7 @@ prepare_build_for_darwin() {
     OSX_DESIRED=12.2
 
     # This is the list of supported SDKs,
-    OSX_SDK_SUPPORTED="${OSX_REQUIRED} 10.15 10.16 11.0 11.1 11.2 11.3 11.4 11.5 11.6 12.0 12.1 12.3 13.0 13.1 13.3 14.0 14.2 14.3 14.4 14.5 15.0 15.1"
+    OSX_SDK_SUPPORTED="${OSX_REQUIRED} 10.15 10.16 11.0 11.1 11.2 11.3 11.4 11.5 11.6 12.0 12.1 12.3 13.0 13.1 13.3 14.0 14.2 14.3 14.4 14.5 15.0 15.1 15.2"
     OSX_XCODE=$(xcodebuild -version | tr '\n' ' ')
     OSX_SDK_INSTALLED_LIST=$(xcodebuild -showsdks 2>/dev/null | \
             egrep --color=never -o " macosx\d+.\d+$" | sed -e "s/.*macosx//g" | sort -n | \
@@ -571,8 +571,6 @@ prepare_build_for_darwin() {
     common_FLAGS="-arch x86_64"
     var_append common_FLAGS " -isysroot $OSX_SDK_ROOT"
     var_append common_FLAGS " -mmacosx-version-min=$OSX_DEPLOYMENT_TARGET"
-    # different versions of clang/macosSDK use __ENVIRONMENT_OS_VERSION_MIN_REQUIRED__
-    var_append common_FLAGS "-D__ENVIRONMENT_OS_VERSION_MIN_REQUIRED__=__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__"
 
     EXTRA_CFLAGS="$common_FLAGS -B/usr/bin"
     EXTRA_CXXFLAGS="$common_FLAGS -B/usr/bin"
@@ -789,7 +787,7 @@ prepare_build_for_darwin_aarch64() {
     CLANG_BINDIR=$PREBUILT_TOOLCHAIN_DIR/bin
     OSX_VERSION=$(sw_vers -productVersion)
     OSX_DEPLOYMENT_TARGET=10.16
-    OSX_SDK_SUPPORTED="10.11 10.12 10.13 10.14 10.15 10.16 11.0 11.1 11.2 11.3 11.4 11.5 11.6 12.0 12.1 12.3 13.0 13.1 13.3 14.0 14.2 14.3 14.4 14.5 15.0 15.1"
+    OSX_SDK_SUPPORTED="10.11 10.12 10.13 10.14 10.15 10.16 11.0 11.1 11.2 11.3 11.4 11.5 11.6 12.0 12.1 12.3 13.0 13.1 13.3 14.0 14.2 14.3 14.4 14.5 15.0 15.1 15.2"
     OSX_SDK_INSTALLED_LIST=$(xcodebuild -showsdks 2>/dev/null | \
             grep --color=never macosx | sed -e "s/.*macosx10\.//g" | sort -n | \
             sed -e 's/^/10./g' | tr '\n' ' ')
@@ -830,8 +828,6 @@ prepare_build_for_darwin_aarch64() {
     common_FLAGS="-arch arm64"
     var_append common_FLAGS " -isysroot $OSX_SDK_ROOT"
     var_append common_FLAGS " -mmacosx-version-min=$OSX_DEPLOYMENT_TARGET"
-    # different versions of clang/macosSDK use __ENVIRONMENT_OS_VERSION_MIN_REQUIRED__
-    var_append common_FLAGS "-D__ENVIRONMENT_OS_VERSION_MIN_REQUIRED__=__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__"
 
     EXTRA_CFLAGS="$common_FLAGS -B/usr/bin"
     EXTRA_CXXFLAGS="$common_FLAGS -B/usr/bin"
