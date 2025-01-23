@@ -66,7 +66,9 @@ void initlogs_once() {
 static absl::once_flag initlogs;
 class AvdCompatibilityCheckResultTest : public ::testing::Test {
 protected:
-    AvdCompatibilityCheckResultTest() { absl::call_once(initlogs, initlogs_once); }
+    AvdCompatibilityCheckResultTest() {
+        absl::call_once(initlogs, initlogs_once);
+    }
     void SetUp() override {
         // Add the CaptureLogSink
         log_sink_ = std::make_unique<CaptureLogSink>();
@@ -75,6 +77,7 @@ protected:
 
         oldCout = std::cout.rdbuf();
         std::cout.rdbuf(buffer.rdbuf());
+        AvdCompatibilityManager::instance().invalidate();
     }
 
     void TearDown() override {
@@ -115,9 +118,20 @@ AvdCompatibilityCheckResult alwaysErrorFoo(AvdInfo* foravd) {
     };
 };
 
+static int gRunCount = 0;
+
+AvdCompatibilityCheckResult runCounter(AvdInfo* foravd) {
+    gRunCount++;
+    return {
+            .description = absl::StrFormat("You ran me: %d times", gRunCount),
+            .status = AvdCompatibility::Ok,
+    };
+};
+
 REGISTER_COMPATIBILITY_CHECK(sampleOkayCheck);
 REGISTER_COMPATIBILITY_CHECK(alwaysErrorBar);
 REGISTER_COMPATIBILITY_CHECK(alwaysErrorFoo);
+REGISTER_COMPATIBILITY_CHECK(runCounter);
 
 TEST_F(AvdCompatibilityCheckResultTest, auto_registration_should_work) {
     EXPECT_THAT(AvdCompatibilityManager::instance().registeredChecks(),
@@ -128,10 +142,14 @@ TEST_F(AvdCompatibilityCheckResultTest, auto_registration_should_work) {
                 ContainsString("alwaysErrorFoo"));
 }
 
-TEST_F(AvdCompatibilityCheckResultTest, auto_registration_results_print_user_messages) {
+TEST_F(AvdCompatibilityCheckResultTest,
+       auto_registration_results_print_user_messages) {
     auto results = AvdCompatibilityManager::instance().check(nullptr);
     AvdCompatibilityManager::instance().printResults(results);
-    EXPECT_THAT(buffer.str(), testing::HasSubstr("USER_ERROR   | You need more bar!  You need more foo!"));
+    EXPECT_THAT(
+            buffer.str(),
+            testing::HasSubstr(
+                    "USER_ERROR   | You need more bar!  You need more foo!"));
 }
 
 TEST_F(AvdCompatibilityCheckResultTest, actually_calls_registered_tests) {
@@ -146,6 +164,21 @@ TEST_F(AvdCompatibilityCheckResultTest, actually_calls_registered_tests) {
             "dynamic_test");
     auto results = AvdCompatibilityManager::instance().check(nullptr);
     EXPECT_THAT(wascalled, testing::Eq(true));
+}
+
+TEST_F(AvdCompatibilityCheckResultTest, checks_only_once) {
+    gRunCount = 0;
+    AvdCompatibilityManager::instance().check(nullptr);
+    AvdCompatibilityManager::instance().check(nullptr);
+    EXPECT_THAT(gRunCount, testing::Eq(1));
+}
+
+TEST_F(AvdCompatibilityCheckResultTest, checks_again_invalidate) {
+    gRunCount = 0;
+    AvdCompatibilityManager::instance().check(nullptr);
+    AvdCompatibilityManager::instance().invalidate();
+    AvdCompatibilityManager::instance().check(nullptr);
+    EXPECT_THAT(gRunCount, testing::Eq(2));
 }
 
 }  // namespace emulation
