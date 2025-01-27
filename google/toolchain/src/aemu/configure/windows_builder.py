@@ -31,16 +31,12 @@ class WindowsBuilder(QemuBuilder):
         ]
 
         bazel_configs = [
-            BazelLib(
-                "//hardware/google/gfxstream/host:gfxstream_backend",
-                "0.1.2",
-                {},
-            ),
-            CargoLib(
-                "/external/crosvm/rutabaga_gfx/ffi:rutabaga_gfx_ffi",
-                "0.1.2",
-                {"archive": "rutabaga_gfx_ffi"},
-            ),  # Must be after libgxstream!
+            # Disabled for now
+            # BazelLib(
+            #     "/external/crosvm/rutabaga_gfx/ffi:rutabaga_gfx_ffi",
+            #     "0.1.2",
+            #     {"archive": "rutabaga_gfx_ffi"},
+            # ),  # Must be after libgxstream!
             BazelLib(
                 "@zlib//:zlib",
                 "1.2.10",
@@ -183,7 +179,7 @@ class WindowsBuilder(QemuBuilder):
             "-Drbd=disabled",
             "-Drdma=disabled",
             "-Dreplication=disabled",
-            "-Drutabaga_gfx=enabled",
+            "-Drutabaga_gfx=disabled", # There are compiler issues on windows.
             "-Dsdl=disabled",
             "-Dsdl_image=disabled",
             "-Dseccomp=disabled",
