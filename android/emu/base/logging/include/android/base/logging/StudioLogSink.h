@@ -46,8 +46,11 @@ public:
      * @return A string_view containing the textual representation of the
      * severity.
      */
-    virtual std::string_view TranslateSeverity(
-            const absl::LogEntry& entry) const;
+    std::string_view TranslateSeverity(
+            const absl::LogEntry& entry) const override;
+
+
+    void Send(const absl::LogEntry& entry) override;
 };
 
 /**
