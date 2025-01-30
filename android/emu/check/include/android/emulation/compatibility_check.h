@@ -53,6 +53,7 @@ enum class AvdCompatibility : uint8_t {
 struct AvdCompatibilityCheckResult {
     /**
      * @brief A description of the check performed and its outcome.
+     * do not include a period, as the framework will add one.
      */
     std::string description;
 
@@ -81,9 +82,14 @@ class AvdCompatibilityManager final {
 public:
     /**
      * @brief Runs all registered compatibility checks on the specified AVD.
-     * @param avd A pointer to the AvdInfo struct representing the AVD to check
-     * @return A vector of AvdCompatibilityCheckResult structs, each containing
-     * the result of a single check
+     *
+     * This function executes all registered compatibility checks on the given
+     * AVD. Results are cached, so subsequent calls will return the cached
+     * results unless the checks are explicitly invalidated.
+     *
+     * @param avd A pointer to the AvdInfo struct representing the AVD to check.
+     * @return A vector of AvdCompatibilityCheckResult structs, one for each
+     *         compatibility check performed.
      */
     std::vector<AvdCompatibilityCheckResult> check(AvdInfo* avd);
 
@@ -98,15 +104,29 @@ public:
             const std::vector<AvdCompatibilityCheckResult>& results);
 
     /**
-     * @brief Prints the results of all compatibility checks in a format
-     * suitable for Android Studio.
+     * @brief Constructs an issue string (error or warning) from the given
+     * compatibility check results.
+     *
+     * This function iterates through the provided results and constructs a
+     * comma-separated string of issues with the specified status (Error or
+     * Warning). To maintain readability, only the first two issues are included
+     * in the string. If more issues exist, a ", and more.." suffix is appended.
+     *
+     * NOTE: You want to use the USER_MESSAGE(WARNING) logging macro for warning
+     * strings and LOG(FATAL) macro for error strings.
+     *
      * @param results A vector of AvdCompatibilityCheckResult structs containing
-     * the check outcomes
+     * the check outcomes.
+     * @param status The AvdCompatibility status (Error or Warning) to filter
+     * issues by.
+     * @return A string containing the concatenated issue descriptions.
      */
-    void printResults(const std::vector<AvdCompatibilityCheckResult>& results);
-
+    std::string constructIssueString(
+            const std::vector<AvdCompatibilityCheckResult>& results,
+            AvdCompatibility status);
     /**
-     * @brief Retrieves the singleton instance of the AvdCompatibilityManager.
+     * @brief Retrieves the singleton instance of the
+     * AvdCompatibilityManager.
      * @return A reference to the single AvdCompatibilityManager instance.
      */
     static AvdCompatibilityManager& instance();
@@ -119,24 +139,47 @@ public:
     void registerCheck(CompatibilityCheck checkFn, const char* name);
 
     /**
-     * @brief Returns a list of the names of all registered compatibility checks
+     * @brief Returns a list of the names of all registered compatibility
+     * checks
      * @return A vector of string_views, each representing the name of a
      * registered check.
      */
     std::vector<std::string_view> registeredChecks();
 
-   /**
-    * @brief Checks the compatibility of an AVD and terminates the program if errors are found
-    * @param avd A pointer to the AvdInfo struct representing the AVD to be checked
-    */
-   static void ensureAvdCompatibility(AvdInfo* avd);
+    /**
+     * @brief Invalidates the cached compatibility check results for the
+     * specified AVD.
+     *
+     * This function clears the cached compatibility check results, forcing
+     * the next call to `check()` to re-run all the checks.
+     */
+    void invalidate() { mRanChecks = false; }
+
+    /**
+     * @brief Ensures the compatibility of an AVD with the current system.
+     *
+     * This function performs a series of compatibility checks on the given AVD.
+     * If any errors are found, the program terminates with a fatal error
+     * message. Warnings are logged to the console.
+     *
+     * Example log lines:
+     *
+     *     USER_WARNING | Suggested minimum number of CPU cores to run avd 'x'
+     * is 4 (available: 2). FATAL        | Not enough disk space available to
+     * run avd: `x`.
+     *
+     * @param avd A pointer to the AvdInfo struct representing the AVD to be
+     * checked.
+     */
+
+    static void ensureAvdCompatibility(AvdInfo* avd);
+
 private:
     AvdCompatibilityManager() = default;
 
-    /**
-     * @brief Stores the registered checks as pairs of name and check function
-     */
     std::vector<std::pair<std::string_view, CompatibilityCheck>> mChecks;
+    bool mRanChecks{false};
+    std::vector<AvdCompatibilityCheckResult> mResults;
 
     // Testing..
     friend class AvdCompatibilityManagerTest;
@@ -173,6 +216,5 @@ void AbslStringify(Sink& sink, AvdCompatibility status) {
             ABSL_UNREACHABLE();
     }
 }
-
 }  // namespace emulation
 }  // namespace android
