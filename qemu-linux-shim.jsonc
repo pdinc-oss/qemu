@@ -32,9 +32,14 @@
         "-deps": [
           "libmodinfo-aarch64-softmmu_c"
         ],
+        // Replace standard launcher with google launcher
+        "-srcs": ["system/main.c"],
+        "+srcs": ["google/system/aemu_main.cpp"],
         "+deps": [
           "libqemu-aarch64-softmmu",
-          "//hardware/generic/goldfish/emulator/plugin/registration:aarch64"
+          "//hardware/generic/goldfish/emulator/plugin/registration:aarch64",
+          "//hardware/generic/goldfish/emulator/crashreport:init",
+          "//hardware/generic/goldfish/android/system"
         ],
         // Enable our plugins to link back.
         "+linkopts": ["-rdynamic"],
@@ -47,12 +52,17 @@
       "target": "qemu-system-riscv64",
       "shims": {
         "_bzl_type": "cc_interface_binary",
+        // Replace standard launcher with google launcher
+        "-srcs": ["system/main.c"],
+        "+srcs": ["google/system/aemu_main.cpp"],
         "-deps": [
           "libmodinfo-riscv64-softmmu_c"
         ],
         "+deps": [
           "libqemu-riscv64-softmmu",
-          "//hardware/generic/goldfish/emulator/plugin/registration:riscv64"
+          "//hardware/generic/goldfish/emulator/plugin/registration:riscv64",
+          "//hardware/generic/goldfish/emulator/crashreport:init",
+          "//hardware/generic/goldfish/android/system"
         ],
         // Enable our plugins to link back.
         "+linkopts": ["-rdynamic"],
@@ -65,12 +75,17 @@
       "target": "qemu-system-x86_64",
       "shims": {
         "_bzl_type": "cc_interface_binary",
+        // Replace standard launcher with google launcher
+        "-srcs": ["system/main.c"],
+        "+srcs": ["google/system/aemu_main.cpp"],
         "-deps": [
           "libmodinfo-x86_64-softmmu_c"
         ],
         "+deps": [
           "libqemu-x86_64-softmmu",
-          "//hardware/generic/goldfish/emulator/plugin/registration:x86_64"
+          "//hardware/generic/goldfish/emulator/plugin/registration:x86_64",
+          "//hardware/generic/goldfish/emulator/crashreport:init",
+          "//hardware/generic/goldfish/android/system"
         ],
         // Enable our plugins to link back.
         "+linkopts": ["-rdynamic"],
