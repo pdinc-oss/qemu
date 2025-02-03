@@ -109,6 +109,10 @@ def checkGperfVersion(min_vers=None):
     checkExeVersion(exe="gperf", exe_version_arg="--version", vers_regex="[0-9]*\.[0-9]*",
                     min_vers=min_vers)
 
+def checkMesonVersion(min_vers=None):
+    checkExeVersion(exe="meson", exe_version_arg="--version", vers_regex="[0-9]*\.[0-9]*",
+                    min_vers=min_vers)
+
 def checkPythonPackage(name):
     if importlib.util.find_spec(name) is None:
         raise Exception(f"Python package {name} not found.")
@@ -121,6 +125,9 @@ def getClangDirectory():
         toolchain_json = json.load(f)
         clang_path = clang_path / toolchain_json['clang']
     return clang_path
+
+def getMesonDirectory():
+    return AOSP_ROOT / "prebuilts" / "meson"
 
 def addToSearchPath(searchDir):
     os.environ["PATH"] = searchDir + os.pathsep + os.environ["PATH"]
