@@ -92,7 +92,7 @@ class WindowsEnvironment(BaseEnvironment):
         Returns:
             _type_: _description_
         """
-        prgrfiles = Path(os.getenv("ProgramFiles(x86)", "C:\Program Files (x86)"))
+        prgrfiles = Path(os.getenv("ProgramFiles(x86)", r"C:\Program Files (x86)"))
         res = subprocess.check_output(
             [
                 str(
@@ -112,7 +112,7 @@ class WindowsEnvironment(BaseEnvironment):
         logging.info("Discovered: %s", vsresult)
         if len(vsresult) == 0:
             raise VisualStudioNativeWorkloadNotFoundException(
-                "No visual studio with the native desktop load available."
+                f"No visual studio with the native desktop load available for version '{self.visual_studio_version}'."
             )
 
         for install in vsresult:
