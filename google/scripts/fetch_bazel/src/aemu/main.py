@@ -330,7 +330,7 @@ def main():
 
     parser.add_argument(
         "--re",
-        default="yahan@google.com,jansene@google.com,bohu@google.com,jpcottin@google.com",
+        default="whollins@google.com,jansene@google.com,rkir@google.com,jpcottin@google.com",
         dest="reviewers",
         type=str,
         help="Set of reviewers for the gerrit change that will be created.",
