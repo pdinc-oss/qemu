@@ -72,7 +72,11 @@ def get_tasks(args) -> List[BuildTask]:
             dist=args.dist,
             features=args.feature,
         ),
-        CompileTask(args.aosp, args.out),
+        CompileTask(
+            args.aosp,
+            args.out,
+            args.target,
+        ),
     ]
     if not args.gfxstream_only:
         tasks += [
