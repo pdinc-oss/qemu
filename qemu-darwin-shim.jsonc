@@ -35,9 +35,14 @@
         "-deps": [
           "libmodinfo-aarch64-softmmu_c"
         ],
+        // Replace standard launcher with google launcher
+        "-srcs": ["system/main.c"],
+        "+srcs": ["google/system/aemu_main.cpp"],
         "+deps": [
           "libqemu-aarch64-softmmu",
-          "//hardware/generic/goldfish/emulator/plugin/registration:aarch64"
+          "//hardware/generic/goldfish/emulator/plugin/registration:aarch64",
+          "//hardware/generic/goldfish/emulator/crashreport:init",
+          "//hardware/generic/goldfish/android/system"
         ],
         "visibility": [
           "//visibility:public"
@@ -52,11 +57,16 @@
         "-deps": [
           "libmodinfo-riscv64-softmmu_c"
         ],
+        // Replace standard launcher with google launcher
+        "-srcs": ["system/main.c"],
+        "+srcs": ["google/system/aemu_main.cpp"],
         // TODO: Figure out why these are not
         // derived.
         "+deps": [
           "libqemu-riscv64-softmmu",
-          "//hardware/generic/goldfish/emulator/plugin/registration:riscv64"
+          "//hardware/generic/goldfish/emulator/plugin/registration:riscv64",
+          "//hardware/generic/goldfish/emulator/crashreport:init",
+          "//hardware/generic/goldfish/android/system"
         ],
         "visibility": [
           "//visibility:public"
@@ -71,9 +81,14 @@
         "-deps": [
           "libmodinfo-x86_64-softmmu_c"
         ],
+        // Replace standard launcher with google launcher
+        "-srcs": ["system/main.c"],
+        "+srcs": ["google/system/aemu_main.cpp"],
         "+deps": [
           "libqemu-x86_64-softmmu",
-          "//hardware/generic/goldfish/emulator/plugin/registration:x86_64"
+          "//hardware/generic/goldfish/emulator/plugin/registration:x86_64",
+          "//hardware/generic/goldfish/emulator/crashreport:init",
+          "//hardware/generic/goldfish/android/system"
         ],
         "visibility": [
           "//visibility:public"
