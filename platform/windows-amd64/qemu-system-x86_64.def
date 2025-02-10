@@ -105,6 +105,7 @@ EXPORTS
     icount_update
     id_generate
     info_report
+    InputButton_lookup
     iov_from_buf_full
     iov_size
     iov_to_buf_full
@@ -343,6 +344,9 @@ EXPORTS
     virtio_del_queue
     virtio_get_queue
     virtio_init
+    virtio_input_add_config
+    virtio_input_init_config
+    virtio_input_send
     virtio_instance_init_common
     virtio_notify
     virtio_notify_config
