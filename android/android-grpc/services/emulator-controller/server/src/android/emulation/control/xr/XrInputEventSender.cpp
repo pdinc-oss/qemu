@@ -58,6 +58,7 @@ void XrInputEventSender::sendXrHeadVelocity(const Velocity velocity) {
     });
 }
 
+//TODO(b/396429645): extract a template function for this and the other doSendXrEvent functions
 void XrInputEventSender::doSendXrCommand(const XrCommand command) {
     auto agent = mAgents->emu;
     switch (command.action()) {
