@@ -27,7 +27,7 @@ MAC_ARM64_PYTHON_3_11 = os.path.join("/opt", "homebrew", "Cellar", "python@3.11"
 MAC_X64_PYTHON_3_11 = os.path.join("/usr", "local", "Cellar", "python@3.11")
 
 def checkMacOsSDKVersion(min_vers):
-    vers_regex = "macosx([0-9]*\.[0-9]*)"
+    vers_regex = r"macosx(\d+\.\d+)"
     try:
         res = subprocess.check_output(args=["xcodebuild", "-showsdks"], env=os.environ.copy(), encoding="utf-8").strip()
         vers_str = re.search(vers_regex, res)
@@ -51,4 +51,4 @@ def addHomebrewPython311ToPath(host_arch):
     paths = glob.glob(os.path.join(pydir, "**", "python3"), recursive=True)
     if not paths:
         logging.fatal(f"Found python installation [{pydir}], but no python3 binary found inside.")
-    deps_common.addToSearchPath(paths[0])
+    deps_common.addToSearchPath(os.path.dirname(paths[0]))
